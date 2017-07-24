@@ -140,6 +140,8 @@ get_system_arch() {
 	local abi=${1-${ABI}}
 
 	case $(get_abi_CHOST ${abi}) in
+		mips64*l*) echo mips64el ;;
+		mips64*) echo mips64 ;;
 		mips*l*) echo mipsel ;;
 		mips*) echo mips ;;
 		ppc64le*) echo ppc64le ;;
