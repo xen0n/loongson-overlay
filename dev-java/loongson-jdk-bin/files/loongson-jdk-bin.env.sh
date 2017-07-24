@@ -1,14 +1,14 @@
 # Copyright 1999-2016 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 
-VERSION="IcedTea JDK ${PV}$(multilib_is_native_abi || printf ' ('${ABI}')')"
-JAVA_HOME="${EPREFIX}/opt/icedtea-bin-${PV}$(multilib_is_native_abi || printf -- -${ABI})"
-JDK_HOME="${EPREFIX}/opt/icedtea-bin-${PV}$(multilib_is_native_abi || printf -- -${ABI})"
+VERSION="Loongson JDK ${PV}$(multilib_is_native_abi || printf ' ('${ABI}')')"
+JAVA_HOME="${EPREFIX}/opt/loongson-jdk-bin-${PV}$(multilib_is_native_abi || printf -- -${ABI})"
+JDK_HOME="${EPREFIX}/opt/loongson-jdk-bin-${PV}$(multilib_is_native_abi || printf -- -${ABI})"
 JAVAC="\${JAVA_HOME}/bin/javac"
 PATH="\${JAVA_HOME}/bin:\${JAVA_HOME}/jre/bin"
 ROOTPATH="\${JAVA_HOME}/bin:\${JAVA_HOME}/jre/bin"
 LDPATH="\${JAVA_HOME}/jre/lib/$(get_system_arch)/:\${JAVA_HOME}/jre/lib/$(get_system_arch)/server/$([[ ${SLOT} = 7 ]] && printf :\${JAVA_HOME}/jre/lib/$(get_system_arch)/xawt/)"
-MANPATH="${EPREFIX}/opt/icedtea-bin-${PV}/man"
+MANPATH="${EPREFIX}/opt/loongson-jdk-bin-${PV}/man"
 PROVIDES_TYPE="JDK JRE"
 PROVIDES_VERSION="1.${SLOT}"
 # Taken from sun.boot.class.path property

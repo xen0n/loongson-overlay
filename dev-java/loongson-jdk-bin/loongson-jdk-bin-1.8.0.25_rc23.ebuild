@@ -3,34 +3,23 @@
 
 EAPI=6
 
-# Don't block arm. See bug #600134.
-#MULTILIB_COMPAT=( abi_ppc_64 abi_x86_{32,64} )
-KEYWORDS="-* amd64 ~arm ppc64 x86"
+MULTILIB_COMPAT=( abi_mips_n64 )
+KEYWORDS="-* ~mips"
 
-inherit java-vm-2 multilib-build toolchain-funcs
+inherit java-vm-2 multilib-build toolchain-funcs versionator
 
-BASE_URI="https://dev.gentoo.org/~chewi/distfiles"
-SRC_URI="doc? ( ${BASE_URI}/${PN}-doc-${PV}.tar.xz )
-	source? ( ${BASE_URI}/${PN}-src-${PV}.tar.xz )
-	multilib? ( amd64? ( abi_x86_32? ( ${BASE_URI}/${PN}-core-${PV}-x86.tar.xz ) ) )"
+BASE_URI="http://ftp.loongnix.org/toolchain/java/openjdk8"
+SRC_URI="${BASE_URI}/jdk8-mips64-$(get_version_component_range 5).tar.gz"
 
-for abi in amd64 arm ppc64 x86; do
-	SRC_URI+="
-		${abi}? (
-			${BASE_URI}/${PN}-core-${PV}-${abi}.tar.xz
-			examples? ( ${BASE_URI}/${PN}-examples-${PV}-${abi}.tar.xz )
-		)"
-done
-
-DESCRIPTION="A Gentoo-made binary build of the IcedTea JDK"
-HOMEPAGE="http://icedtea.classpath.org"
+DESCRIPTION="A Loongson-compatible JDK prebuilt by the Loongnix project"
+HOMEPAGE="http://www.loongnix.org/index.php/Java"
 LICENSE="GPL-2-with-classpath-exception"
 SLOT="8"
 
-IUSE="+alsa +cups doc examples +gtk headless-awt multilib nsplugin pulseaudio selinux source +webstart"
-REQUIRED_USE="gtk? ( !headless-awt ) nsplugin? ( !headless-awt )"
+IUSE="+alsa +cups examples +gtk headless-awt multilib selinux"
+REQUIRED_USE="gtk? ( !headless-awt )"
 
-RESTRICT="preserve-libs strip"
+RESTRICT="preserve-libs strip mirror"
 QA_PREBUILT="opt/.*"
 
 RDEPEND=">=dev-libs/glib-2.42:2%
@@ -66,9 +55,9 @@ RDEPEND=">=sys-devel/gcc-5.4.0[multilib?]
 	multilib? ( ${RDEPEND//%/[${MULTILIB_USEDEP}]} )
 	!multilib? ( ${RDEPEND//%/} )"
 
-PDEPEND="webstart? ( >=dev-java/icedtea-web-1.6.1:0 )
-	nsplugin? ( >=dev-java/icedtea-web-1.6.1:0[nsplugin] )
-	pulseaudio? ( dev-java/icedtea-sound )"
+#PDEPEND="webstart? ( >=dev-java/icedtea-web-1.6.1:0 )
+#	nsplugin? ( >=dev-java/icedtea-web-1.6.1:0[nsplugin] )
+#	pulseaudio? ( dev-java/icedtea-sound )"
 
 S="${WORKDIR}"
 
@@ -80,6 +69,9 @@ pkg_pretend() {
 
 src_prepare() {
 	default
+
+	# normalize install directory name to be icedtea-bin-like
+	mv j2sdk-image "${P}-${ABI}"
 
 	if ! use alsa; then
 		rm -v */jre/lib/*/libjsoundalsa.* || die
@@ -98,8 +90,9 @@ multilib_src_install() {
 	dodir "${dest}"
 
 	if multilib_is_native_abi; then
-		dodoc ${P}-${ABI}/doc/{ASSEMBLY_EXCEPTION,AUTHORS,NEWS,README,THIRD_PARTY_README}
-		use doc && dodoc -r ${P}/doc/html
+		dodoc ${P}-${ABI}/{ASSEMBLY_EXCEPTION,THIRD_PARTY_README}
+		# the Loongnix package doesn't contain html docs
+		# use doc && dodoc -r ${P}/doc/html
 
 		# doins doesn't preserve executable bits.
 		cp -pRP ${P}-${ABI}/{bin,include,jre,lib,man} "${ddest}" || die
@@ -108,12 +101,13 @@ multilib_src_install() {
 			cp -pRP ${P}-${ABI}/{demo,sample} "${ddest}" || die
 		fi
 
-		if use source; then
-			cp ${P}/src.zip "${ddest}" || die
-		fi
+		# the Loongnix package doesn't contain sources.
+		#if use source; then
+		#	cp ${P}/src.zip "${ddest}" || die
+		#fi
 
 		# Use default VMHANDLE.
-		java-vm_install-env "${FILESDIR}/icedtea-bin.env.sh"
+		java-vm_install-env "${FILESDIR}/loongson-jdk-bin.env.sh"
 	else
 		local x native=$(get_system_arch ${DEFAULT_ABI})
 
@@ -129,7 +123,7 @@ multilib_src_install() {
 		done
 
 		# Use ABI-suffixed VMHANDLE.
-		VMHANDLE+="-${ABI}" java-vm_install-env "${FILESDIR}/icedtea-bin.env.sh"
+		VMHANDLE+="-${ABI}" java-vm_install-env "${FILESDIR}/loongson-jdk-bin.env.sh"
 	fi
 
 	# Both icedtea itself and the icedtea ebuild set PAX markings but we
