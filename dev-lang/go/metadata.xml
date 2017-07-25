@@ -2,8 +2,8 @@
 <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
 	<maintainer type="person">
-		<email>williamh@gentoo.org</email>
-		<name>William Hubbs</name>
+		<email>git@xen0n.name</email>
+		<name>Wang Xuerui</name>
 	</maintainer>
 	<longdescription lang="en">
 		Go is a new systems programming language developped at google by
@@ -11,6 +11,9 @@
 		channels and a clean syntax.  
 	</longdescription>
 	<use>
+		<!-- FIXME: gccgo on MIPS is currently broken due to outdated libffi -->
+		<!--
 		<flag name="gccgo">Enable bootstrapping using gccgo</flag>
+		-->
 	</use>
 </pkgmetadata>
