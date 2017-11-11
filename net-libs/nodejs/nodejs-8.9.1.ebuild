@@ -20,8 +20,9 @@ IUSE="cpu_flags_x86_sse2 debug doc icu loongson +npm +snapshot +ssl systemtap te
 
 RDEPEND="icu? ( >=dev-libs/icu-56:= )
 	npm? ( ${PYTHON_DEPS} )
-	>=net-libs/http-parser-2.6.2:=
-	>=dev-libs/libuv-1.11.0:=
+	>=net-libs/http-parser-2.7.0:=
+	>=dev-libs/libuv-1.15.0:=
+	>=net-libs/nghttp2-1.25.0
 	>=dev-libs/openssl-1.0.2g:0=[-bindist]
 	sys-libs/zlib"
 DEPEND="${RDEPEND}
@@ -34,6 +35,7 @@ REQUIRED_USE="${PYTHON_REQUIRED_USE}"
 
 PATCHES=(
 	"${FILESDIR}"/gentoo-global-npm-config.patch
+	"${FILESDIR}"/nodejs-8.9.0-shared-nghttp2.patch
 )
 
 mips_endianness() {
@@ -59,7 +61,7 @@ src_prepare() {
 
 	# make sure we use python2.* while using gyp
 	sed -i -e "s/python/${EPYTHON}/" deps/npm/node_modules/node-gyp/gyp/gyp || die
-	sed -i -e "s/|| 'python'/|| '${EPYTHON}'/" deps/npm/node_modules/node-gyp/lib/configure.js || die
+	sed -i -e "s/|| 'python2'/|| '${EPYTHON}'/" deps/npm/node_modules/node-gyp/lib/configure.js || die
 
 	# less verbose install output (stating the same as portage, basically)
 	sed -i -e "/print/d" tools/install.py || die
@@ -67,11 +69,12 @@ src_prepare() {
 	# proper libdir, hat tip @ryanpcmcquen https://github.com/iojs/io.js/issues/504
 	local LIBDIR=$(get_libdir)
 	sed -i -e "s|lib/|${LIBDIR}/|g" tools/install.py || die
-	sed -i -e "s/'lib'/'${LIBDIR}'/" lib/module.js || die
-	sed -i -e "s|\"lib\"|\"${LIBDIR}\"|" deps/npm/lib/npm.js || die
+	sed -i -e "s/'lib'/'${LIBDIR}'/" lib/module.js deps/npm/lib/npm.js || die
 
 	# Avoid writing a depfile, not useful
 	sed -i -e "/DEPFLAGS =/d" tools/gyp/pylib/gyp/generator/make.py || die
+
+	sed -i -e "/'-O3'/d" common.gypi || die
 
 	# Avoid a test that I've only been able to reproduce from emerge. It doesnt
 	# seem sandbox related either (invoking it from a sandbox works fine).
@@ -91,9 +94,9 @@ src_prepare() {
 
 src_configure() {
 	local myarch=""
-	local myconf=( --shared-openssl --shared-libuv --shared-http-parser --shared-zlib )
+	local myconf=( --shared-http-parser --shared-libuv --shared-nghttp2 --shared-openssl --shared-zlib )
 	use npm || myconf+=( --without-npm )
-	use icu && myconf+=( --with-intl=system-icu )
+	use icu && myconf+=( --with-intl=system-icu ) || myconf+=( --with-intl=none )
 	use snapshot && myconf+=( --with-snapshot )
 	use ssl || myconf+=( --without-ssl )
 	use debug && myconf+=( --debug )
@@ -117,6 +120,7 @@ src_configure() {
 		fi
 		myconf+=( --with-mips-float-abi=${mipsfloatabi} )
 	fi
+
 
 	case ${ABI} in
 		amd64) myarch="x64";;
