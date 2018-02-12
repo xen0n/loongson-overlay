@@ -30,6 +30,11 @@ RDEPEND=">=app-emulation/runc-1.0.0_rc4
 S=${WORKDIR}/${P}/src/${EGO_PN}
 
 src_compile() {
+	# fix build on mips
+	if use mips; then
+		sed -i 's/-buildmode=pie//g' Makefile.linux
+	fi
+
 	local options=( $(usex seccomp "seccomp" "") )
 	export GOPATH="${WORKDIR}/${P}" # ${PWD}/vendor
 	LDFLAGS=$(usex hardened '-extldflags -fno-PIC' '') emake GIT_COMMIT="$EGIT_COMMIT" BUILDTAGS="${options[@]}"
