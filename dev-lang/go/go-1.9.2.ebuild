@@ -30,7 +30,7 @@ x64-solaris? ( ${BOOTSTRAP_DIST}/go-solaris-amd64-${BOOTSTRAP_VERSION}.tbz )
 
 case ${PV}  in
 *9999*)
-	EGIT_REPO_URI="git://github.com/golang/go.git"
+	EGIT_REPO_URI="https://github.com/golang/go.git"
 	inherit git-r3
 	;;
 *)
@@ -39,7 +39,7 @@ case ${PV}  in
 	case ${PV} in
 	*_beta*|*_rc*) ;;
 	*)
-		KEYWORDS="-* amd64 arm ~arm64 ~mips ~ppc64 x86 ~amd64-fbsd ~x86-fbsd ~x64-macos ~x64-solaris"
+		KEYWORDS="-* ~amd64 ~arm ~arm64 ~ppc64 ~x86 ~amd64-fbsd ~x86-fbsd ~x64-macos ~x64-solaris"
 		# The upstream tests fail under portage but pass if the build is
 		# run according to their documentation [1].
 		# I am restricting the tests on released versions until this is
@@ -52,7 +52,7 @@ esac
 SRC_URI+="!gccgo? ( ${BOOTSTRAP_URI} )"
 
 DESCRIPTION="A concurrent garbage collected and typesafe programming language"
-HOMEPAGE="http://www.golang.org"
+HOMEPAGE="https://golang.org"
 
 LICENSE="BSD"
 SLOT="0/${PV}"
@@ -176,23 +176,16 @@ src_unpack()
 src_compile()
 {
 	export GOROOT_BOOTSTRAP="${WORKDIR}"/go-$(go_os)-$(go_arch)-bootstrap
-
-	# I used a specially built installation cross-compiled from amd64,
-	# hence I don't need gccgo for the final bootstrapping.
-	# However the bootstrap package is not ready yet so just symlink the
-	# existing installation here.
-	ln -s /usr/lib/go "${GOROOT_BOOTSTRAP}"
-
-	#if use gccgo; then
-	#	mkdir -p "${GOROOT_BOOTSTRAP}/bin" || die
-	#	local go_binary=$(gcc-config --get-bin-path)/go-$(gcc-major-version)
-	#	[[ -x ${go_binary} ]] || go_binary=$(
-	#		find "${EPREFIX}"/usr/${CHOST}/gcc-bin/*/go-$(gcc-major-version) |
-	#			sort -V | tail -n1)
-	#	[[ -x ${go_binary} ]] ||
-	#		die "go-$(gcc-major-version): command not found"
-	#	ln -s "${go_binary}" "${GOROOT_BOOTSTRAP}/bin/go" || die
-	#fi
+	if use gccgo; then
+		mkdir -p "${GOROOT_BOOTSTRAP}/bin" || die
+		local go_binary=$(gcc-config --get-bin-path)/go-$(gcc-major-version)
+		[[ -x ${go_binary} ]] || go_binary=$(
+			find "${EPREFIX}"/usr/${CHOST}/gcc-bin/*/go-$(gcc-major-version) |
+				sort -V | tail -n1)
+		[[ -x ${go_binary} ]] ||
+			die "go-$(gcc-major-version): command not found"
+		ln -s "${go_binary}" "${GOROOT_BOOTSTRAP}/bin/go" || die
+	fi
 	export GOROOT_FINAL="${EPREFIX}"/usr/lib/go
 	export GOROOT="$(pwd)"
 	export GOBIN="${GOROOT}/bin"
