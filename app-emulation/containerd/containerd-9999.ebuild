@@ -35,6 +35,11 @@ src_compile() {
 		sed -i 's/-buildmode=pie//g' Makefile.linux
 	fi
 
+	# add mips support files
+	cp "${FILESDIR}"/boltdb/*.go vendor/github.com/boltdb/bolt/
+	cp "${FILESDIR}"/continuity/*.go vendor/github.com/containerd/continuity/sysx/
+	cp "${FILESDIR}"/ctr/*.go cmd/ctr/commands
+
 	local options=( $(usex seccomp "seccomp" "") )
 	export GOPATH="${WORKDIR}/${P}" # ${PWD}/vendor
 	LDFLAGS=$(usex hardened '-extldflags -fno-PIC' '') emake GIT_COMMIT="$EGIT_COMMIT" BUILDTAGS="${options[@]}"
