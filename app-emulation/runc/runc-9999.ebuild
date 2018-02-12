@@ -20,13 +20,25 @@ fi
 
 LICENSE="Apache-2.0"
 SLOT="0"
-IUSE="+seccomp"
+IUSE="apparmor +seccomp"
 
 DEPEND=">=dev-lang/go-1.4:="
-RDEPEND="seccomp? ( sys-libs/libseccomp )
+RDEPEND="
+	apparmor? ( sys-libs/apparmor )
+	seccomp? ( sys-libs/libseccomp )
 	!app-emulation/docker-runc"
 
 src_compile() {
+	# disable pie build for mips
+	if use mips; then
+		sed -i 's/-buildmode=pie//g' Makefile
+	fi
+
+	# restructure vendor to vendor/src
+	mv vendor src
+	mkdir vendor
+	mv src vendor/src
+
 	# Taken from app-emulation/docker-1.7.0-r1
 	export CGO_CFLAGS="-I${ROOT}/usr/include"
 	export CGO_LDFLAGS="-L${ROOT}/usr/$(get_libdir)"
@@ -38,9 +50,9 @@ src_compile() {
 	export GOPATH="${PWD}/.gopath:${PWD}/vendor"
 
 	# build up optional flags
-	local options=( $(usex seccomp "seccomp") )
+	local options=( $(usex apparmor "apparmor") $(usex seccomp "seccomp") )
 
-	emake BUILDTAGS="${options[@]}"
+	emake BUILDTAGS="${options[*]}"
 }
 
 src_install() {
