@@ -19,6 +19,7 @@ src_prepare() {
 		"${FILESDIR}"/${PN}-0.3.109-install.patch \
 		"${FILESDIR}"/${PN}-0.3.109-x32.patch \
 		"${FILESDIR}"/${PN}-0.3.109-testcase-8.patch \
+		"${FILESDIR}"/${PN}-0.3.110-mips64el.patch \
 		"${FILESDIR}"/${PN}-0.3.110-cppflags.patch \
 		"${FILESDIR}"/${PN}-0.3.110-optional-werror.patch \
 		"${FILESDIR}"/${PN}-0.3.110-link-stdlib.patch #558406
