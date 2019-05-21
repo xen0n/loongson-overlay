@@ -1,0 +1,66 @@
+<dev-libs/libunistring-9999 **
+<x11-libs/libxkbcommon-9999 **
+
+<sys-devel/llvm-8.0.9999 **
+<sys-devel/llvm-common-8.0.9999 **
+<dev-util/lldb-8.0.9999 **
+<sys-libs/compiler-rt-8.0.9999 **
+<sys-libs/compiler-rt-sanitizers-8.0.9999 **
+<sys-devel/clang-8.0.9999 **
+<sys-devel/clang-common-9999 **
+<sys-devel/clang-runtime-9999 **
+
+<sys-fs/ntfs3g-9999 **
+
+<dev-util/re2c-9999 **
+<media-libs/libuninameslist-99999999 **
+<media-gfx/fontforge-99999999 **
+<x11-libs/libvdpau-9999 **
+<x11-libs/libva-9999 **
+<x11-libs/libva-vdpau-driver-9999 **
+<x11-drivers/xf86-video-ati-9999 **
+<x11-drivers/xf86-video-amdgpu-9999 **
+<dev-util/ninja-9999 **
+
+<media-fonts/source-han-sans-9999 **
+
+<media-sound/pulseaudio-9999 **
+<media-plugins/alsa-plugins-9999 **
+<net-libs/libasyncns-9999 **
+<media-libs/vo-aacenc-9999 **
+<media-libs/libbluray-9999 **
+<sys-auth/realtime-base-9999 **
+<sys-auth/rtkit-9999 **
+<media-sound/jack-audio-connection-kit-9999 **
+<media-video/ffmpeg-9999 **
+<media-libs/opus-9999 **
+<media-video/mplayer-9999 **
+
+<app-shells/zsh-completions-9999 **
+
+<media-fonts/croscorefonts-9999 **
+<app-eselect/eselect-lcdfilter-9999 **
+<media-libs/fontconfig-infinality-99999999 **
+<app-eselect/eselect-infinality-9999 **
+
+<net-libs/http-parser-9999 **
+<dev-libs/libuv-9999 **
+<net-libs/nodejs-9999 **
+
+<dev-util/perf-9999 **
+
+<x11-misc/xclip-9999 **
+
+<dev-util/patchelf-9999 **
+
+<net-misc/proxychains-9999 **
+
+<dev-db/redis-9999 **
+
+<sys-apps/dmidecode-9999 **
+
+<app-shells/autojump-9999 **
+
+<dev-lang/mujs-9999 **
+<dev-lang/elixir-9999 **
+<dev-libs/jemalloc-9999 **

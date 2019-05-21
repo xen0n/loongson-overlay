@@ -1,0 +1,7 @@
+<dev-libs/ell-9999 **
+
+# required by media-sound/pulseaudio-12.2::gentoo[bluetooth]
+# required by media-libs/libsdl2-2.0.8-r2::gentoo[pulseaudio]
+# required by media-video/ffmpeg-3.4.4::gentoo[sdl]
+# required by media-plugins/alsa-plugins-1.1.6::gentoo[-libav,ffmpeg]
+<media-libs/sbc-9999 **

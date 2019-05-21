@@ -1,0 +1,33 @@
+<app-emulation/docker-9999 **
+
+# required by app-emulation/docker-17.06.0-r1::gentoo[container-init]
+# required by app-emulation/docker (argument)
+<sys-process/tini-9999 **
+# required by app-emulation/docker-17.06.0-r1::gentoo
+# required by app-emulation/docker (argument)
+<app-emulation/containerd-9999 **
+# required by dev-go/go-md2man-1.0.6::gentoo
+# required by app-emulation/docker-17.06.0-r1::gentoo
+# required by app-emulation/docker (argument)
+<dev-go/blackfriday-9999 **
+# required by app-emulation/docker-17.06.0-r1::gentoo
+# required by app-emulation/docker (argument)
+<app-emulation/docker-runc-9999 **
+# required by app-emulation/docker-17.06.0-r1::gentoo
+# required by app-emulation/docker (argument)
+<dev-go/go-md2man-9999 **
+# required by app-emulation/docker-17.06.0-r1::gentoo
+# required by app-emulation/docker (argument)
+<app-emulation/docker-proxy-9999 **
+# required by dev-go/blackfriday-9999::gentoo
+# required by dev-go/go-md2man-1.0.6::gentoo
+# required by app-emulation/docker-17.06.0-r1::gentoo
+# required by app-emulation/docker (argument)
+<dev-go/sanitized-anchor-name-9999 **
+
+
+# special-case
+=app-emulation/docker-9999 **
+=app-emulation/containerd-9999 **
+=app-emulation/docker-runc-9999 **
+=app-emulation/runc-9999 **

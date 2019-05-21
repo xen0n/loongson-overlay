@@ -1,0 +1,11 @@
+<app-emulation/qemu-9999 **
+<media-libs/virglrenderer-9999 **
+<media-libs/libsdl2-9999 **
+<sys-devel/bin86-9999 **
+<sys-firmware/ipxe-9999 **
+<sys-firmware/vgabios-9999 **
+<sys-devel/dev86-9999 **
+
+# required by app-emulation/qemu-2.9.0-r54::gentoo[pin-upstream-blobs,qemu_softmmu_targets_x86_64,qemu_softmmu_targets_i386]
+# required by qemu (argument)
+<sys-firmware/edk2-ovmf-9999 **

@@ -1,0 +1,13 @@
+# required by net-print/cups-filters-1.17.7::gentoo[pdf]
+# required by net-print/cups-2.2.4::gentoo
+# required by dev-qt/qtgui-4.8.7::gentoo[cups]
+# required by dev-qt/qtcore-4.8.7-r2::gentoo[qt3support]
+# required by dev-qt/qttranslations-4.8.7::gentoo
+<app-text/mupdf-9999 **
+# required by app-text/mupdf-1.11-r2::gentoo[opengl,-static-libs]
+# required by net-print/cups-filters-1.17.7::gentoo[pdf]
+# required by net-print/cups-2.2.4::gentoo
+# required by dev-qt/qtgui-4.8.7::gentoo[cups]
+# required by dev-qt/qtcore-4.8.7-r2::gentoo[qt3support]
+# required by dev-qt/qttranslations-4.8.7::gentoo
+<media-libs/glfw-9999 **
