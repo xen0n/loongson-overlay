@@ -1,0 +1,123 @@
+# Andreas Sturmlechner <asturm@gentoo.org> (2019-03-31)
+# sys-auth/elogind is not yet keyworded here. bug #681200
+-elogind
+
+# Mart Raudsepp <leio@gentoo.org> (2018-02-11)
+# dev-util/valgrind is not keyworded here yet,
+# though the MIPS platform is supported upstream
+-valgrind
+
+# Michał Górny <mgorny@gentoo.org> (2018-01-23)
+# net-misc/networkmanager is not keyworded here.
+-networkmanager
+
+# Michał Górny <mgorny@gentoo.org> (2018-01-23)
+# sci-geosciences/gpsd is not keyworded here.
+-gps
+
+# Mart Raudsepp <leio@gentoo.org> (2017-05-27)
+# media-libs/libmtp not tested
+-mtp
+
+# Mart Raudsepp <leio@gentoo.org> (2017-05-27)
+# net-libs/gnome-online-accounts not tested
+-gnome-online-accounts
+
+# Mart Raudsepp <leio@gentoo.org> (2017-05-27)
+# Keywords lost on net-fs/samba over time, use.mask until re-keyworded
+-samba
+
+# Mart Raudsepp <leio@gentoo.org> (2017-02-07)
+# dev-libs/libappindicator not tested
+-ayatana
+
+# Markos Chandras <hwoarang@gentoo.org>
+# Needs packages that lack ~mips keywords
+# See #485366
+-m17n-lib
+
+# Samuli Suominen <ssuominen@gentoo.org>
+# Media cannot be tested for MIPS at the moment.
+# media-libs/libmpeg3
+# media-libs/portaudio
+# dev-libs/libcdio
+# media-libs/musicbrainz
+# media-libs/openexr
+-mpeg
+-portaudio
+-cdio
+-cdda
+-musicbrainz
+-openexr
+
+# Ryan Hill <dirtyepic@gentoo.org>
+# Various Gnome flags
+-gnome
+
+# Until someone actually needs fuse, we'll mask it as
+# it holds up stablizing ntfsprogs
+-fuse
+
+# Donnie Berkholz <dberkholz@gentoo.org> (2006-03-07)
+# Modular X: mask for architectures lacking direct rendering
+-dri
+
+# Stephen P. Becker <geoman@gentoo.org>
+# more modular X stuff
+-video_cards_nouveau
+-video_cards_r128
+-video_cards_radeon
+-input_devices_wacom
+
+# Matt Turner <mattst88@gentoo.org>
+# Mask more VIDEO_CARDs added with mesa-8.0
+-video_cards_amdgpu
+-video_cards_r100
+-video_cards_r200
+-video_cards_r300
+-video_cards_r600
+-video_cards_radeonsi
+
+# John N. Laliberte <allanonjl@gentoo.org>
+# mask scanner support
+-scanner
+
+# Hardave Riar <hardave@gentoo.org>
+# This should work, someone with a usb card and digital camera should test it
+-gphoto2
+
+# Stephen P. Becker <geoman@gentoo.org>
+# masked for now until this can be properly tested with alsa
+-jack
+
+# Stephen P. Becker <geoman@gentoo.org>
+# masked because of silly java deps with gnome (we have no jre on mips)
+-accessibility
+
+# masked until gnome-extra/evolution-data-server is keyworded for mips
+-eds
+
+# We don't use smartcards, afaik
+-pcsc-lite
+
+# Doug Goldstein <cardoe@gentoo.org> (2007-05-08)
+# no one in mips land has smartcard hardware to test with
+# see bug #162205 comment 10.
+-smartcard
+-openct
+
+# kumba (2007-06-02)
+# pulseaudio hasn't been tested on mips; maybe someday
+-pulseaudio
+
+# Matt Turner <mattst88@gentoo.org> (2010-12-13)
+# We don't have sys-devel/llvm
+-llvm
+
+# Chí-Thanh Christopher Nguyễn <chithanh@gentoo.org> (2013-08-22)
+# virtual/opencl is not keyworded
+-opencl
+
+# Ben de Groot <yngwin@gentoo.org> (2015-02-01)
+# please remove when keyworded
+-qt5

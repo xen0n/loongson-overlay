@@ -1,0 +1,5 @@
+media-libs/mesa -vulkan -vulkan-overlay
+
+xfce-base/xfwm4 -xpresent
+
+media-libs/freetype -infinality
