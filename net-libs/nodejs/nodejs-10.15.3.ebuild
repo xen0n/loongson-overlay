@@ -14,8 +14,8 @@ SRC_URI="https://nodejs.org/dist/v${PV}/node-v${PV}.tar.xz"
 
 LICENSE="Apache-1.1 Apache-2.0 BSD BSD-2 MIT"
 SLOT="0"
-KEYWORDS="~amd64 ~arm ~arm64 ~ppc ~ppc64 ~x86 ~amd64-linux ~x64-macos"
-IUSE="cpu_flags_x86_sse2 debug doc icu inspector +npm +snapshot +ssl systemtap test"
+KEYWORDS="~amd64 ~arm ~arm64 ~mips ~ppc ~ppc64 ~x86 ~amd64-linux ~x64-macos"
+IUSE="cpu_flags_x86_sse2 debug doc icu inspector loongson +npm +snapshot +ssl systemtap test"
 REQUIRED_USE="
 	${PYTHON_REQUIRED_USE}
 	inspector? ( icu ssl )
@@ -41,6 +41,10 @@ PATCHES=(
 	"${FILESDIR}"/${PN}-10.3.0-global-npm-config.patch
 )
 S="${WORKDIR}/node-v${PV}"
+
+mips_endianness() {
+	[[ "$(tc-endian)" = "little" ]] && echo el
+}
 
 pkg_pretend() {
 	(use x86 && ! use cpu_flags_x86_sse2) && \
@@ -106,11 +110,34 @@ src_configure() {
 		amd64) myarch="x64";;
 		arm) myarch="arm";;
 		arm64) myarch="arm64";;
+		# TODO: both 32-bit MIPS ABIs are likely broken, non-tested
+		o32|n32) myarch="mips$(mips_endianness)";;
+		n64) myarch="mips64$(mips_endianness)";;
 		ppc64) myarch="ppc64";;
 		x32) myarch="x32";;
 		x86) myarch="ia32";;
 		*) myarch="${ABI}";;
 	esac
+
+	# MIPS flags
+	if use mips; then
+		use loongson && myconf+=( --with-mips-arch-variant=loongson )
+
+		local mipsfpumode=""
+		# TODO: confirm on more MIPS models besides Loongson
+		case ${ABI} in
+			o32) mipsfpumode=fp32;;
+			n32|n64) mipsfpumode=fp64;;
+			*) die "Unknown MIPS ABI: ${ABI}";;
+		esac
+		myconf+=( --with-mips-fpu-mode=${mipsfpumode} )
+
+		local mipsfloatabi="hard"
+		if [[ "$(tc-is-softfloat)" != "no" ]]; then
+			mipsfloatabi="soft"
+		fi
+		myconf+=( --with-mips-float-abi=${mipsfloatabi} )
+	fi
 
 	GYP_DEFINES="linux_use_gold_flags=0
 		linux_use_bundled_binutils=0
