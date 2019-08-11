@@ -1,0 +1,52 @@
+# required by media-libs/mesa-19.1.4::gentoo[gallium,opencl]
+# required by x11-wm/mutter-3.30.2-r3::gentoo
+# required by gnome-base/gnome-shell-3.30.2-r2::gentoo
+# required by virtual/notification-daemon-0::gentoo[gnome]
+# required by x11-libs/libnotify-0.7.8::gentoo
+# required by net-libs/webkit-gtk-2.24.3::gentoo[libnotify]
+# required by gnome-extra/yelp-3.30.0::gentoo
+# required by gnome-base/gnome-core-apps-3.30.2::gentoo
+# required by gnome-base/gnome-3.30.2::gentoo
+# required by @selected
+# required by @world (argument)
+<dev-libs/ocl-icd-9999 **
+# required by media-libs/mesa-19.1.4::gentoo[gallium,opencl]
+# required by x11-wm/mutter-3.30.2-r3::gentoo
+# required by gnome-base/gnome-shell-3.30.2-r2::gentoo
+# required by virtual/notification-daemon-0::gentoo[gnome]
+# required by x11-libs/libnotify-0.7.8::gentoo
+# required by net-libs/webkit-gtk-2.24.3::gentoo[libnotify]
+# required by gnome-extra/yelp-3.30.0::gentoo
+# required by gnome-base/gnome-core-apps-3.30.2::gentoo
+# required by gnome-base/gnome-3.30.2::gentoo
+# required by @selected
+# required by @world (argument)
+<dev-libs/libclc-9999 **
+# required by dev-libs/ocl-icd-2.2.12-r1::gentoo
+# required by media-libs/mesa-19.1.4::gentoo[gallium,opencl]
+# required by x11-wm/mutter-3.30.2-r3::gentoo
+# required by gnome-base/gnome-shell-3.30.2-r2::gentoo
+# required by virtual/notification-daemon-0::gentoo[gnome]
+# required by x11-libs/libnotify-0.7.8::gentoo
+# required by net-libs/webkit-gtk-2.24.3::gentoo[libnotify]
+# required by gnome-extra/yelp-3.30.0::gentoo
+# required by gnome-base/gnome-core-apps-3.30.2::gentoo
+# required by gnome-base/gnome-3.30.2::gentoo
+# required by @selected
+# required by @world (argument)
+<app-eselect/eselect-opencl-9999 **
+# required by sys-devel/clang-runtime-8.0.1::gentoo[openmp]
+# required by sys-devel/clang-8.0.1::gentoo
+# required by dev-libs/libclc-0.2.0_pre20190313::gentoo
+# required by media-libs/mesa-19.1.4::gentoo[gallium,opencl]
+# required by x11-wm/mutter-3.30.2-r3::gentoo
+# required by gnome-base/gnome-shell-3.30.2-r2::gentoo
+# required by virtual/notification-daemon-0::gentoo[gnome]
+# required by x11-libs/libnotify-0.7.8::gentoo
+# required by net-libs/webkit-gtk-2.24.3::gentoo[libnotify]
+# required by gnome-extra/yelp-3.30.0::gentoo
+# required by gnome-base/gnome-core-apps-3.30.2::gentoo
+# required by gnome-base/gnome-3.30.2::gentoo
+# required by @selected
+# required by @world (argument)
+<sys-libs/libomp-9999 **
