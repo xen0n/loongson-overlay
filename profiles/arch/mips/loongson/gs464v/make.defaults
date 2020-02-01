@@ -1,0 +1,5 @@
+CFLAGS="-O2 -pipe -march=gs464e -mtune=gs464e -mmsa"
+CXXFLAGS="${CFLAGS}"
+FFLAGS="${CFLAGS}"
+FCFLAGS="${CFLAGS}"
+CPU_FLAGS_MIPS="mipsr2 lext lext2"
