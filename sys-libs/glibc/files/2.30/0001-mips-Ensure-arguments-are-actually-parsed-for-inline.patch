@@ -1,0 +1,350 @@
+From 97994badd963953ef95c8d03f9f614da19d30db1 Mon Sep 17 00:00:00 2001
+From: Wang Xuerui <git@xen0n.name>
+Date: Sun, 9 Feb 2020 17:47:41 +0800
+Subject: [PATCH] mips: Ensure arguments are actually parsed for inlined
+ syscalls
+
+According to gcc documentation on local register variables, temporary
+variables must be used for the desired content to not be call-clobbered.
+Follow the x86 way (commit 381a0c26d73e0f074c962e0ab53b99a6c327066d) and
+add a level of indirection for all syscall arguments.
+
+This fixes, for example, garbage arguments to setresuid(2) when calling
+posix_spawn(3), which is used by GNU make 4.3.
+---
+ sysdeps/unix/sysv/linux/mips/mips32/sysdep.h  | 30 ++++++---
+ .../unix/sysv/linux/mips/mips64/n32/sysdep.h  | 63 ++++++++++++-------
+ .../unix/sysv/linux/mips/mips64/n64/sysdep.h  | 63 ++++++++++++-------
+ 3 files changed, 104 insertions(+), 52 deletions(-)
+
+diff --git a/sysdeps/unix/sysv/linux/mips/mips32/sysdep.h b/sysdeps/unix/sysv/linux/mips/mips32/sysdep.h
+index beefcf284b..c275d63f67 100644
+--- a/sysdeps/unix/sysv/linux/mips/mips32/sysdep.h
++++ b/sysdeps/unix/sysv/linux/mips/mips32/sysdep.h
+@@ -178,10 +178,11 @@ union __mips_syscall_return
+ 	long _sys_result;						\
+ 									\
+ 	{								\
++	long _arg1 = (long) (arg1);					\
+ 	register long __s0 asm ("$16") __attribute__ ((unused))		\
+ 	  = (number);							\
+ 	register long __v0 asm ("$2");					\
+-	register long __a0 asm ("$4") = (long) (arg1);			\
++	register long __a0 asm ("$4") = _arg1;				\
+ 	register long __a3 asm ("$7");					\
+ 	__asm__ volatile (						\
+ 	".set\tnoreorder\n\t"						\
+@@ -202,11 +203,13 @@ union __mips_syscall_return
+ 	long _sys_result;						\
+ 									\
+ 	{								\
++	long _arg1 = (long) (arg1);					\
++	long _arg2 = (long) (arg2);					\
+ 	register long __s0 asm ("$16") __attribute__ ((unused))		\
+ 	  = (number);							\
+ 	register long __v0 asm ("$2");					\
+-	register long __a0 asm ("$4") = (long) (arg1);			\
+-	register long __a1 asm ("$5") = (long) (arg2);			\
++	register long __a0 asm ("$4") = _arg1;				\
++	register long __a1 asm ("$5") = _arg2;				\
+ 	register long __a3 asm ("$7");					\
+ 	__asm__ volatile (						\
+ 	".set\tnoreorder\n\t"						\
+@@ -228,12 +231,15 @@ union __mips_syscall_return
+ 	long _sys_result;						\
+ 									\
+ 	{								\
++	long _arg1 = (long) (arg1);					\
++	long _arg2 = (long) (arg2);					\
++	long _arg3 = (long) (arg3);					\
+ 	register long __s0 asm ("$16") __attribute__ ((unused))		\
+ 	  = (number);							\
+ 	register long __v0 asm ("$2");					\
+-	register long __a0 asm ("$4") = (long) (arg1);			\
+-	register long __a1 asm ("$5") = (long) (arg2);			\
+-	register long __a2 asm ("$6") = (long) (arg3);			\
++	register long __a0 asm ("$4") = _arg1;				\
++	register long __a1 asm ("$5") = _arg2;				\
++	register long __a2 asm ("$6") = _arg3;				\
+ 	register long __a3 asm ("$7");					\
+ 	__asm__ volatile (						\
+ 	".set\tnoreorder\n\t"						\
+@@ -255,13 +261,17 @@ union __mips_syscall_return
+ 	long _sys_result;						\
+ 									\
+ 	{								\
++	long _arg1 = (long) (arg1);					\
++	long _arg2 = (long) (arg2);					\
++	long _arg3 = (long) (arg3);					\
++	long _arg4 = (long) (arg4);					\
+ 	register long __s0 asm ("$16") __attribute__ ((unused))		\
+ 	  = (number);							\
+ 	register long __v0 asm ("$2");					\
+-	register long __a0 asm ("$4") = (long) (arg1);			\
+-	register long __a1 asm ("$5") = (long) (arg2);			\
+-	register long __a2 asm ("$6") = (long) (arg3);			\
+-	register long __a3 asm ("$7") = (long) (arg4);			\
++	register long __a0 asm ("$4") = _arg1;				\
++	register long __a1 asm ("$5") = _arg2;				\
++	register long __a2 asm ("$6") = _arg3;				\
++	register long __a3 asm ("$7") = _arg4;				\
+ 	__asm__ volatile (						\
+ 	".set\tnoreorder\n\t"						\
+ 	v0_init								\
+diff --git a/sysdeps/unix/sysv/linux/mips/mips64/n32/sysdep.h b/sysdeps/unix/sysv/linux/mips/mips64/n32/sysdep.h
+index f96636538a..958a889147 100644
+--- a/sysdeps/unix/sysv/linux/mips/mips64/n32/sysdep.h
++++ b/sysdeps/unix/sysv/linux/mips/mips64/n32/sysdep.h
+@@ -138,10 +138,11 @@
+ 	long _sys_result;						\
+ 									\
+ 	{								\
++	long long _arg1 = ARGIFY (arg1);				\
+ 	register long long __s0 asm ("$16") __attribute__ ((unused))	\
+ 	  = (number);							\
+ 	register long long __v0 asm ("$2");				\
+-	register long long __a0 asm ("$4") = ARGIFY (arg1);		\
++	register long long __a0 asm ("$4") = _arg1;			\
+ 	register long long __a3 asm ("$7");				\
+ 	__asm__ volatile (						\
+ 	".set\tnoreorder\n\t"						\
+@@ -162,11 +163,13 @@
+ 	long _sys_result;						\
+ 									\
+ 	{								\
++	long long _arg1 = ARGIFY (arg1);				\
++	long long _arg2 = ARGIFY (arg2);				\
+ 	register long long __s0 asm ("$16") __attribute__ ((unused))	\
+ 	  = (number);							\
+ 	register long long __v0 asm ("$2");				\
+-	register long long __a0 asm ("$4") = ARGIFY (arg1);		\
+-	register long long __a1 asm ("$5") = ARGIFY (arg2);		\
++	register long long __a0 asm ("$4") = _arg1;			\
++	register long long __a1 asm ("$5") = _arg2;			\
+ 	register long long __a3 asm ("$7");				\
+ 	__asm__ volatile (						\
+ 	".set\tnoreorder\n\t"						\
+@@ -188,12 +191,15 @@
+ 	long _sys_result;						\
+ 									\
+ 	{								\
++	long long _arg1 = ARGIFY (arg1);				\
++	long long _arg2 = ARGIFY (arg2);				\
++	long long _arg3 = ARGIFY (arg3);				\
+ 	register long long __s0 asm ("$16") __attribute__ ((unused))	\
+ 	  = (number);							\
+ 	register long long __v0 asm ("$2");				\
+-	register long long __a0 asm ("$4") = ARGIFY (arg1);		\
+-	register long long __a1 asm ("$5") = ARGIFY (arg2);		\
+-	register long long __a2 asm ("$6") = ARGIFY (arg3);		\
++	register long long __a0 asm ("$4") = _arg1;			\
++	register long long __a1 asm ("$5") = _arg2;			\
++	register long long __a2 asm ("$6") = _arg3;			\
+ 	register long long __a3 asm ("$7");				\
+ 	__asm__ volatile (						\
+ 	".set\tnoreorder\n\t"						\
+@@ -215,13 +221,17 @@
+ 	long _sys_result;						\
+ 									\
+ 	{								\
++	long long _arg1 = ARGIFY (arg1);				\
++	long long _arg2 = ARGIFY (arg2);				\
++	long long _arg3 = ARGIFY (arg3);				\
++	long long _arg4 = ARGIFY (arg4);				\
+ 	register long long __s0 asm ("$16") __attribute__ ((unused))	\
+ 	  = (number);							\
+ 	register long long __v0 asm ("$2");				\
+-	register long long __a0 asm ("$4") = ARGIFY (arg1);		\
+-	register long long __a1 asm ("$5") = ARGIFY (arg2);		\
+-	register long long __a2 asm ("$6") = ARGIFY (arg3);		\
+-	register long long __a3 asm ("$7") = ARGIFY (arg4);		\
++	register long long __a0 asm ("$4") = _arg1;			\
++	register long long __a1 asm ("$5") = _arg2;			\
++	register long long __a2 asm ("$6") = _arg3;			\
++	register long long __a3 asm ("$7") = _arg4;			\
+ 	__asm__ volatile (						\
+ 	".set\tnoreorder\n\t"						\
+ 	v0_init								\
+@@ -242,14 +252,19 @@
+ 	long _sys_result;						\
+ 									\
+ 	{								\
++	long long _arg1 = ARGIFY (arg1);				\
++	long long _arg2 = ARGIFY (arg2);				\
++	long long _arg3 = ARGIFY (arg3);				\
++	long long _arg4 = ARGIFY (arg4);				\
++	long long _arg5 = ARGIFY (arg5);				\
+ 	register long long __s0 asm ("$16") __attribute__ ((unused))	\
+ 	  = (number);							\
+ 	register long long __v0 asm ("$2");				\
+-	register long long __a0 asm ("$4") = ARGIFY (arg1);		\
+-	register long long __a1 asm ("$5") = ARGIFY (arg2);		\
+-	register long long __a2 asm ("$6") = ARGIFY (arg3);		\
+-	register long long __a3 asm ("$7") = ARGIFY (arg4);		\
+-	register long long __a4 asm ("$8") = ARGIFY (arg5);		\
++	register long long __a0 asm ("$4") = _arg1;			\
++	register long long __a1 asm ("$5") = _arg2;			\
++	register long long __a2 asm ("$6") = _arg3;			\
++	register long long __a3 asm ("$7") = _arg4;			\
++	register long long __a4 asm ("$8") = _arg5;			\
+ 	__asm__ volatile (						\
+ 	".set\tnoreorder\n\t"						\
+ 	v0_init								\
+@@ -270,15 +285,21 @@
+ 	long _sys_result;						\
+ 									\
+ 	{								\
++	long long _arg1 = ARGIFY (arg1);				\
++	long long _arg2 = ARGIFY (arg2);				\
++	long long _arg3 = ARGIFY (arg3);				\
++	long long _arg4 = ARGIFY (arg4);				\
++	long long _arg5 = ARGIFY (arg5);				\
++	long long _arg6 = ARGIFY (arg6);				\
+ 	register long long __s0 asm ("$16") __attribute__ ((unused))	\
+ 	  = (number);							\
+ 	register long long __v0 asm ("$2");				\
+-	register long long __a0 asm ("$4") = ARGIFY (arg1);		\
+-	register long long __a1 asm ("$5") = ARGIFY (arg2);		\
+-	register long long __a2 asm ("$6") = ARGIFY (arg3);		\
+-	register long long __a3 asm ("$7") = ARGIFY (arg4);		\
+-	register long long __a4 asm ("$8") = ARGIFY (arg5);		\
+-	register long long __a5 asm ("$9") = ARGIFY (arg6);		\
++	register long long __a0 asm ("$4") = _arg1;			\
++	register long long __a1 asm ("$5") = _arg2;			\
++	register long long __a2 asm ("$6") = _arg3;			\
++	register long long __a3 asm ("$7") = _arg4;			\
++	register long long __a4 asm ("$8") = _arg5;			\
++	register long long __a5 asm ("$9") = _arg6;			\
+ 	__asm__ volatile (						\
+ 	".set\tnoreorder\n\t"						\
+ 	v0_init								\
+diff --git a/sysdeps/unix/sysv/linux/mips/mips64/n64/sysdep.h b/sysdeps/unix/sysv/linux/mips/mips64/n64/sysdep.h
+index 9d30291f84..f47613deaf 100644
+--- a/sysdeps/unix/sysv/linux/mips/mips64/n64/sysdep.h
++++ b/sysdeps/unix/sysv/linux/mips/mips64/n64/sysdep.h
+@@ -134,10 +134,11 @@
+ 	long _sys_result;						\
+ 									\
+ 	{								\
++	long _arg1 = (long) (arg1);					\
+ 	register long __s0 asm ("$16") __attribute__ ((unused))		\
+ 	  = (number);							\
+ 	register long __v0 asm ("$2");					\
+-	register long __a0 asm ("$4") = (long) (arg1);			\
++	register long __a0 asm ("$4") = _arg1;				\
+ 	register long __a3 asm ("$7");					\
+ 	__asm__ volatile (						\
+ 	".set\tnoreorder\n\t"						\
+@@ -158,11 +159,13 @@
+ 	long _sys_result;						\
+ 									\
+ 	{								\
++	long _arg1 = (long) (arg1);					\
++	long _arg2 = (long) (arg2);					\
+ 	register long __s0 asm ("$16") __attribute__ ((unused))		\
+ 	  = (number);							\
+ 	register long __v0 asm ("$2");					\
+-	register long __a0 asm ("$4") = (long) (arg1);			\
+-	register long __a1 asm ("$5") = (long) (arg2);			\
++	register long __a0 asm ("$4") = _arg1;				\
++	register long __a1 asm ("$5") = _arg2;				\
+ 	register long __a3 asm ("$7");					\
+ 	__asm__ volatile (						\
+ 	".set\tnoreorder\n\t"						\
+@@ -184,12 +187,15 @@
+ 	long _sys_result;						\
+ 									\
+ 	{								\
++	long _arg1 = (long) (arg1);					\
++	long _arg2 = (long) (arg2);					\
++	long _arg3 = (long) (arg3);					\
+ 	register long __s0 asm ("$16") __attribute__ ((unused))		\
+ 	  = (number);							\
+ 	register long __v0 asm ("$2");					\
+-	register long __a0 asm ("$4") = (long) (arg1);			\
+-	register long __a1 asm ("$5") = (long) (arg2);			\
+-	register long __a2 asm ("$6") = (long) (arg3);			\
++	register long __a0 asm ("$4") = _arg1;				\
++	register long __a1 asm ("$5") = _arg2;				\
++	register long __a2 asm ("$6") = _arg3;				\
+ 	register long __a3 asm ("$7");					\
+ 	__asm__ volatile (						\
+ 	".set\tnoreorder\n\t"						\
+@@ -211,13 +217,17 @@
+ 	long _sys_result;						\
+ 									\
+ 	{								\
++	long _arg1 = (long) (arg1);					\
++	long _arg2 = (long) (arg2);					\
++	long _arg3 = (long) (arg3);					\
++	long _arg4 = (long) (arg4);					\
+ 	register long __s0 asm ("$16") __attribute__ ((unused))		\
+ 	  = (number);							\
+ 	register long __v0 asm ("$2");					\
+-	register long __a0 asm ("$4") = (long) (arg1);			\
+-	register long __a1 asm ("$5") = (long) (arg2);			\
+-	register long __a2 asm ("$6") = (long) (arg3);			\
+-	register long __a3 asm ("$7") = (long) (arg4);			\
++	register long __a0 asm ("$4") = _arg1;				\
++	register long __a1 asm ("$5") = _arg2;				\
++	register long __a2 asm ("$6") = _arg3;				\
++	register long __a3 asm ("$7") = _arg4;				\
+ 	__asm__ volatile (						\
+ 	".set\tnoreorder\n\t"						\
+ 	v0_init								\
+@@ -238,14 +248,19 @@
+ 	long _sys_result;						\
+ 									\
+ 	{								\
++	long _arg1 = (long) (arg1);					\
++	long _arg2 = (long) (arg2);					\
++	long _arg3 = (long) (arg3);					\
++	long _arg4 = (long) (arg4);					\
++	long _arg5 = (long) (arg5);					\
+ 	register long __s0 asm ("$16") __attribute__ ((unused))		\
+ 	  = (number);							\
+ 	register long __v0 asm ("$2");					\
+-	register long __a0 asm ("$4") = (long) (arg1);			\
+-	register long __a1 asm ("$5") = (long) (arg2);			\
+-	register long __a2 asm ("$6") = (long) (arg3);			\
+-	register long __a3 asm ("$7") = (long) (arg4);			\
+-	register long __a4 asm ("$8") = (long) (arg5);			\
++	register long __a0 asm ("$4") = _arg1;				\
++	register long __a1 asm ("$5") = _arg2;				\
++	register long __a2 asm ("$6") = _arg3;				\
++	register long __a3 asm ("$7") = _arg4;				\
++	register long __a4 asm ("$8") = _arg5;				\
+ 	__asm__ volatile (						\
+ 	".set\tnoreorder\n\t"						\
+ 	v0_init								\
+@@ -266,15 +281,21 @@
+ 	long _sys_result;						\
+ 									\
+ 	{								\
++	long _arg1 = (long) (arg1);					\
++	long _arg2 = (long) (arg2);					\
++	long _arg3 = (long) (arg3);					\
++	long _arg4 = (long) (arg4);					\
++	long _arg5 = (long) (arg5);					\
++	long _arg6 = (long) (arg6);					\
+ 	register long __s0 asm ("$16") __attribute__ ((unused))		\
+ 	  = (number);							\
+ 	register long __v0 asm ("$2");					\
+-	register long __a0 asm ("$4") = (long) (arg1);			\
+-	register long __a1 asm ("$5") = (long) (arg2);			\
+-	register long __a2 asm ("$6") = (long) (arg3);			\
+-	register long __a3 asm ("$7") = (long) (arg4);			\
+-	register long __a4 asm ("$8") = (long) (arg5);			\
+-	register long __a5 asm ("$9") = (long) (arg6);			\
++	register long __a0 asm ("$4") = _arg1;				\
++	register long __a1 asm ("$5") = _arg2;				\
++	register long __a2 asm ("$6") = _arg3;				\
++	register long __a3 asm ("$7") = _arg4;				\
++	register long __a4 asm ("$8") = _arg5;				\
++	register long __a5 asm ("$9") = _arg6;				\
+ 	__asm__ volatile (						\
+ 	".set\tnoreorder\n\t"						\
+ 	v0_init								\
+-- 
+2.24.1
+
