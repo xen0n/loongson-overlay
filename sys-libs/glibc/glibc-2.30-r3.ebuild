@@ -793,7 +793,8 @@ src_prepare() {
 
 	gnuconfig_update
 
-	eapply "${FILESDIR}"/2.30/0001-mips-Ensure-arguments-are-actually-parsed-for-inline.patch
+	eapply "${FILESDIR}"/2.30/0001-mips-Use-long-int-and-long-long-int-in-linux-sysc.patch
+	eapply "${FILESDIR}"/2.30/0002-mips-Fix-argument-passing-for-inlined-syscalls-on.patch
 
 	cd "${WORKDIR}"
 	find . -name configure -exec touch {} +
