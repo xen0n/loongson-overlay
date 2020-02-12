@@ -1,4 +1,4 @@
-From 0bb7a48f3c7e70f6549e9c77491b63343619c7e2 Mon Sep 17 00:00:00 2001
+From 4bf045384d4ea0786d3f1a247a68640b101aaa90 Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <git@xen0n.name>
 Date: Wed, 12 Feb 2020 14:17:37 +0800
 Subject: [PATCH v2 1/2] mips: Use 'long int' and 'long long int' in linux
@@ -15,12 +15,12 @@ Style fixes only, no functional change.
  .../mips/mips32/mips16/mips16-syscall2.c      |   6 +-
  .../mips/mips32/mips16/mips16-syscall3.c      |   6 +-
  .../mips/mips32/mips16/mips16-syscall4.c      |   6 +-
- sysdeps/unix/sysv/linux/mips/mips32/sysdep.h  | 132 +++++++++---------
+ sysdeps/unix/sysv/linux/mips/mips32/sysdep.h  | 135 +++++++++---------
  .../unix/sysv/linux/mips/mips64/n32/sysdep.h  | 100 ++++++-------
  .../unix/sysv/linux/mips/mips64/n64/sysdep.h  |  98 ++++++-------
  sysdeps/unix/sysv/linux/mips/mips64/syscall.S |   2 +-
  sysdeps/unix/sysv/linux/mips/sysdep.h         |   4 +-
- 14 files changed, 227 insertions(+), 220 deletions(-)
+ 14 files changed, 230 insertions(+), 220 deletions(-)
 
 diff --git a/sysdeps/unix/sysv/linux/mips/mips32/mips-syscall5.S b/sysdeps/unix/sysv/linux/mips/mips32/mips-syscall5.S
 index b2bbf10181..ff445a5406 100644
@@ -249,7 +249,7 @@ index 39de510357..8658d822ab 100644
    union __mips_syscall_return ret;
    ret.reg.v0 = INTERNAL_SYSCALL_MIPS16 (number, ret.reg.v1, 4,
 diff --git a/sysdeps/unix/sysv/linux/mips/mips32/sysdep.h b/sysdeps/unix/sysv/linux/mips/mips32/sysdep.h
-index beefcf284b..fe5dea7b1b 100644
+index beefcf284b..5cdac96b20 100644
 --- a/sysdeps/unix/sysv/linux/mips/mips32/sysdep.h
 +++ b/sysdeps/unix/sysv/linux/mips/mips32/sysdep.h
 @@ -52,7 +52,7 @@
@@ -279,7 +279,7 @@ index beefcf284b..fe5dea7b1b 100644
  union __mips_syscall_return
    {
 -    long long val;
-+    long int long int val;
++    long long int val;
      struct
        {
 -	long v0;
@@ -397,16 +397,17 @@ index beefcf284b..fe5dea7b1b 100644
  	__asm__ volatile (						\
  	".set\tnoreorder\n\t"						\
  	v0_init								\
-@@ -285,63 +285,63 @@ union __mips_syscall_return
+@@ -285,63 +285,66 @@ union __mips_syscall_return
     compiler specifics required for the stack arguments to be pushed,
     which would be the case if these syscalls were inlined.  */
  
 -long long __nomips16 __mips_syscall5 (long arg1, long arg2, long arg3,
 -				      long arg4, long arg5,
 -				      long number);
-+long int long int __nomips16 __mips_syscall5 (long int arg1, long int arg2, long int arg3,
-+				      long int arg4, long int arg5,
-+				      long int number);
++long long int __nomips16 __mips_syscall5 (long int arg1, long int arg2,
++					  long int arg3, long int arg4,
++					  long int arg5,
++					  long int number);
  libc_hidden_proto (__mips_syscall5, nomips16)
  
  #define internal_syscall5(v0_init, input, number, err,			\
@@ -432,9 +433,10 @@ index beefcf284b..fe5dea7b1b 100644
 -long long __nomips16 __mips_syscall6 (long arg1, long arg2, long arg3,
 -				      long arg4, long arg5, long arg6,
 -				      long number);
-+long int long int __nomips16 __mips_syscall6 (long int arg1, long int arg2, long int arg3,
-+				      long int arg4, long int arg5, long int arg6,
-+				      long int number);
++long long int __nomips16 __mips_syscall6 (long int arg1, long int arg2,
++					  long int arg3, long int arg4,
++					  long int arg5, long int arg6,
++					  long int number);
  libc_hidden_proto (__mips_syscall6, nomips16)
  
  #define internal_syscall6(v0_init, input, number, err,			\
@@ -463,10 +465,11 @@ index beefcf284b..fe5dea7b1b 100644
 -				      long arg4, long arg5, long arg6,
 -				      long arg7,
 -				      long number);
-+long int long int __nomips16 __mips_syscall7 (long int arg1, long int arg2, long int arg3,
-+				      long int arg4, long int arg5, long int arg6,
-+				      long int arg7,
-+				      long int number);
++long long int __nomips16 __mips_syscall7 (long int arg1, long int arg2,
++					  long int arg3, long int arg4,
++					  long int arg5, long int arg6,
++					  long int arg7,
++					  long int number);
  libc_hidden_proto (__mips_syscall7, nomips16)
  
  #define internal_syscall7(v0_init, input, number, err,			\

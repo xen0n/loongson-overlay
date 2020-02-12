@@ -1,4 +1,4 @@
-From 0db3ce6fbe106a0e24993718b8428c5e0be03f64 Mon Sep 17 00:00:00 2001
+From 57255169363889a543e2f1d45850a2a10de6f3ee Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <git@xen0n.name>
 Date: Sun, 9 Feb 2020 17:47:41 +0800
 Subject: [PATCH v2 2/2] mips: Fix argument passing for inlined syscalls on
@@ -22,7 +22,7 @@ Tested with gcc 9.2.0, both cross-compiled and natively on Loongson
  3 files changed, 104 insertions(+), 52 deletions(-)
 
 diff --git a/sysdeps/unix/sysv/linux/mips/mips32/sysdep.h b/sysdeps/unix/sysv/linux/mips/mips32/sysdep.h
-index fe5dea7b1b..d4758056c2 100644
+index 5cdac96b20..0c6a83e9b3 100644
 --- a/sysdeps/unix/sysv/linux/mips/mips32/sysdep.h
 +++ b/sysdeps/unix/sysv/linux/mips/mips32/sysdep.h
 @@ -178,10 +178,11 @@ union __mips_syscall_return
