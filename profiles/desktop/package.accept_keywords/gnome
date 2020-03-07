@@ -161,3 +161,10 @@
 <dev-libs/libsass-9999 **
 <dev-ruby/bundler-9999 **
 <mail-filter/bogofilter-9999 **
+<gui-libs/libhandy-9999 **
+<media-libs/gsound-9999 **
+<gui-libs/libwpe-9999 **
+<gui-libs/wpebackend-fdo-9999 **
+<sys-apps/xdg-dbus-proxy-9999 **
+<net-libs/libsoup-9999 **
+<net-libs/libpsl-9999 **

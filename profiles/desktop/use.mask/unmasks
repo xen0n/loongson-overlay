@@ -1,1 +1,4 @@
 -vdpau
+
+-python_targets_python3_8
+-python_single_target_python3_8
