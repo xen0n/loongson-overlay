@@ -45,6 +45,10 @@ PATCHES=(
 RESTRICT="test"
 S="${WORKDIR}/node-v${PV}"
 
+mips_endianness() {
+	[[ "$(tc-endian)" = "little" ]] && echo el
+}
+
 pkg_pretend() {
 	(use x86 && ! use cpu_flags_x86_sse2) && \
 		die "Your CPU doesn't support the required SSE2 instruction."
@@ -118,7 +122,7 @@ src_configure() {
 		arm64) myarch="arm64";;
 		# TODO: both 32-bit MIPS ABIs are likely broken, non-tested
 		o32|n32) myarch="mips$(mips_endianness)";;
-		n64) myarch="mips$(mips_endianness)";;
+		n64) myarch="mips64$(mips_endianness)";;
 		ppc64) myarch="ppc64";;
 		x32) myarch="x32";;
 		x86) myarch="ia32";;
