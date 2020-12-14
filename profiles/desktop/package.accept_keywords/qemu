@@ -8,4 +8,4 @@
 
 # required by app-emulation/qemu-2.9.0-r54::gentoo[pin-upstream-blobs,qemu_softmmu_targets_x86_64,qemu_softmmu_targets_i386]
 # required by qemu (argument)
-<sys-firmware/edk2-ovmf-9999 **
+<sys-firmware/edk2-ovmf-999999 **
