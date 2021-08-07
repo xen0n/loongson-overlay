@@ -1,0 +1,12 @@
+# Copyright 2019 Gentoo Authors
+# Distributed under the terms of the GNU General Public License v2
+
+# LoongArch baseline/lp64 no-multilib profile
+
+CFLAGS="-O2 -pipe -march=loongarch64 -mabi=lp64"
+CXXFLAGS="${CFLAGS}"
+FFLAGS="${CFLAGS}"
+FCFLAGS="${CFLAGS}"
+
+# We have only one ABI
+MULTILIB_ABIS="lp64"
