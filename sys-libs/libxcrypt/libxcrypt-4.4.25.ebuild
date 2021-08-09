@@ -54,6 +54,9 @@ pkg_setup() {
 src_prepare() {
 	default
 
+	# add LoongArch support
+	eapply "${FILESDIR}"/0001-Add-symbol-version-for-loongarch64.patch
+
 	# WARNING: Please read on bumping or applying patches!
 	#
 	# There are two circular dependencies to be aware of:
