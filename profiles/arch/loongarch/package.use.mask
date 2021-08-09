@@ -1,0 +1,18 @@
+# taken from riscv
+
+# sys-libs/libunwind do not support loongarch
+dev-libs/efl unwind
+dev-util/strace unwind
+media-libs/gstreamer unwind
+media-libs/mesa unwind
+net-libs/zeromq unwind
+net-mail/dovecot unwind
+x11-base/xorg-server unwind
+x11-base/xwayland unwind
+
+
+# This doesn't work for (any) loongarch yet.
+dev-libs/libpcre2 jit
+dev-libs/libpcre jit
+<dev-vcs/git-2.31.0 pcre-jit
+www-servers/nginx pcre-jit
