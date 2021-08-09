@@ -13,7 +13,9 @@
 <dev-libs/libpcre-9999 **
 <dev-libs/openssl-2 **
 <net-dns/libidn2-9999 **
+<sys-apps/attr-9999 **
 <sys-apps/busybox-9999 **
+<sys-apps/coreutils-9999 **
 <sys-apps/debianutils-9999 **
 <sys-apps/gawk-9999 **
 <sys-apps/grep-9999 **
