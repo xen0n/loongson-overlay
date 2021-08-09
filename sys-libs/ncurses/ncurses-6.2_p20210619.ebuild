@@ -161,6 +161,11 @@ do_configure() {
 		--disable-pkg-ldflags
 	)
 
+	# https://bugs.gentoo.org/711590
+	if [[ ${target} == cross ]] ; then
+		conf+=( --with-progs )
+	fi
+
 	if [[ ${target} == ncurses*w ]] ; then
 		conf+=( --enable-widec )
 	else
