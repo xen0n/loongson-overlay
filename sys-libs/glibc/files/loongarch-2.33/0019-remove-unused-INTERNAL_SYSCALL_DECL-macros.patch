@@ -1,0 +1,52 @@
+From 79c20689bc6e68c7503afd10e0822ab691d62cb7 Mon Sep 17 00:00:00 2001
+From: Xiaotian Wu <wuxiaotian@loongson.cn>
+Date: Thu, 5 Aug 2021 14:32:02 +0800
+Subject: [PATCH 19/27] remove unused INTERNAL_SYSCALL_DECL macros
+
+---
+ sysdeps/unix/sysv/linux/loongarch/syscall.c |  1 -
+ sysdeps/unix/sysv/linux/loongarch/sysdep.h  | 16 ----------------
+ 2 files changed, 17 deletions(-)
+
+diff --git a/sysdeps/unix/sysv/linux/loongarch/syscall.c b/sysdeps/unix/sysv/linux/loongarch/syscall.c
+index 69473b6f4b..1da2882e6f 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/syscall.c
++++ b/sysdeps/unix/sysv/linux/loongarch/syscall.c
+@@ -23,7 +23,6 @@ syscall (long int syscall_number, long int arg1, long int arg2, long int arg3,
+ 	 long int arg4, long int arg5, long int arg6, long int arg7)
+ {
+   long int ret;
+-  INTERNAL_SYSCALL_DECL (err);
+ 
+   ret = INTERNAL_SYSCALL_NCS (syscall_number, 7, arg1, arg2, arg3, arg4,
+ 			      arg5, arg6, arg7);
+diff --git a/sysdeps/unix/sysv/linux/loongarch/sysdep.h b/sysdeps/unix/sysv/linux/loongarch/sysdep.h
+index 9d8e0e5350..0d3167a3ac 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/sysdep.h
++++ b/sysdeps/unix/sysv/linux/loongarch/sysdep.h
+@@ -126,22 +126,6 @@
+ # define HAVE_GETTIMEOFDAY_VSYSCALL	"__vdso_gettimeofday"
+ # define HAVE_GETCPU_VSYSCALL		"__vdso_getcpu"
+ 
+-/* Define a macro which expands into the inline wrapper code for a system
+-   call.  */
+-# undef INLINE_SYSCALL
+-# define INLINE_SYSCALL(name, nr, args...)				\
+-  ({ INTERNAL_SYSCALL_DECL (err);					\
+-     long int __sys_result = INTERNAL_SYSCALL (name, nr, args);	\
+-     if (__glibc_unlikely (INTERNAL_SYSCALL_ERROR_P (__sys_result)))  \
+-       {								\
+-         __set_errno (INTERNAL_SYSCALL_ERRNO (__sys_result));		\
+-	 __sys_result = (unsigned long) -1;				\
+-       }								\
+-     __sys_result; })
+-
+-
+-# define INTERNAL_SYSCALL_DECL(err) do { } while (0)
+-
+ # define INTERNAL_SYSCALL(name, nr, args...) \
+ 	internal_syscall##nr (SYS_ify (name), args)
+ 
+-- 
+2.30.1
+

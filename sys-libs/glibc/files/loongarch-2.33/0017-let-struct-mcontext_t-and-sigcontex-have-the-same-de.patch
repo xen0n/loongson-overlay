@@ -1,0 +1,77 @@
+From c946eb8f4a3393058c3838b318a7872dc2e7eae3 Mon Sep 17 00:00:00 2001
+From: Xiaotian Wu <wuxiaotian@loongson.cn>
+Date: Thu, 5 Aug 2021 14:29:46 +0800
+Subject: [PATCH 17/27] let struct mcontext_t and sigcontex have the same
+ definition
+
+---
+ sysdeps/unix/sysv/linux/loongarch/getcontext.S   | 3 ++-
+ sysdeps/unix/sysv/linux/loongarch/setcontext.S   | 3 ++-
+ sysdeps/unix/sysv/linux/loongarch/swapcontext.S  | 6 ++++--
+ sysdeps/unix/sysv/linux/loongarch/sys/ucontext.h | 3 ++-
+ 4 files changed, 10 insertions(+), 5 deletions(-)
+
+diff --git a/sysdeps/unix/sysv/linux/loongarch/getcontext.S b/sysdeps/unix/sysv/linux/loongarch/getcontext.S
+index f08936e8d7..c5dfd77e1c 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/getcontext.S
++++ b/sysdeps/unix/sysv/linux/loongarch/getcontext.S
+@@ -55,7 +55,8 @@ LEAF (__getcontext)
+ 
+ /* rt_sigprocmask (SIG_BLOCK, NULL, &ucp->uc_sigmask, _NSIG8) */
+ 	li.d	a3, _NSIG8
+-	addi.d     a2, a0, UCONTEXT_SIGMASK
++	li.d	a2, UCONTEXT_SIGMASK
++	add.d	a2, a2, a0
+ 	ori	a1, zero,0
+ 	li.d	a0, SIG_BLOCK
+ 
+diff --git a/sysdeps/unix/sysv/linux/loongarch/setcontext.S b/sysdeps/unix/sysv/linux/loongarch/setcontext.S
+index cfbc5498e5..59ab33273d 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/setcontext.S
++++ b/sysdeps/unix/sysv/linux/loongarch/setcontext.S
+@@ -35,7 +35,8 @@ LEAF (__setcontext)
+ /* rt_sigprocmask (SIG_SETMASK, &ucp->uc_sigmask, NULL, _NSIG8) */
+ 	li.d	a3, _NSIG8
+ 	li.d	a2, 0
+-	addi.d  a1, a0, UCONTEXT_SIGMASK
++	li.d	a1, UCONTEXT_SIGMASK
++	add.d	a1, a1, a0
+ 	li.d	a0, SIG_SETMASK
+ 
+ 	li.d	a7, SYS_ify (rt_sigprocmask)
+diff --git a/sysdeps/unix/sysv/linux/loongarch/swapcontext.S b/sysdeps/unix/sysv/linux/loongarch/swapcontext.S
+index 31e8fc7775..6b1e71562c 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/swapcontext.S
++++ b/sysdeps/unix/sysv/linux/loongarch/swapcontext.S
+@@ -58,8 +58,10 @@ LEAF (__swapcontext)
+ 
+ /* rt_sigprocmask (SIG_SETMASK, &ucp->uc_sigmask, &oucp->uc_sigmask, _NSIG8) */
+ 	li.d	a3, _NSIG8
+-	addi.d	a2, a0, UCONTEXT_SIGMASK
+-	addi.d  a1, t0, UCONTEXT_SIGMASK
++	li.d	a2, UCONTEXT_SIGMASK
++	add.d	a2, a2, a0
++	li.d	a1, UCONTEXT_SIGMASK
++	add.d	a1, a1, t0
+ 	li.d	a0, SIG_SETMASK
+ 
+ 	li.d	a7, SYS_ify (rt_sigprocmask)
+diff --git a/sysdeps/unix/sysv/linux/loongarch/sys/ucontext.h b/sysdeps/unix/sysv/linux/loongarch/sys/ucontext.h
+index a46e7897e2..b122f2d87e 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/sys/ucontext.h
++++ b/sysdeps/unix/sysv/linux/loongarch/sys/ucontext.h
+@@ -64,9 +64,10 @@ typedef struct mcontext_t {
+     unsigned int   __fcsr;
+     unsigned int   __vcsr;
+     unsigned long long   __fcc;
++    unsigned long long   __scr[4];
+     union __loongarch_mc_fp_state    __fpregs[32] __attribute__((__aligned__ (32)));
+ 
+-    unsigned int   __reserved;
++    unsigned char  __reserved[4096] __attribute__((__aligned__(16)));
+ } mcontext_t;
+ 
+ /* Userlevel context.  */
+-- 
+2.30.1
+

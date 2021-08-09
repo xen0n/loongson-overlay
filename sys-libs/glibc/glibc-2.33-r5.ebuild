@@ -774,6 +774,10 @@ src_prepare() {
 		einfo "Done."
 	fi
 
+	einfo "Applying LoongArch support patches"
+	eapply "${FILESDIR}"/loongarch-2.33
+	einfo "Done."
+
 	default
 
 	gnuconfig_update

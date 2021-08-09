@@ -1,0 +1,39 @@
+From 1c48cf114c1d50c744718eab2f5118bb74bfd575 Mon Sep 17 00:00:00 2001
+From: Xiaotian Wu <wuxiaotian@loongson.cn>
+Date: Thu, 5 Aug 2021 14:34:30 +0800
+Subject: [PATCH 18/27] code clean
+
+---
+ sysdeps/loongarch/Makefile | 16 ----------------
+ 1 file changed, 16 deletions(-)
+
+diff --git a/sysdeps/loongarch/Makefile b/sysdeps/loongarch/Makefile
+index d5801b3ce5..5e4b739ee4 100644
+--- a/sysdeps/loongarch/Makefile
++++ b/sysdeps/loongarch/Makefile
+@@ -5,22 +5,6 @@ endif
+ # LoongArch's assembler also needs to know about PIC as it changes the definition
+ # of some assembler macros.
+ ASFLAGS-.os += $(pic-ccflag)
+-CFLAGS-elf-init.oS += -mcmodel=large
+-CFLAGS-atexit.oS += -mcmodel=large
+-CFLAGS-at_quick_exit.oS += -mcmodel=large
+-CFLAGS-stat.oS += -mcmodel=large
+-CFLAGS-fstat.oS += -mcmodel=large
+-CFLAGS-lstat.oS += -mcmodel=large
+-CFLAGS-stat64.oS += -mcmodel=large
+-CFLAGS-fstat64.oS += -mcmodel=large
+-CFLAGS-lstat64.oS += -mcmodel=large
+-CFLAGS-fstatat.oS += -mcmodel=large
+-CFLAGS-fstatat64.oS += -mcmodel=large
+-CFLAGS-mknod.oS += -mcmodel=large
+-CFLAGS-mknodat.oS += -mcmodel=large
+-CFLAGS-pthread_atfork.oS += -mcmodel=large
+-CFLAGS-warning-nop.oS += -mcmodel=large
+-CFLAGS-stack_chk_fail_local.oS += -mcmodel=large
+ 
+ abi-variants := lp32 lp64
+ 
+-- 
+2.30.1
+

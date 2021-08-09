@@ -1,0 +1,24 @@
+From c8793900942229e22e54624c17fa5c9ce5bc6576 Mon Sep 17 00:00:00 2001
+From: Xiaotian Wu <wuxiaotian@loongson.cn>
+Date: Sat, 7 Aug 2021 13:23:17 +0800
+Subject: [PATCH 25/27] add lost #else
+
+---
+ sysdeps/loongarch/sys/asm.h | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/sysdeps/loongarch/sys/asm.h b/sysdeps/loongarch/sys/asm.h
+index a908bd136b..c6367f3a3d 100644
+--- a/sysdeps/loongarch/sys/asm.h
++++ b/sysdeps/loongarch/sys/asm.h
+@@ -40,6 +40,7 @@
+ # define REG_S st.w
+ # define FREG_L fld.w
+ # define FREG_S fst.w
++#else
+ # error _LOONGARCH_SIM must equal _ABILP32 or _ABILP64
+ #endif
+ 
+-- 
+2.30.1
+

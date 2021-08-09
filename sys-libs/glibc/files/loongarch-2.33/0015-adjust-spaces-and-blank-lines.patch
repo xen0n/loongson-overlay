@@ -1,0 +1,384 @@
+From 37e9b5b1ca9ec4efa3ffb0102776ecffdb957972 Mon Sep 17 00:00:00 2001
+From: Xiaotian Wu <wuxiaotian@loongson.cn>
+Date: Thu, 5 Aug 2021 14:14:37 +0800
+Subject: [PATCH 15/27] adjust spaces and blank lines
+
+---
+ sysdeps/loongarch/__longjmp.S                 |  2 +-
+ sysdeps/loongarch/lp64/memcpy.S               |  2 +-
+ sysdeps/loongarch/lp64/memmove.S              |  2 +-
+ sysdeps/loongarch/lp64/memset.S               |  2 +-
+ sysdeps/loongarch/lp64/s_cosf.S               | 24 +++++++++----------
+ sysdeps/loongarch/lp64/s_sinf.S               |  8 +++----
+ sysdeps/loongarch/lp64/strchr.S               |  2 +-
+ sysdeps/loongarch/lp64/strcmp.S               |  2 +-
+ sysdeps/loongarch/lp64/strcpy.S               |  2 +-
+ sysdeps/loongarch/lp64/strncmp.S              |  2 +-
+ sysdeps/loongarch/sfp-machine.h               |  2 +-
+ sysdeps/loongarch/start.S                     |  2 +-
+ sysdeps/unix/sysv/linux/loongarch/clone.S     |  1 +
+ sysdeps/unix/sysv/linux/loongarch/dl-static.c |  1 +
+ sysdeps/unix/sysv/linux/loongarch/ldsodefs.h  |  1 +
+ .../linux/loongarch/lp64/jmp_buf-macros.h     |  1 +
+ .../unix/sysv/linux/loongarch/makecontext.c   |  1 +
+ .../sysv/linux/loongarch/sigcontextinfo.h     |  1 +
+ .../unix/sysv/linux/loongarch/sys/procfs.h    |  1 +
+ .../unix/sysv/linux/loongarch/sys/ucontext.h  |  1 +
+ sysdeps/unix/sysv/linux/loongarch/syscall.c   |  1 +
+ sysdeps/unix/sysv/linux/loongarch/sysdep.h    |  2 +-
+ sysdeps/unix/sysv/linux/loongarch/vfork.S     |  1 +
+ 23 files changed, 37 insertions(+), 27 deletions(-)
+
+diff --git a/sysdeps/loongarch/__longjmp.S b/sysdeps/loongarch/__longjmp.S
+index 44c8db64b5..6598bcd948 100644
+--- a/sysdeps/loongarch/__longjmp.S
++++ b/sysdeps/loongarch/__longjmp.S
+@@ -1,4 +1,4 @@
+-/* longjmp, LoongArch version. 
++/* longjmp, LoongArch version.
+    Copyright (C) 2020-2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+diff --git a/sysdeps/loongarch/lp64/memcpy.S b/sysdeps/loongarch/lp64/memcpy.S
+index 7f471e512b..0e763eb800 100644
+--- a/sysdeps/loongarch/lp64/memcpy.S
++++ b/sysdeps/loongarch/lp64/memcpy.S
+@@ -1,6 +1,6 @@
+ /* Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+-   
++
+    Contributed by Loongson Technology Corporation Limited.
+ 
+    The GNU C Library is free software; you can redistribute it and/or
+diff --git a/sysdeps/loongarch/lp64/memmove.S b/sysdeps/loongarch/lp64/memmove.S
+index ee8c3ca31c..82967368ce 100644
+--- a/sysdeps/loongarch/lp64/memmove.S
++++ b/sysdeps/loongarch/lp64/memmove.S
+@@ -1,6 +1,6 @@
+ /* Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+-   
++
+    Contributed by Loongson Technology Corporation Limited.
+ 
+    The GNU C Library is free software; you can redistribute it and/or
+diff --git a/sysdeps/loongarch/lp64/memset.S b/sysdeps/loongarch/lp64/memset.S
+index 26fe071eca..e2073bb565 100644
+--- a/sysdeps/loongarch/lp64/memset.S
++++ b/sysdeps/loongarch/lp64/memset.S
+@@ -1,6 +1,6 @@
+ /* Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+-   
++
+    Contributed by Loongson Technology Corporation Limited.
+ 
+    The GNU C Library is free software; you can redistribute it and/or
+diff --git a/sysdeps/loongarch/lp64/s_cosf.S b/sysdeps/loongarch/lp64/s_cosf.S
+index 8e81421eef..6d298310e5 100644
+--- a/sysdeps/loongarch/lp64/s_cosf.S
++++ b/sysdeps/loongarch/lp64/s_cosf.S
+@@ -1,6 +1,6 @@
+ /* Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+-   
++
+    Contributed by Loongson Technology Corporation Limited.
+ 
+    The GNU C Library is free software; you can redistribute it and/or
+@@ -66,7 +66,7 @@
+  *  sin/cos(Inf) = NaN, raises invalid, sets errno to EDOM,
+  *  sin/cos(NaN) = NaN.
+  */
+- 
++
+ #define COSF __cosf
+ 
+ #define LOADFD(rd, rs, label) \
+@@ -106,7 +106,7 @@ LEAF(COSF)
+     li.w          t1, 0x40e231d6                       /* 9*Pi/4 */
+     la.local    t4, L(DP_)                           /*DP_ base addr*/
+     bgeu        t0, t1, L(greater_or_equal_9pio4)    /* |x| >= 9*Pi/4 branch */
+-/* L(median_args): */    
++/* L(median_args): */
+     /* Here if Pi/4<=|x|<9*Pi/4 */
+     fabs.d      fa0, fa1                             /* DP |x| */
+     fld.d       fa1, t4, 56                          /* 4/Pi */
+@@ -125,7 +125,7 @@ L(reduced):
+     * y = t*t; z = y*y;
+     * s = sign(x) * (-1.0)^((n>>2)&1)
+     * result = s * (1.0+t^2*(C0+t^2*(C1+t^2*(C2+t^2*(C3+t^2*C4)))))
+-    
++
+     * Here if cos(x) calculated using sin(t) polynomial for |t|<Pi/4:
+     * y = t*t; z = y*y;
+     * s = sign(x) * (-1.0)^((n>>2)&1)
+@@ -139,7 +139,7 @@ L(reduced):
+     alsl.d      t2, t1, t4, 4                        /* adjust to DP_C or DP_S */
+     fld.d       fa3, t2, 32                          /* C4 */
+     andi        t0, t0, 8                            /* =====> (n << 1) & 8 */
+-    fmul.d      fa1, fa0, fa0                        /* y=x^2 */    
++    fmul.d      fa1, fa0, fa0                        /* y=x^2 */
+     fld.d       fa4, t2, 16                          /* C2 */
+     fmul.d      fa2, fa1, fa1                        /* z=x^4 */
+     fld.d       fa5, t2, 24                          /* C3 */
+@@ -250,13 +250,13 @@ L(arg_less_pio4):
+     li.w          t1, 0x3d000000                       /* const 2^-5 */
+     blt         t0, t1, L(less_2pn5)                 /* |x| < 2^-5 branch */
+ /* Here if 2^-5<=|x|<Pi/4 */
+-/* 
+-* Chebyshev polynomial of the form:
+-* 1.0+x^2*(C0+x^2*(C1+x^2*(C2+x^2*(C3+x^2*C4)))).
+-*/
++/*
++ * Chebyshev polynomial of the form:
++ * 1.0+x^2*(C0+x^2*(C1+x^2*(C2+x^2*(C3+x^2*C4)))).
++ */
+     la.local    t0, L(DP_) /*DP_ base addr*/
+     fld.d       fa3, t0, 96                          /* C4 */
+-    fmul.d      fa1, fa1, fa1                        /* y=x^2 */    
++    fmul.d      fa1, fa1, fa1                        /* y=x^2 */
+     fld.d       fa4, t0, 80                          /* C2 */
+     fmul.d      fa2, fa1, fa1                        /* z=x^4 */
+     fld.d       fa5, t0, 88                          /* C3 */
+@@ -364,10 +364,10 @@ L(invpio4_table):                                    /* 4/Pi broken into sum of
+     .word   0x3560e410
+ 
+ /* Coefficients of polynomial
+-    for sin(x)~=x+x^3*DP_SIN2_0+x^5*DP_SIN2_1, |x|<2^-5.  
++    for sin(x)~=x+x^3*DP_SIN2_0+x^5*DP_SIN2_1, |x|<2^-5.
+  */
+ /* Coefficients of polynomial
+-    for sin(t)~=t+t^3*(S0+t^2*(S1+t^2*(S2+t^2*(S3+t^2*S4)))), |t|<Pi/4.  
++    for sin(t)~=t+t^3*(S0+t^2*(S1+t^2*(S2+t^2*(S3+t^2*S4)))), |t|<Pi/4.
+     for cos(t)~=1.0+t^2*(C0+t^2*(C1+t^2*(C2+t^2*(C3+t^2*C4)))), |t|<Pi/4.
+  */
+ 
+diff --git a/sysdeps/loongarch/lp64/s_sinf.S b/sysdeps/loongarch/lp64/s_sinf.S
+index 060a73b83e..a2fffbcbb1 100644
+--- a/sysdeps/loongarch/lp64/s_sinf.S
++++ b/sysdeps/loongarch/lp64/s_sinf.S
+@@ -108,7 +108,7 @@ LEAF(SINF)
+     bstrpick.d  t5, t2, 31, 31                             /* sign of x */
+     slli.w      t5, t5, 3
+     bgeu        t0, t1, L(greater_or_equal_9pio4)          /* |x| >= 9*Pi/4 branch */
+-/* L(median_args): */    
++/* L(median_args): */
+ /* Here if Pi/4<=|x|<9*Pi/4 */
+     fabs.d      fa0, fa1                                   /* DP |x| */
+     fld.d       fa1, t4, 56                                /* 4/Pi */
+@@ -127,7 +127,7 @@ L(reduced):
+  * y = t*t; z = y*y;
+  * s = sign(x) * (-1.0)^((n>>2)&1)
+  * result = s * (1.0+t^2*(C0+t^2*(C1+t^2*(C2+t^2*(C3+t^2*C4)))))
+-    
++
+  * Here if cos(x) calculated using sin(t) polynomial for |t|<Pi/4:
+  * y = t*t; z = y*y;
+  * s = sign(x) * (-1.0)^((n>>2)&1)
+@@ -252,13 +252,13 @@ L(arg_less_pio4):
+     li.w          t1, 0x3d000000                             /* const 2^-5 */
+     blt         t0, t1, L(less_2pn5)                       /* |x| < 2^-5 branch */
+ /* Here if 2^-5<=|x|<Pi/4 */
+-/* 
++/*
+  * Chebyshev polynomial of the form:
+  * 1.0+x^2*(C0+x^2*(C1+x^2*(C2+x^2*(C3+x^2*C4)))).
+  */
+     la.local    t0, L(DP_)                                 /*DP_ base addr*/
+     fld.d       fa3, t0, 32                                /* S4 */
+-    fmul.d      fa0, fa1, fa1                              /* y=x^2 */    
++    fmul.d      fa0, fa1, fa1                              /* y=x^2 */
+     fld.d       fa4, t0, 16                                /* S2 */
+     fmul.d      fa2, fa0, fa0                              /* z=x^4 */
+     fld.d       fa5, t0, 24                                /* S3 */
+diff --git a/sysdeps/loongarch/lp64/strchr.S b/sysdeps/loongarch/lp64/strchr.S
+index b324725ee0..d4adb22ad9 100644
+--- a/sysdeps/loongarch/lp64/strchr.S
++++ b/sysdeps/loongarch/lp64/strchr.S
+@@ -1,6 +1,6 @@
+ /* Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+-   
++
+    Contributed by Loongson Technology Corporation Limited. (written by Songyuekun)
+ 
+    The GNU C Library is free software; you can redistribute it and/or
+diff --git a/sysdeps/loongarch/lp64/strcmp.S b/sysdeps/loongarch/lp64/strcmp.S
+index 8f4236aa63..8b8e29e364 100644
+--- a/sysdeps/loongarch/lp64/strcmp.S
++++ b/sysdeps/loongarch/lp64/strcmp.S
+@@ -1,6 +1,6 @@
+ /* Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+-   
++
+    Contributed by Loongson Technology Corporation Limited. (written by Songyuekun)
+ 
+    The GNU C Library is free software; you can redistribute it and/or
+diff --git a/sysdeps/loongarch/lp64/strcpy.S b/sysdeps/loongarch/lp64/strcpy.S
+index f4cb0b7bf0..34b5cea8bc 100644
+--- a/sysdeps/loongarch/lp64/strcpy.S
++++ b/sysdeps/loongarch/lp64/strcpy.S
+@@ -1,6 +1,6 @@
+ /* Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+-   
++
+    Contributed by Loongson Technology Corporation Limited. (written by Huang Pei)
+ 
+    The GNU C Library is free software; you can redistribute it and/or
+diff --git a/sysdeps/loongarch/lp64/strncmp.S b/sysdeps/loongarch/lp64/strncmp.S
+index 8cb0d950ef..e595959d0a 100644
+--- a/sysdeps/loongarch/lp64/strncmp.S
++++ b/sysdeps/loongarch/lp64/strncmp.S
+@@ -1,6 +1,6 @@
+ /* Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+-   
++
+    Contributed by Loongson Technology Corporation Limited. (written by Songyuekun)
+ 
+    The GNU C Library is free software; you can redistribute it and/or
+diff --git a/sysdeps/loongarch/sfp-machine.h b/sysdeps/loongarch/sfp-machine.h
+index 522c13ef1d..aba7c1949c 100644
+--- a/sysdeps/loongarch/sfp-machine.h
++++ b/sysdeps/loongarch/sfp-machine.h
+@@ -1,7 +1,7 @@
+ /* LoongArch softfloat definitions
+    Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+-   
++
+    Contributed by Loongson Technology Corporation Limited.
+ 
+    The GNU C Library is free software; you can redistribute it and/or
+diff --git a/sysdeps/loongarch/start.S b/sysdeps/loongarch/start.S
+index b0518d271f..3a2d03aff3 100644
+--- a/sysdeps/loongarch/start.S
++++ b/sysdeps/loongarch/start.S
+@@ -1,7 +1,7 @@
+ /* Startup code compliant to the ELF LoongArch ABI.
+    Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+-   
++
+    Contributed by Loongson Technology Corporation Limited.
+ 
+    The GNU C Library is free software; you can redistribute it and/or
+diff --git a/sysdeps/unix/sysv/linux/loongarch/clone.S b/sysdeps/unix/sysv/linux/loongarch/clone.S
+index 3c57a4a9d3..b06f5e25b0 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/clone.S
++++ b/sysdeps/unix/sysv/linux/loongarch/clone.S
+@@ -1,4 +1,5 @@
+ /* Copyright (C) 2020-2021 Free Software Foundation, Inc.
++
+    This file is part of the GNU C Library.
+ 
+    The GNU C Library is free software; you can redistribute it and/or
+diff --git a/sysdeps/unix/sysv/linux/loongarch/dl-static.c b/sysdeps/unix/sysv/linux/loongarch/dl-static.c
+index 7e6927fb36..12b030f0f9 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/dl-static.c
++++ b/sysdeps/unix/sysv/linux/loongarch/dl-static.c
+@@ -1,4 +1,5 @@
+ /* Copyright (C) 2020-2021 Free Software Foundation, Inc.
++
+    This file is part of the GNU C Library.
+ 
+    The GNU C Library is free software; you can redistribute it and/or
+diff --git a/sysdeps/unix/sysv/linux/loongarch/ldsodefs.h b/sysdeps/unix/sysv/linux/loongarch/ldsodefs.h
+index c45e16c11d..c0fc704647 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/ldsodefs.h
++++ b/sysdeps/unix/sysv/linux/loongarch/ldsodefs.h
+@@ -1,4 +1,5 @@
+ /* Copyright (C) 2020-2021 Free Software Foundation, Inc.
++
+    This file is part of the GNU C Library.
+ 
+    The GNU C Library is free software; you can redistribute it and/or
+diff --git a/sysdeps/unix/sysv/linux/loongarch/lp64/jmp_buf-macros.h b/sysdeps/unix/sysv/linux/loongarch/lp64/jmp_buf-macros.h
+index 2337d3413c..e1c96e67c4 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/lp64/jmp_buf-macros.h
++++ b/sysdeps/unix/sysv/linux/loongarch/lp64/jmp_buf-macros.h
+@@ -1,4 +1,5 @@
+ /* Copyright (C) 2020-2021 Free Software Foundation, Inc.
++
+    This file is part of the GNU C Library.
+ 
+    The GNU C Library is free software; you can redistribute it and/or
+diff --git a/sysdeps/unix/sysv/linux/loongarch/makecontext.c b/sysdeps/unix/sysv/linux/loongarch/makecontext.c
+index bb70a6b001..ee6f9b5657 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/makecontext.c
++++ b/sysdeps/unix/sysv/linux/loongarch/makecontext.c
+@@ -1,4 +1,5 @@
+ /* Copyright (C) 2020-2021 Free Software Foundation, Inc.
++
+    This file is part of the GNU C Library.
+ 
+    The GNU C Library is free software; you can redistribute it and/or
+diff --git a/sysdeps/unix/sysv/linux/loongarch/sigcontextinfo.h b/sysdeps/unix/sysv/linux/loongarch/sigcontextinfo.h
+index 0769bc2083..7274147033 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/sigcontextinfo.h
++++ b/sysdeps/unix/sysv/linux/loongarch/sigcontextinfo.h
+@@ -1,4 +1,5 @@
+ /* Copyright (C) 2020-2021 Free Software Foundation, Inc.
++
+    This file is part of the GNU C Library.
+ 
+    The GNU C Library is free software; you can redistribute it and/or
+diff --git a/sysdeps/unix/sysv/linux/loongarch/sys/procfs.h b/sysdeps/unix/sysv/linux/loongarch/sys/procfs.h
+index 1f05253650..9ae06b408b 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/sys/procfs.h
++++ b/sysdeps/unix/sysv/linux/loongarch/sys/procfs.h
+@@ -1,4 +1,5 @@
+ /* Copyright (C) 2020-2021 Free Software Foundation, Inc.
++
+    This file is part of the GNU C Library.
+ 
+    The GNU C Library is free software; you can redistribute it and/or
+diff --git a/sysdeps/unix/sysv/linux/loongarch/sys/ucontext.h b/sysdeps/unix/sysv/linux/loongarch/sys/ucontext.h
+index 8e4e7ac336..a46e7897e2 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/sys/ucontext.h
++++ b/sysdeps/unix/sysv/linux/loongarch/sys/ucontext.h
+@@ -1,4 +1,5 @@
+ /* Copyright (C) 2020-2021 Free Software Foundation, Inc.
++
+    This file is part of the GNU C Library.
+ 
+    The GNU C Library is free software; you can redistribute it and/or
+diff --git a/sysdeps/unix/sysv/linux/loongarch/syscall.c b/sysdeps/unix/sysv/linux/loongarch/syscall.c
+index aeb8370a2c..69473b6f4b 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/syscall.c
++++ b/sysdeps/unix/sysv/linux/loongarch/syscall.c
+@@ -1,4 +1,5 @@
+ /* Copyright (C) 2020-2021 Free Software Foundation, Inc.
++
+    This file is part of the GNU C Library.
+ 
+    The GNU C Library is free software; you can redistribute it and/or
+diff --git a/sysdeps/unix/sysv/linux/loongarch/sysdep.h b/sysdeps/unix/sysv/linux/loongarch/sysdep.h
+index 6ebd335675..9d8e0e5350 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/sysdep.h
++++ b/sysdeps/unix/sysv/linux/loongarch/sysdep.h
+@@ -1,6 +1,6 @@
+ /* Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+-   
++
+    Contributed by Loongson Technology Corporation Limited.
+ 
+    The GNU C Library is free software; you can redistribute it and/or
+diff --git a/sysdeps/unix/sysv/linux/loongarch/vfork.S b/sysdeps/unix/sysv/linux/loongarch/vfork.S
+index 385499c81c..0f491eb415 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/vfork.S
++++ b/sysdeps/unix/sysv/linux/loongarch/vfork.S
+@@ -1,4 +1,5 @@
+ /* Copyright (C) 1999-2021 Free Software Foundation, Inc.
++
+    This file is part of the GNU C Library.
+ 
+    The GNU C Library is free software; you can redistribute it and/or
+-- 
+2.30.1
+

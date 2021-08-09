@@ -1,0 +1,25 @@
+From 3a321ddec90e3cd699c58baf22a05f0febb688b1 Mon Sep 17 00:00:00 2001
+From: Xiaotian Wu <wuxiaotian@loongson.cn>
+Date: Thu, 5 Aug 2021 14:30:33 +0800
+Subject: [PATCH 16/27] use https for www.gnu.org website
+
+---
+ sysdeps/loongarch/nptl/pthreaddef.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/sysdeps/loongarch/nptl/pthreaddef.h b/sysdeps/loongarch/nptl/pthreaddef.h
+index f70275767b..86dcd1e002 100644
+--- a/sysdeps/loongarch/nptl/pthreaddef.h
++++ b/sysdeps/loongarch/nptl/pthreaddef.h
+@@ -14,7 +14,7 @@
+ 
+    You should have received a copy of the GNU Lesser General Public
+    License along with the GNU C Library.  If not, see
+-   <http://www.gnu.org/licenses/>.  */
++   <https://www.gnu.org/licenses/>.  */
+ 
+ /* Default stack size.  */
+ #define ARCH_STACK_DEFAULT_SIZE	(2 * 1024 * 1024)
+-- 
+2.30.1
+

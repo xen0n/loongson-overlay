@@ -1,0 +1,64 @@
+From b10a65d841205bdc4bb427eb3aabb50a4da97792 Mon Sep 17 00:00:00 2001
+From: Xiaotian Wu <wuxiaotian@loongson.cn>
+Date: Thu, 5 Aug 2021 15:52:22 +0800
+Subject: [PATCH 21/27] remove bsd*setjmp.c
+
+---
+ sysdeps/loongarch/bsd-_setjmp.c |  1 -
+ sysdeps/loongarch/bsd-setjmp.c  |  1 -
+ sysdeps/loongarch/setjmp.S      | 13 ++-----------
+ 3 files changed, 2 insertions(+), 13 deletions(-)
+ delete mode 100644 sysdeps/loongarch/bsd-_setjmp.c
+ delete mode 100644 sysdeps/loongarch/bsd-setjmp.c
+
+diff --git a/sysdeps/loongarch/bsd-_setjmp.c b/sysdeps/loongarch/bsd-_setjmp.c
+deleted file mode 100644
+index 0d413101ce..0000000000
+--- a/sysdeps/loongarch/bsd-_setjmp.c
++++ /dev/null
+@@ -1 +0,0 @@
+-/* _setjmp is implemented in setjmp.S */
+diff --git a/sysdeps/loongarch/bsd-setjmp.c b/sysdeps/loongarch/bsd-setjmp.c
+deleted file mode 100644
+index ee7c5e3437..0000000000
+--- a/sysdeps/loongarch/bsd-setjmp.c
++++ /dev/null
+@@ -1 +0,0 @@
+-/* setjmp is implemented in setjmp.S */
+diff --git a/sysdeps/loongarch/setjmp.S b/sysdeps/loongarch/setjmp.S
+index 8d2cf5563d..3c135a7074 100644
+--- a/sysdeps/loongarch/setjmp.S
++++ b/sysdeps/loongarch/setjmp.S
+@@ -19,13 +19,6 @@
+ #include <sysdep.h>
+ #include <sys/asm.h>
+ 
+-ENTRY (_setjmp)
+-  li.w a1,0
+-  b __sigsetjmp
+-END (_setjmp)
+-ENTRY (setjmp)
+-  li.w a1,1
+-END (setjmp)
+ ENTRY (__sigsetjmp)
+   REG_S ra, a0, 0*SZREG
+   REG_S sp, a0, 1*SZREG
+@@ -50,13 +43,11 @@ ENTRY (__sigsetjmp)
+   FREG_S $f30, a0, 13*SZREG + 6*SZFREG
+   FREG_S $f31, a0, 13*SZREG + 7*SZFREG
+ 
+-#if !IS_IN (libc) && IS_IN(rtld)
++#if IS_IN(rtld)
+   li.w v0, 0
+   jirl zero,ra,0
+ #else
+-  b __sigjmp_save
++  b C_SYMBOL_NAME(__sigjmp_save)
+ #endif
+ END (__sigsetjmp)
+-
+ hidden_def (__sigsetjmp)
+-weak_alias (_setjmp, __GI__setjmp)
+-- 
+2.30.1
+

@@ -1,0 +1,79 @@
+From 1b9f4285f403e7945347cfc39382b3acc40fd0a4 Mon Sep 17 00:00:00 2001
+From: Xiaotian Wu <wuxiaotian@loongson.cn>
+Date: Fri, 6 Aug 2021 15:00:27 +0800
+Subject: [PATCH 24/27] rewrite code about __loongarch_xlen
+
+---
+ sysdeps/loongarch/bits/wordsize.h                  | 7 +++++--
+ sysdeps/loongarch/sys/asm.h                        | 7 +++----
+ sysdeps/unix/sysv/linux/loongarch/atomic-machine.h | 4 +++-
+ 3 files changed, 11 insertions(+), 7 deletions(-)
+
+diff --git a/sysdeps/loongarch/bits/wordsize.h b/sysdeps/loongarch/bits/wordsize.h
+index 615e0f3a14..aa70dc4af4 100644
+--- a/sysdeps/loongarch/bits/wordsize.h
++++ b/sysdeps/loongarch/bits/wordsize.h
+@@ -16,8 +16,11 @@
+    License along with the GNU C Library; if not, see
+    <http://www.gnu.org/licenses/>.  */
+ 
+-#define __loongarch_xlen			64
++#ifdef __LP64__
++# define __WORDSIZE			64
++#else
++# define __WORDSIZE			32
++#endif
+ 
+-#define __WORDSIZE			__loongarch_xlen
+ #define __WORDSIZE_TIME64_COMPAT32	0
+ 
+diff --git a/sysdeps/loongarch/sys/asm.h b/sysdeps/loongarch/sys/asm.h
+index 2402754ba1..a908bd136b 100644
+--- a/sysdeps/loongarch/sys/asm.h
++++ b/sysdeps/loongarch/sys/asm.h
+@@ -24,7 +24,7 @@
+ #include <sysdeps/generic/sysdep.h>
+ 
+ /* Macros to handle different pointer/register sizes for 32/64-bit code.  */
+-#ifdef __loongarch64
++#if _LOONGARCH_SIM == _ABILP64
+ # define PTRLOG 3
+ # define SZREG	8
+ # define SZFREG	8
+@@ -32,7 +32,7 @@
+ # define REG_S st.d
+ # define FREG_L fld.d
+ # define FREG_S fst.d
+-#elif defined __loongarch32
++#elif _LOONGARCH_SIM == _ABILP32
+ # define PTRLOG 2
+ # define SZREG	4
+ # define SZFREG	4
+@@ -40,8 +40,7 @@
+ # define REG_S st.w
+ # define FREG_L fld.w
+ # define FREG_S fst.w
+-#else
+-# error __loongarch_xlen must equal 32 or 64
++# error _LOONGARCH_SIM must equal _ABILP32 or _ABILP64
+ #endif
+ 
+ 
+diff --git a/sysdeps/unix/sysv/linux/loongarch/atomic-machine.h b/sysdeps/unix/sysv/linux/loongarch/atomic-machine.h
+index edea61e495..8dfe39bc8c 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/atomic-machine.h
++++ b/sysdeps/unix/sysv/linux/loongarch/atomic-machine.h
+@@ -34,7 +34,9 @@ typedef uintmax_t uatomic_max_t;
+ 
+ #define atomic_full_barrier() __sync_synchronize ()
+ 
+-# define __HAVE_64B_ATOMICS (__loongarch_xlen >= 64)
++#ifdef __LP64__
++# define __HAVE_64B_ATOMICS 1
++#endif
+ # define USE_ATOMIC_COMPILER_BUILTINS 1
+ # define ATOMIC_EXCHANGE_USES_CAS 0
+ 
+-- 
+2.30.1
+

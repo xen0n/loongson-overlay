@@ -1,0 +1,104 @@
+From e59f2618cf367c24e935e44e3300103eed728ced Mon Sep 17 00:00:00 2001
+From: Xiaotian Wu <wuxiaotian@loongson.cn>
+Date: Sat, 24 Jul 2021 18:16:03 +0800
+Subject: [PATCH 28/29] use interpreter /lib/ld-linux-loongarch{32,64}.so.1
+
+---
+ sysdeps/loongarch/preconfigure                | 26 +++++++++++---
+ sysdeps/unix/sysv/linux/loongarch/ldconfig.h  | 34 +++++++++++++++++++
+ .../unix/sysv/linux/loongarch/shlib-versions  |  8 +++++
+ 3 files changed, 64 insertions(+), 4 deletions(-)
+ create mode 100644 sysdeps/unix/sysv/linux/loongarch/ldconfig.h
+
+diff --git a/sysdeps/loongarch/preconfigure b/sysdeps/loongarch/preconfigure
+index 26ffe88416..b5f3073449 100644
+--- a/sysdeps/loongarch/preconfigure
++++ b/sysdeps/loongarch/preconfigure
+@@ -1,8 +1,26 @@
+ case "$machine" in
+-loongarch*)
+-	base_machine=loongarch
+-	machine=loongarch/lp64
+-	;;
++	loongarch*)
++		lasim=`$CC $CFLAGS $CPPFLAGS -E -dM -xc /dev/null | sed -n 's/^#define _LOONGARCH_SIM \(.*\)/\1/p'`
++		case "$lasim" in
++			_ABILP32)
++				loongarch_sim=1
++				;;
++			_ABILP64)
++				loongarch_sim=3
++				;;
++			*)
++				echo "Unable to determine _LOONGARCH_SIM" >&2
++				exit 1
++				;;
++		esac
++
++		$as_echo "#define LOONGARCH_ABILP32 1" >>confdefs.h
++		$as_echo "#define LOONGARCH_ABILP64 3" >>confdefs.h
++		$as_echo "#define LOONGARCH_SIM $loongarch_sim" >>confdefs.h
++
++		base_machine=loongarch
++		machine=loongarch/lp64
++		;;
+ esac
+ 
+ #TODO: this file is useless now.
+diff --git a/sysdeps/unix/sysv/linux/loongarch/ldconfig.h b/sysdeps/unix/sysv/linux/loongarch/ldconfig.h
+new file mode 100644
+index 0000000000..c1c8c5b4db
+--- /dev/null
++++ b/sysdeps/unix/sysv/linux/loongarch/ldconfig.h
+@@ -0,0 +1,34 @@
++/* ldconfig default paths and libraries.  Linux/LoongArch version.
++   Copyright (C) 2001-2021 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library.  If not, see
++   <http://www.gnu.org/licenses/>.  */
++
++#include <sysdeps/generic/ldconfig.h>
++
++#if _LOONGARCH_SIM == _ABILP32
++#define LD_SO_PATH "/lib/ld-linux-loongarch32.so.1"
++#elif _LOONGARCH_SIM == _ABILP64
++#define LD_SO_PATH "/lib64/ld-linux-loongarch64.so.1"
++#else
++#error cannot determine ABI
++#endif
++
++#define SYSDEP_KNOWN_INTERPRETER_NAMES				\
++  { LD_SO_PATH, FLAG_ELF_LIBC6 },
++
++#define SYSDEP_KNOWN_LIBRARY_NAMES	\
++  { "libc.so.6", FLAG_ELF_LIBC6 },	\
++  { "libm.so.6", FLAG_ELF_LIBC6 },
+diff --git a/sysdeps/unix/sysv/linux/loongarch/shlib-versions b/sysdeps/unix/sysv/linux/loongarch/shlib-versions
+index 0e6345b836..ed9690b49c 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/shlib-versions
++++ b/sysdeps/unix/sysv/linux/loongarch/shlib-versions
+@@ -1 +1,9 @@
+ DEFAULT		GLIBC_2.27
++
++%if LOONGARCH_SIM == LOONGARCH_ABILP64
++ld=ld-linux-loongarch64.so.1
++%elif LOONGARCH_SIM == LOONGARCH_ABILP32
++ld=ld-linux-loongarch32.so.1
++%else
++%error cannot determine ABI
++%endif
+-- 
+2.30.1
+

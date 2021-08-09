@@ -1,0 +1,26 @@
+From 4c04ac972916f7819fcc032874e1ecd8d2eb8e71 Mon Sep 17 00:00:00 2001
+From: caiyinyu <caiyinyu@loongson.cn>
+Date: Fri, 6 Aug 2021 08:51:00 +0800
+Subject: [PATCH 20/27] fix _nl_default_dirname in libc.abilist
+
+	modified:   ../sysdeps/unix/sysv/linux/loongarch/lp64/libc.abilist
+---
+ sysdeps/unix/sysv/linux/loongarch/lp64/libc.abilist | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/sysdeps/unix/sysv/linux/loongarch/lp64/libc.abilist b/sysdeps/unix/sysv/linux/loongarch/lp64/libc.abilist
+index 5686dc95f6..9f17aef947 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/lp64/libc.abilist
++++ b/sysdeps/unix/sysv/linux/loongarch/lp64/libc.abilist
+@@ -508,7 +508,7 @@ GLIBC_2.27 _libc_intl_domainname D 0x5
+ GLIBC_2.27 _longjmp F
+ GLIBC_2.27 _mcleanup F
+ GLIBC_2.27 _mcount F
+-GLIBC_2.27 _nl_default_dirname D 0xf
++GLIBC_2.27 _nl_default_dirname D 0x12
+ GLIBC_2.27 _nl_domain_bindings D 0x8
+ GLIBC_2.27 _nl_msg_cat_cntr D 0x4
+ GLIBC_2.27 _null_auth D 0x18
+-- 
+2.30.1
+
