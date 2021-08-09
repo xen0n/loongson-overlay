@@ -8,7 +8,7 @@
 ARCH="loongarch"
 ACCEPT_KEYWORDS="loongarch ~loongarch"
 
-PROFILE_ARCH="mips"
+USE_EXPAND_VALUES_ARCH="${USE_EXPAND_VALUES_ARCH} loongarch"
 
 CFLAGS="-O2 -pipe"
 CXXFLAGS="${CFLAGS}"

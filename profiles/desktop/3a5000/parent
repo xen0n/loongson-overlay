@@ -1,2 +1,4 @@
+gentoo:base
+gentoo:default/linux
 ../../arch/loongarch/baseline/lp64
 ..
