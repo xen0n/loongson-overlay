@@ -5,10 +5,10 @@
 
 # This is not a complete profile. Use the subdirectories!
 
-ARCH="loongarch"
-ACCEPT_KEYWORDS="loongarch ~loongarch"
+ARCH="loong"
+ACCEPT_KEYWORDS="loong ~loong"
 
-USE_EXPAND_VALUES_ARCH="${USE_EXPAND_VALUES_ARCH} loongarch"
+USE_EXPAND_VALUES_ARCH="${USE_EXPAND_VALUES_ARCH} loong"
 
 CFLAGS="-O2 -pipe"
 CXXFLAGS="${CFLAGS}"

@@ -16,7 +16,7 @@ SRC_URI="
 S="${WORKDIR}/linux-${PV}"
 
 # This is for testing the LoongArch port only.
-KEYWORDS="~loongarch"
+KEYWORDS="~loong"
 
 BDEPEND="
 	app-arch/xz-utils

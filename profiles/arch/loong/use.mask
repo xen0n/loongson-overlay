@@ -1,4 +1,4 @@
--loongarch
+-loong
 
 # below are taken from gentoo:arch/riscv use.mask:
 

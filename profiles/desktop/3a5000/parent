@@ -1,4 +1,4 @@
 gentoo:base
 gentoo:default/linux
-../../arch/loongarch/baseline/lp64
+../../arch/loong/baseline/lp64
 ..
