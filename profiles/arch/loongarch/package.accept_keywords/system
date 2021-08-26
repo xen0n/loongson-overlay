@@ -20,11 +20,13 @@
 <sys-apps/gawk-9999 **
 <sys-apps/grep-9999 **
 <sys-apps/gentoo-functions-9999 **
+<sys-apps/systemd-9999 **
 <sys-apps/util-linux-9999 **
 <sys-kernel/installkernel-gentoo-9999 **
 <sys-libs/glibc-2.34 **
-<sys-libs/musl-9999 **
+<sys-libs/libcap-9999 **
 <sys-libs/libxcrypt-9999 **
+<sys-libs/musl-9999 **
 <sys-libs/ncurses-9999 **
 <sys-libs/readline-9999 **
 <sys-libs/timezone-data-9999 **
