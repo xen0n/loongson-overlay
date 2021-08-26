@@ -20,7 +20,7 @@ index fef4f4d2ae..5709a0ed43 100644
  # Local configure fragment for sysdeps/unix/sysv/linux/loongarch.
  
 -arch_minimum_kernel=4.15.0
-+arch_minimum_kernel=5.14.0
++arch_minimum_kernel=4.19.0
  
  libc_cv_loongarch_int_abi=no
  AC_EGREP_CPP(4 4 4, [__SIZEOF_INT__ __SIZEOF_LONG__ __SIZEOF_POINTER__
