@@ -11,6 +11,8 @@
 <dev-libs/gmp-9999 **
 <dev-libs/libffi-9999 **
 <dev-libs/libpcre-9999 **
+<dev-libs/mpc-9999 **
+<dev-libs/mpfr-9999 **
 <dev-libs/openssl-2 **
 <net-dns/libidn2-9999 **
 <sys-apps/attr-9999 **
@@ -22,6 +24,11 @@
 <sys-apps/gentoo-functions-9999 **
 <sys-apps/systemd-9999 **
 <sys-apps/util-linux-9999 **
+<sys-devel/flex-9999 **
+<sys-devel/gcc-9999 **
+<sys-devel/gcc-config-9999 **
+<sys-devel/gettext-9999 **
+<sys-devel/m4-9999 **
 <sys-kernel/installkernel-gentoo-9999 **
 <sys-libs/glibc-2.34 **
 <sys-libs/libcap-9999 **
