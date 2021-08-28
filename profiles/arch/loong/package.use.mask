@@ -3,6 +3,10 @@
 # loongarch has no gold
 sys-devel/binutils gold
 
+# gpgme cross build fails atm
+app-portage/portage-utils qmanifest
+sys-apps/portage rsync-verify
+
 # sys-libs/libunwind do not support loongarch
 dev-libs/efl unwind
 dev-util/strace unwind
