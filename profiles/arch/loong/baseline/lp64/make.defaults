@@ -10,6 +10,8 @@ FCFLAGS="${CFLAGS}"
 
 # We have only one ABI
 MULTILIB_ABIS="lp64"
+DEFAULT_ABI="lp64"
+ABI="lp64"
 
 # Temporarily workaround multilib.eclass having no support for LoongArch
 #LIBDIR_default="lib64"
