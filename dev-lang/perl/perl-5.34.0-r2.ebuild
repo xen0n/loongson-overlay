@@ -3,7 +3,7 @@
 
 EAPI=7
 
-inherit alternatives flag-o-matic toolchain-funcs multilib multiprocessing
+inherit alternatives flag-o-matic gnuconfig toolchain-funcs multilib multiprocessing
 
 PATCH_VER=1
 CROSS_VER=1.3.6
@@ -429,6 +429,9 @@ src_prepare() {
 		# fix install_name (soname) not to reference $D
 		sed -i -e '/install_name `pwd/s/`pwd`/\\$(shrpdir)/' Makefile.SH || die
 	fi
+
+	# config.guess and config.sub might be outdated for newer arches
+	gnuconfig_update
 
 	default
 }
