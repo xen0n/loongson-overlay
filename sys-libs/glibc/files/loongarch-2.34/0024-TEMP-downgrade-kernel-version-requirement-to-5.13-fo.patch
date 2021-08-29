@@ -1,0 +1,40 @@
+From 684fe0f09eb3fad92d7708d70f735118e719fd66 Mon Sep 17 00:00:00 2001
+From: WANG Xuerui <git@xen0n.name>
+Date: Sun, 29 Aug 2021 17:47:59 +0800
+Subject: [PATCH 24/24] TEMP downgrade kernel version requirement to 5.13 for
+ testing in qemu on my rig
+
+---
+ sysdeps/unix/sysv/linux/loongarch/configure    | 2 +-
+ sysdeps/unix/sysv/linux/loongarch/configure.ac | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/sysdeps/unix/sysv/linux/loongarch/configure b/sysdeps/unix/sysv/linux/loongarch/configure
+index 0668936415..c803a2bdbd 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/configure
++++ b/sysdeps/unix/sysv/linux/loongarch/configure
+@@ -1,7 +1,7 @@
+ # This file is generated from configure.ac by Autoconf.  DO NOT EDIT!
+  # Local configure fragment for sysdeps/unix/sysv/linux/loongarch.
+ 
+-arch_minimum_kernel=5.14.0
++arch_minimum_kernel=5.13.0
+ 
+ libc_cv_loongarch_int_abi=no
+ 
+diff --git a/sysdeps/unix/sysv/linux/loongarch/configure.ac b/sysdeps/unix/sysv/linux/loongarch/configure.ac
+index 5709a0ed43..709a889939 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/configure.ac
++++ b/sysdeps/unix/sysv/linux/loongarch/configure.ac
+@@ -2,7 +2,7 @@ sinclude(./aclocal.m4)dnl Autoconf lossage
+ GLIBC_PROVIDES dnl See aclocal.m4 in the top level source directory.
+ # Local configure fragment for sysdeps/unix/sysv/linux/loongarch.
+ 
+-arch_minimum_kernel=5.14.0
++arch_minimum_kernel=5.13.0
+ 
+ libc_cv_loongarch_int_abi=no
+ AC_EGREP_CPP(4 4 4, [__SIZEOF_INT__ __SIZEOF_LONG__ __SIZEOF_POINTER__
+-- 
+2.33.0
+
