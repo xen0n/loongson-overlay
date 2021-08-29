@@ -85,6 +85,7 @@
 <sys-devel/gettext-9999 **
 <sys-devel/gnuconfig-99999999 **
 <sys-devel/m4-9999 **
+<sys-devel/make-9999 **
 <sys-devel/patch-9999 **
 <sys-kernel/installkernel-gentoo-9999 **
 <sys-libs/glibc-2.34 **
