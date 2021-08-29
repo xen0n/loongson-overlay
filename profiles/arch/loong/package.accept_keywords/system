@@ -52,6 +52,7 @@
 <dev-python/idna-9999 **
 <dev-python/requests-9999 **
 <dev-python/urllib3-9999 **
+<dev-util/strace-9999 **
 <net-dns/libidn2-9999 **
 <net-libs/gnutls-9999 **
 <net-libs/nghttp2-9999 **
