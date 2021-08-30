@@ -88,7 +88,7 @@
 <sys-devel/make-9999 **
 <sys-devel/patch-9999 **
 <sys-kernel/installkernel-gentoo-9999 **
-<sys-libs/glibc-2.34 **
+<sys-libs/glibc-2.35 **
 <sys-libs/libcap-9999 **
 <sys-libs/libseccomp-9999 **
 <sys-libs/libxcrypt-9999 **
