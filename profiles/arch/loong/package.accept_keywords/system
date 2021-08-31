@@ -38,6 +38,7 @@
 <dev-libs/libgpg-error-9999 **
 <dev-libs/libksba-9999 **
 <dev-libs/libpcre-9999 **
+<dev-libs/libpcre2-9999 **
 <dev-libs/libtasn1-9999 **
 <dev-libs/libxml2-9999 **
 <dev-libs/mpc-9999 **
@@ -58,9 +59,11 @@
 <net-libs/nghttp2-9999 **
 <net-misc/curl-9999 **
 <net-misc/rsync-9999 **
+<net-misc/wget-9999 **
 <perl-core/Encode-9999 **
 <perl-core/File-Temp-9999 **
 <sys-apps/attr-9999 **
+<sys-apps/baselayout-9999 **
 <sys-apps/busybox-9999 **
 <sys-apps/coreutils-9999 **
 <sys-apps/debianutils-9999 **
