@@ -1,3 +1,4 @@
 # gnulib needs porting
 >=sys-apps/grep-3.7
 #>=sys-devel/m4-1.4.19
+>=sys-apps/texinfo-6.8
