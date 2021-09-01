@@ -111,6 +111,10 @@ src_prepare() {
 		fi
 	fi
 
+	einfo "Applying LoongArch support patches"
+	eapply "${FILESDIR}"/loongarch-2.37
+	einfo "Done."
+
 	# This check should probably go somewhere else, like pkg_pretend.
 	if [[ ${CTARGET} == *-uclibc* ]] ; then
 		if grep -qs 'linux-gnu' "${S}"/ltconfig ; then
