@@ -3,3 +3,6 @@ mips    desktop/3a3000          dev
 mips    desktop/3a3000/systemd  dev
 mips    desktop/3a4000          dev
 mips    desktop/3a4000/systemd  dev
+
+loong   desktop/3a5000          dev
+loong   desktop/3a5000/systemd  dev
