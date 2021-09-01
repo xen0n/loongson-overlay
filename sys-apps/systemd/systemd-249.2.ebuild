@@ -223,6 +223,7 @@ src_prepare() {
 	# Add local patches here
 	PATCHES+=(
 		"${FILESDIR}/249-libudev-static.patch"
+		"${FILESDIR}/loongarch/"*.patch
 	)
 
 	if ! use vanilla; then
