@@ -90,6 +90,7 @@
 <sys-apps/which-9999 **
 <sys-devel/autoconf-9999 **
 <sys-devel/autoconf-wrapper-9999 **
+<sys-devel/automake-9999 **
 <sys-devel/binutils-9999 **
 <sys-devel/binutils-config-9999 **
 <sys-devel/flex-9999 **
