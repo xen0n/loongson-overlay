@@ -26,9 +26,9 @@ BDEPEND="doc? ( dev-python/docutils )"
 PDEPEND="emacs? ( app-emacs/eselect-mode )
 	vim-syntax? ( app-vim/eselect-syntax )"
 
-src_prepare() {
-	eapply "${FILESDIR}" ./files/0001-Recognise-loongarch-loong-in-package-manager-lib.patch
-}
+PATCHES=(
+	"${FILESDIR}"/0001-Recognise-loongarch-loong-in-package-manager-lib.patch
+)
 
 src_compile() {
 	emake
