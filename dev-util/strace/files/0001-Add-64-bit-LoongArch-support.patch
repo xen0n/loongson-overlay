@@ -1,0 +1,315 @@
+From 484df02c073a315ae20170bf992d976dbf9cf85b Mon Sep 17 00:00:00 2001
+From: WANG Xuerui <git@xen0n.name>
+Date: Tue, 10 Aug 2021 00:11:17 +0800
+Subject: [PATCH] Add 64-bit LoongArch support
+
+This is based on the WIP Linux port still under review, but the syscall
+interface is remarkably similar to that of RISC-V, namely using
+asm-generic numbers and parameters, so breakage should be minimal, if
+at all, when the port is eventually merged.
+
+Currently only the LP64 ABI is implemented in the toolchains, so only
+support the host type "loongarch64".
+
+* NEWS: Mention this.
+* configure.ac [$host_cpu == loongarch64]: Define LOONGARCH64.
+* src/linux/loongarch64/arch_regs.c: New file.
+* src/linux/loongarch64/get_error.c: Likewise.
+* src/linux/loongarch64/get_scno.c: Likewise.
+* src/linux/loongarch64/get_syscall_args.c: Likewise.
+* src/linux/loongarch64/ioctls_arch0.h: Likewise.
+* src/linux/loongarch64/ioctls_inc0.h: Likewise.
+* src/linux/loongarch64/raw_syscall.h: Likewise.
+* src/linux/loongarch64/set_error.c: Likewise.
+* src/linux/loongarch64/set_scno.c: Likewise.
+* src/linux/loongarch64/syscallent.h: Likewise.
+* src/Makefile.am (EXTRA_DIST): Add them.
+* src/xlat/elf_em.in: Add EM_LOONGARCH.
+---
+ NEWS                                     |  1 +
+ configure.ac                             |  5 ++++
+ src/Makefile.am                          | 10 ++++++++
+ src/linux/loongarch64/arch_regs.c        | 11 +++++++++
+ src/linux/loongarch64/get_error.c        | 19 ++++++++++++++++
+ src/linux/loongarch64/get_scno.c         | 14 ++++++++++++
+ src/linux/loongarch64/get_syscall_args.c | 19 ++++++++++++++++
+ src/linux/loongarch64/ioctls_arch0.h     |  1 +
+ src/linux/loongarch64/ioctls_inc0.h      |  1 +
+ src/linux/loongarch64/raw_syscall.h      | 29 ++++++++++++++++++++++++
+ src/linux/loongarch64/set_error.c        | 20 ++++++++++++++++
+ src/linux/loongarch64/set_scno.c         | 15 ++++++++++++
+ src/linux/loongarch64/syscallent.h       |  8 +++++++
+ src/xlat/elf_em.in                       |  1 +
+ 14 files changed, 154 insertions(+)
+ create mode 100644 src/linux/loongarch64/arch_regs.c
+ create mode 100644 src/linux/loongarch64/get_error.c
+ create mode 100644 src/linux/loongarch64/get_scno.c
+ create mode 100644 src/linux/loongarch64/get_syscall_args.c
+ create mode 100644 src/linux/loongarch64/ioctls_arch0.h
+ create mode 100644 src/linux/loongarch64/ioctls_inc0.h
+ create mode 100644 src/linux/loongarch64/raw_syscall.h
+ create mode 100644 src/linux/loongarch64/set_error.c
+ create mode 100644 src/linux/loongarch64/set_scno.c
+ create mode 100644 src/linux/loongarch64/syscallent.h
+
+diff --git a/NEWS b/NEWS
+index f88de1d11..d6727a4ed 100644
+--- a/NEWS
++++ b/NEWS
+@@ -10,6 +10,7 @@ Noteworthy changes in release 5.14 (2021-09-02)
+   * Updated lists of BPF_*, IORING_*, MADV_*, MOUNT_ATTR_*, SCTP_*,
+     and UFFD_* constants.
+   * Updated lists of ioctl commands from Linux 5.14.
++  * Added 64-bit LoongArch architecture support.
+ 
+ * Bug fixes
+   * Fixed build using bionic libc.
+diff --git a/configure.ac b/configure.ac
+index 2771c0f82..def3bb26f 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -110,6 +110,11 @@ ia64)
+ 	arch=ia64
+ 	AC_DEFINE([IA64], 1, [Define for the IA64 architecture.])
+ 	;;
++loongarch64)
++	arch=loongarch64
++	karch=loongarch
++	AC_DEFINE([LOONGARCH64], 1, [Define for the 64-bit LoongArch architecture.])
++	;;
+ m68k)
+ 	arch=m68k
+ 	AC_DEFINE([M68K], 1, [Define for the m68k architecture.])
+diff --git a/src/Makefile.am b/src/Makefile.am
+index b7e74a76e..76ce2f9e7 100644
+--- a/src/Makefile.am
++++ b/src/Makefile.am
+@@ -634,6 +634,16 @@ EXTRA_DIST =				\
+ 	linux/ia64/syscallent.h		\
+ 	linux/ia64/syscallent_base_nr.h	\
+ 	linux/ia64/userent.h		\
++	linux/loongarch64/arch_regs.c	\
++	linux/loongarch64/get_error.c	\
++	linux/loongarch64/get_scno.c	\
++	linux/loongarch64/get_syscall_args.c	\
++	linux/loongarch64/ioctls_arch0.h	\
++	linux/loongarch64/ioctls_inc0.h	\
++	linux/loongarch64/raw_syscall.h	\
++	linux/loongarch64/set_error.c	\
++	linux/loongarch64/set_scno.c	\
++	linux/loongarch64/syscallent.h	\
+ 	linux/m68k/arch_defs_.h		\
+ 	linux/m68k/arch_regs.c		\
+ 	linux/m68k/arch_rt_sigframe.c	\
+diff --git a/src/linux/loongarch64/arch_regs.c b/src/linux/loongarch64/arch_regs.c
+new file mode 100644
+index 000000000..80acde005
+--- /dev/null
++++ b/src/linux/loongarch64/arch_regs.c
+@@ -0,0 +1,11 @@
++/*
++ * Copyright (c) 2021 The strace developers.
++ * All rights reserved.
++ *
++ * SPDX-License-Identifier: LGPL-2.1-or-later
++ */
++
++static struct pt_regs loongarch_regs;
++#define ARCH_REGS_FOR_GETREGSET loongarch_regs
++#define ARCH_PC_REG loongarch_regs.csr_epc
++#define ARCH_SP_REG loongarch_regs.regs[3]
+diff --git a/src/linux/loongarch64/get_error.c b/src/linux/loongarch64/get_error.c
+new file mode 100644
+index 000000000..07e9a3e6d
+--- /dev/null
++++ b/src/linux/loongarch64/get_error.c
+@@ -0,0 +1,19 @@
++/*
++ * Copyright (c) 2021 The strace developers.
++ * All rights reserved.
++ *
++ * SPDX-License-Identifier: LGPL-2.1-or-later
++ */
++
++#include "negated_errno.h"
++
++static void
++arch_get_error(struct tcb *tcp, const bool check_errno)
++{
++	if (check_errno && is_negated_errno(loongarch_regs.regs[4])) {
++		tcp->u_rval = -1;
++		tcp->u_error = -loongarch_regs.regs[4];
++	} else {
++		tcp->u_rval = loongarch_regs.regs[4];
++	}
++}
+diff --git a/src/linux/loongarch64/get_scno.c b/src/linux/loongarch64/get_scno.c
+new file mode 100644
+index 000000000..966f93ed5
+--- /dev/null
++++ b/src/linux/loongarch64/get_scno.c
+@@ -0,0 +1,14 @@
++/*
++ * Copyright (c) 2021 The strace developers.
++ * All rights reserved.
++ *
++ * SPDX-License-Identifier: LGPL-2.1-or-later
++ */
++
++/* Return codes: 1 - ok, 0 - ignore, other - error. */
++static int
++arch_get_scno(struct tcb *tcp)
++{
++	tcp->scno = loongarch_regs.regs[11];
++	return 1;
++}
+diff --git a/src/linux/loongarch64/get_syscall_args.c b/src/linux/loongarch64/get_syscall_args.c
+new file mode 100644
+index 000000000..4bb054198
+--- /dev/null
++++ b/src/linux/loongarch64/get_syscall_args.c
+@@ -0,0 +1,19 @@
++/*
++ * Copyright (c) 2021 The strace developers.
++ * All rights reserved.
++ *
++ * SPDX-License-Identifier: LGPL-2.1-or-later
++ */
++
++/* Return -1 on error or 1 on success (never 0!). */
++static int
++arch_get_syscall_args(struct tcb *tcp)
++{
++	tcp->u_arg[0] = loongarch_regs.regs[4];
++	tcp->u_arg[1] = loongarch_regs.regs[5];
++	tcp->u_arg[2] = loongarch_regs.regs[6];
++	tcp->u_arg[3] = loongarch_regs.regs[7];
++	tcp->u_arg[4] = loongarch_regs.regs[8];
++	tcp->u_arg[5] = loongarch_regs.regs[9];
++	return 1;
++}
+diff --git a/src/linux/loongarch64/ioctls_arch0.h b/src/linux/loongarch64/ioctls_arch0.h
+new file mode 100644
+index 000000000..59d8aaa9a
+--- /dev/null
++++ b/src/linux/loongarch64/ioctls_arch0.h
+@@ -0,0 +1 @@
++/* Generated by ioctls_gen.sh from definitions found in $linux/arch/loongarch/include/ tree. */
+diff --git a/src/linux/loongarch64/ioctls_inc0.h b/src/linux/loongarch64/ioctls_inc0.h
+new file mode 100644
+index 000000000..6028afbe4
+--- /dev/null
++++ b/src/linux/loongarch64/ioctls_inc0.h
+@@ -0,0 +1 @@
++#include "../64/ioctls_inc.h"
+diff --git a/src/linux/loongarch64/raw_syscall.h b/src/linux/loongarch64/raw_syscall.h
+new file mode 100644
+index 000000000..784edbe06
+--- /dev/null
++++ b/src/linux/loongarch64/raw_syscall.h
+@@ -0,0 +1,29 @@
++/*
++ * Raw syscalls.
++ *
++ * Copyright (c) 2021 The strace developers.
++ * All rights reserved.
++ *
++ * SPDX-License-Identifier: LGPL-2.1-or-later
++ */
++
++#ifndef STRACE_RAW_SYSCALL_H
++# define STRACE_RAW_SYSCALL_H
++
++# include "kernel_types.h"
++
++static inline kernel_ulong_t
++raw_syscall_0(const kernel_ulong_t nr, kernel_ulong_t *err)
++{
++	*err = 0;
++	register kernel_ulong_t a7 __asm__("a7") = nr;
++	register kernel_ulong_t a0 __asm__("a0");
++	__asm__ __volatile__("syscall 0"
++			     : "=r"(a0)
++			     : "r"(a7)
++			     : "memory");
++	return a0;
++}
++# define raw_syscall_0 raw_syscall_0
++
++#endif /* !STRACE_RAW_SYSCALL_H */
+diff --git a/src/linux/loongarch64/set_error.c b/src/linux/loongarch64/set_error.c
+new file mode 100644
+index 000000000..3eac45e6d
+--- /dev/null
++++ b/src/linux/loongarch64/set_error.c
+@@ -0,0 +1,20 @@
++/*
++ * Copyright (c) 2021 The strace developers.
++ * All rights reserved.
++ *
++ * SPDX-License-Identifier: LGPL-2.1-or-later
++ */
++
++static int
++arch_set_error(struct tcb *tcp)
++{
++	loongarch_regs.regs[4] = -tcp->u_error;
++	return set_regs(tcp->pid);
++}
++
++static int
++arch_set_success(struct tcb *tcp)
++{
++	loongarch_regs.regs[4] = tcp->u_rval;
++	return set_regs(tcp->pid);
++}
+diff --git a/src/linux/loongarch64/set_scno.c b/src/linux/loongarch64/set_scno.c
+new file mode 100644
+index 000000000..e3b6c084d
+--- /dev/null
++++ b/src/linux/loongarch64/set_scno.c
+@@ -0,0 +1,15 @@
++/*
++ * Copyright (c) 2021 The strace developers.
++ * All rights reserved.
++ *
++ * SPDX-License-Identifier: LGPL-2.1-or-later
++ */
++
++static int
++arch_set_scno(struct tcb *tcp, kernel_ulong_t scno)
++{
++	if (ptrace_syscall_info_is_valid() && get_regs(tcp) < 0)
++		return -1;
++	loongarch_regs.regs[11] = scno;
++	return set_regs(tcp->pid);
++}
+diff --git a/src/linux/loongarch64/syscallent.h b/src/linux/loongarch64/syscallent.h
+new file mode 100644
+index 000000000..44e0191cb
+--- /dev/null
++++ b/src/linux/loongarch64/syscallent.h
+@@ -0,0 +1,8 @@
++/*
++ * Copyright (c) 2021 The strace developers.
++ * All rights reserved.
++ *
++ * SPDX-License-Identifier: LGPL-2.1-or-later
++ */
++
++#include "../64/syscallent.h"
+diff --git a/src/xlat/elf_em.in b/src/xlat/elf_em.in
+index 9ffbcd6e0..18f4c9a70 100644
+--- a/src/xlat/elf_em.in
++++ b/src/xlat/elf_em.in
+@@ -190,6 +190,7 @@ EM_AMDGPU		224 /* AMD GPU architecture */
+ EM_RISCV		243 /* RISC-V */
+ EM_BPF			247 /* Linux BPF - in-kernel virtual machine */
+ EM_CSKY			252 /* C-SKY */
++EM_LOONGARCH		258 /* LoongArch */
+ EM_AVR32		0x18ad /* Atmel AVR32, removed in v4.12-rc1~159^2~5 */
+ EM_FRV			0x5441 /* Fujitsu FR-V */
+ EM_OR32			0x8472 /* arch/openrisc/include/uapi/asm/elf.h */
+-- 
+2.33.0
+
