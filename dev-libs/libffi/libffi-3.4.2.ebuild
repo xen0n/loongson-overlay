@@ -13,7 +13,7 @@ SRC_URI="https://github.com/libffi/libffi/releases/download/v${MY_PV}/${MY_P}.ta
 
 LICENSE="MIT"
 SLOT="0/8" # SONAME=libffi.so.8
-KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~ia64 ~m68k ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86 ~x64-cygwin ~amd64-linux ~x86-linux ~ppc-macos ~x64-macos ~sparc-solaris ~sparc64-solaris ~x64-solaris ~x86-solaris"
+KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~ia64 ~loong ~m68k ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86 ~x64-cygwin ~amd64-linux ~x86-linux ~ppc-macos ~x64-macos ~sparc-solaris ~sparc64-solaris ~x64-solaris ~x86-solaris"
 IUSE="debug exec-static-trampoline pax-kernel static-libs test"
 
 RESTRICT="!test? ( test )"
@@ -27,6 +27,11 @@ DOCS="ChangeLog* README.md"
 S=${WORKDIR}/${MY_P}
 
 ECONF_SOURCE=${S}
+
+PATCHES=(
+	"${FILESDIR}"/loongarch-3.4.2/0001-update-config.-guess-sub.patch
+	"${FILESDIR}"/loongarch-3.4.2/0002-New-LoongArch-port.patch
+)
 
 src_prepare() {
 	default
