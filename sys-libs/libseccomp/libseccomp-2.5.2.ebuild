@@ -39,6 +39,7 @@ DEPEND="${DEPEND} >=sys-kernel/linux-headers-4.3"
 src_prepare() {
 	local PATCHES=(
 		"${FILESDIR}/libseccomp-python-shared.patch"
+		"${FILESDIR}/add-loongarch-for-gentoo-v2.5.2.patch"
 	)
 	default
 	if [[ "${PV}" == *9999 ]] ; then
