@@ -50,7 +50,7 @@ src_prepare() {
 	tc-export CC
 
 	# without this, tclsh fails with "alloc: invalid block" when building sqlite
-	export CFLAGS="${CFLAGS} -DPURIFY"
+	export CFLAGS="${CFLAGS} -O0"
 
 	sed \
 		-e '/chmod/s:555:755:g' \
