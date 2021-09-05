@@ -61,6 +61,7 @@
 <app-crypt/openpgp-keys-gentoo-release-99999999 **
 <app-crypt/pinentry-9999 **
 <app-crypt/rhash-9999 **
+<app-editors/nano-9999 **
 <app-editors/vim-9999 **
 <app-editors/vim-core-9999 **
 <app-eselect/eselect-iptables-99999999 **
