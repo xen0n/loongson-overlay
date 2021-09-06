@@ -157,6 +157,7 @@
 <dev-python/setuptools-9999 **
 <dev-python/setuptools_scm-9999 **
 <dev-python/toml-9999 **
+<dev-python/tomli-9999 **
 <dev-python/urllib3-9999 **
 <dev-util/cmake-9999 **
 <dev-util/gperf-9999 **
