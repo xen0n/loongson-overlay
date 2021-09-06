@@ -151,6 +151,7 @@
 <dev-python/jinja-9999 **
 <dev-python/lxml-9999 **
 <dev-python/markupsafe-9999 **
+<dev-python/packaging-9999 **
 <dev-python/PySocks-9999 **
 <dev-python/requests-9999 **
 <dev-python/setuptools-9999 **
