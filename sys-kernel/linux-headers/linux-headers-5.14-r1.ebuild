@@ -8,8 +8,8 @@ H_SUPPORTEDARCH="alpha amd64 arc arm arm64 avr32 cris frv hexagon hppa ia64 loon
 inherit kernel-2 toolchain-funcs
 detect_version
 
-PATCH_PV=5.14 # to ease testing new versions against not existing patches
-PATCH_VER="20210807"
+PATCH_PV=${PV} # to ease testing new versions against not existing patches
+PATCH_VER="20210907"
 SRC_URI="
 	${KERNEL_URI}
 	${PATCH_VER:+http://loongson-pub-gz.qnbkt.xen0n.name/loongarch-headers-${PATCH_PV}-${PATCH_VER}.tar.xz}"
@@ -41,6 +41,5 @@ src_test() {
 src_install() {
 	kernel-2_src_install
 
-	# hrm, build system sucks
 	find "${ED}" \( -name '.install' -o -name '*.cmd' \) -delete || die
 }
