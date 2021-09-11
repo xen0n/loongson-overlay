@@ -19,6 +19,10 @@ DEPEND="${RDEPEND}
 	>=sys-kernel/linux-headers-3.17
 "
 
+PATCHES=(
+	"${FILESDIR}/0001-Add-support-for-LoongArch.patch"
+)
+
 pkg_setup() {
 	local f="${EROOT}/usr/$(get_libdir)/${PN}.a"
 	if ! has_version ${CATEGORY}/${PN}; then
