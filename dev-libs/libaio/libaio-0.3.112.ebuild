@@ -22,7 +22,6 @@ RESTRICT="!test? ( test )"
 PATCHES=(
 	"${FILESDIR}"/${PN}-0.3.112-cppflags.patch
 	"${FILESDIR}"/${PN}-0.3.111-optional-werror.patch
-	"${FILESDIR}"/loongarch-0.3.112/0001-cases-16.t-loongarch-only-supports-eventfd2.patch
 	"${FILESDIR}"/loongarch-0.3.112/0002-Add-loongarch-to-supported-architectures-in-libaio.s.patch
 	"${FILESDIR}"/loongarch-0.3.112/0003-Add-endian-detection-and-bit-width-detection-for-loo.patch
 	"${FILESDIR}"/loongarch-0.3.112/0004-Use-generic-syscall-number-schema-for-loongarch.patch
