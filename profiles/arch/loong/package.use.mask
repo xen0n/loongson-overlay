@@ -17,6 +17,8 @@ net-mail/dovecot unwind
 x11-base/xorg-server unwind
 x11-base/xwayland unwind
 
+# loongarch has no llvm
+media-libs/mesa llvm
 
 # This doesn't work for (any) loongarch yet.
 dev-libs/libpcre2 jit
