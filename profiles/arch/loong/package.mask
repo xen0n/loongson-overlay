@@ -2,3 +2,6 @@
 >=sys-apps/grep-3.7
 #>=sys-devel/m4-1.4.19
 >=sys-apps/texinfo-6.8
+
+# rust
+>=gnome-base/librsvg-2.41
