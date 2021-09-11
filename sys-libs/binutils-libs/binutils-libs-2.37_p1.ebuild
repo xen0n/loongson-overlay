@@ -43,6 +43,10 @@ src_prepare() {
 		eapply "${WORKDIR}/patch"/*.patch
 	fi
 
+	einfo "Applying LoongArch support patches"
+	eapply "${FILESDIR}"/loongarch-2.37
+	einfo "Done."
+
 	# Fix cross-compile relinking issue, bug #626402
 	elibtoolize
 
