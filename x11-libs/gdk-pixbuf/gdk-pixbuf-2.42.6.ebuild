@@ -58,6 +58,10 @@ src_prepare() {
 	# because sed doesn't return failure code if it doesn't do any replacements
 	grep -q "foreach png: \[ 'libpng16', 'libpng15', 'libpng14', 'libpng13', 'libpng12', 'libpng10' \]" meson.build || die "libpng check order has changed upstream"
 	sed -e "s/foreach png: \[ 'libpng16', 'libpng15', 'libpng14', 'libpng13', 'libpng12', 'libpng10' \]/foreach png: \[ 'libpng', 'libpng16', 'libpng15', 'libpng14', 'libpng13', 'libpng12', 'libpng10' \]/" -i meson.build || die
+
+	# seems at least the loongarch64 gcc-12 will fire this error, silence for now
+	# similar issue regarding GTK: https://gitlab.gnome.org/GNOME/gtk/-/issues/3776
+	sed -i '/-Werror=array-bounds/s/^/#/' meson.build || die
 }
 
 multilib_src_configure() {
