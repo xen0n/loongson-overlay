@@ -1,0 +1,87 @@
+diff -Nurp ./ff-68-a/build/moz.configure/init.configure ./ff-68-b/build/moz.configure/init.configure
+--- ./ff-68-a/build/moz.configure/init.configure	2020-08-18 02:26:21.000000000 +0800
++++ ./ff-68-b/build/moz.configure/init.configure	2021-09-12 12:10:40.998763175 +0800
+@@ -734,6 +734,9 @@ def split_triplet(triplet, allow_unknown
+     elif cpu == 'sh4':
+         canonical_cpu = 'sh4'
+         endianness = 'little'
++    elif cpu == 'loongarch64':
++        canonical_cpu = 'loongarch64'
++        endianness = 'little'
+     elif allow_unknown:
+         canonical_cpu = cpu
+         endianness = 'unknown'
+diff -Nurp ./ff-68-a/js/src/jit/AtomicOperations.h ./ff-68-b/js/src/jit/AtomicOperations.h
+--- ./ff-68-a/js/src/jit/AtomicOperations.h	2021-09-12 02:21:25.181831470 +0800
++++ ./ff-68-b/js/src/jit/AtomicOperations.h	2021-09-12 12:13:47.990155312 +0800
+@@ -382,6 +382,9 @@ inline bool AtomicOperations::isLockfree
+ #  else
+ #    include "jit/shared/AtomicOperations-feeling-lucky.h"
+ #  endif
++#elif defined(__loongarch64)
++// This is only here to avoid merge conflict with spidermonkey-68.0-add-riscv-support.patch.
++#  include "jit/shared/AtomicOperations-feeling-lucky.h"
+ #elif defined(__mips__)
+ #  if defined(__clang__) || defined(__GNUC__)
+ #    include "jit/mips-shared/AtomicOperations-mips-shared.h"
+diff -Nurp ./ff-68-a/js/src/jit/shared/AtomicOperations-feeling-lucky-gcc.h ./ff-68-b/js/src/jit/shared/AtomicOperations-feeling-lucky-gcc.h
+--- ./ff-68-a/js/src/jit/shared/AtomicOperations-feeling-lucky-gcc.h	2020-08-18 02:26:24.000000000 +0800
++++ ./ff-68-b/js/src/jit/shared/AtomicOperations-feeling-lucky-gcc.h	2021-09-12 12:15:04.714310338 +0800
+@@ -57,6 +57,11 @@
+ #  define HAS_64BIT_LOCKFREE
+ #endif
+ 
++#ifdef __loongarch64
++#  define HAS_64BIT_ATOMICS
++#  define HAS_64BIT_LOCKFREE
++#endif
++
+ #if defined(__ppc64__) || defined(__PPC64__) || defined(__ppc64le__) || \
+     defined(__PPC64LE__)
+ #  define HAS_64BIT_ATOMICS
+diff -Nurp ./ff-68-a/mfbt/tests/TestPoisonArea.cpp ./ff-68-b/mfbt/tests/TestPoisonArea.cpp
+--- ./ff-68-a/mfbt/tests/TestPoisonArea.cpp	2020-08-18 02:26:28.000000000 +0800
++++ ./ff-68-b/mfbt/tests/TestPoisonArea.cpp	2021-09-12 12:16:49.447517636 +0800
+@@ -127,6 +127,9 @@
+ #elif defined __arm__ || defined _M_ARM
+ #  define RETURN_INSTR 0xE12FFF1E /* bx lr */
+ 
++#elif defined __loongarch__
++#  define RETURN_INSTR 0x4c000020 /* jirl zero, ra, 0 */
++
+ // PPC has its own style of CPU-id #defines.  There is no Windows for
+ // PPC as far as I know, so no _M_ variant.
+ #elif defined _ARCH_PPC || defined _ARCH_PWR || defined _ARCH_PWR2
+diff -Nurp ./ff-68-a/python/mozbuild/mozbuild/configure/constants.py ./ff-68-b/python/mozbuild/mozbuild/configure/constants.py
+--- ./ff-68-a/python/mozbuild/mozbuild/configure/constants.py	2020-08-18 02:26:28.000000000 +0800
++++ ./ff-68-b/python/mozbuild/mozbuild/configure/constants.py	2021-09-12 12:19:00.762771788 +0800
+@@ -46,6 +46,7 @@ CPU_bitness = {
+     'arm': 32,
+     'hppa': 32,
+     'ia64': 64,
++    'loongarch64': 64,
+     'mips32': 32,
+     'mips64': 64,
+     'ppc': 32,
+@@ -78,6 +79,7 @@ CPU_preprocessor_checks = OrderedDict((
+     ('arm', '__arm__ || _M_ARM'),
+     ('aarch64', '__aarch64__ || _M_ARM64'),
+     ('ia64', '__ia64__'),
++    ('loongarch64', '__loongarch64'),
+     ('s390x', '__s390x__'),
+     ('s390', '__s390__'),
+     ('ppc64', '__powerpc64__'),
+diff -Nurp ./ff-68-a/python/mozbuild/mozbuild/test/configure/test_toolchain_configure.py ./ff-68-b/python/mozbuild/mozbuild/test/configure/test_toolchain_configure.py
+--- ./ff-68-a/python/mozbuild/mozbuild/test/configure/test_toolchain_configure.py	2020-08-18 02:26:28.000000000 +0800
++++ ./ff-68-b/python/mozbuild/mozbuild/test/configure/test_toolchain_configure.py	2021-09-12 12:20:13.765910816 +0800
+@@ -1068,6 +1068,10 @@ class LinuxCrossCompileToolchainTest(Bas
+         'ia64-unknown-linux-gnu': little_endian + {
+             '__ia64__': 1,
+         },
++        'loongarch64-unknown-linux-gnu': little_endian + {
++            '__loongarch__': 1,
++            '__loongarch64': 1,
++        },
+         's390x-unknown-linux-gnu': big_endian + {
+             '__s390x__': 1,
+             '__s390__': 1,
