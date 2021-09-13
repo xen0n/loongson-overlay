@@ -89,6 +89,7 @@ PATCHES=(
 	"${FILESDIR}"/${PN}-10.1-cet.patch
 	"${FILESDIR}"/${PN}-10.2-sparc-nat.patch
 	"${FILESDIR}"/${PN}-10.2-DW_LLE-riscv64.patch
+	"${FILESDIR}"/loongarch-10.2/*.patch
 )
 
 pkg_setup() {
