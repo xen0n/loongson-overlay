@@ -86,18 +86,15 @@ BDEPEND="
 
 PATCHES=(
 	"${FILESDIR}"/${PN}-8.3.1-verbose-build.patch
-	"${FILESDIR}"/${PN}-10.1-cet.patch
-	"${FILESDIR}"/${PN}-10.2-sparc-nat.patch
-	"${FILESDIR}"/${PN}-10.2-DW_LLE-riscv64.patch
 
-	"${FILESDIR}"/loongarch-10.2/0001-gdb-LoongArch-GDB-Port.patch
-	"${FILESDIR}"/loongarch-10.2/0002-gdbserver-LoongArch-GDBServer-Port.patch
-	"${FILESDIR}"/loongarch-10.2/0003-bfd-LoongArch-BFD-Port.patch
-	"${FILESDIR}"/loongarch-10.2/0004-ld-LoongArch-LD-Port.patch
-	"${FILESDIR}"/loongarch-10.2/0005-opcodes-LoongArch-Opcodes-Port.patch
-	"${FILESDIR}"/loongarch-10.2/0006-opcodes-LoongArch-make-all-non-native-jumps-desugar-.patch
-	"${FILESDIR}"/loongarch-10.2/0007-opcodes-LoongArch-add-ret-instruction-to-reduce-typi.patch
-	"${FILESDIR}"/loongarch-10.2/0008-opcodes-LoongArch-make-beq-bne-s-operand-order-rd-rj.patch
+	"${FILESDIR}"/loongarch-12/0001-gdb-LoongArch-GDB-Port.patch
+	"${FILESDIR}"/loongarch-12/0002-gdbserver-LoongArch-GDBServer-Port.patch
+	"${FILESDIR}"/loongarch-12/0003-bfd-LoongArch-BFD-Port.patch
+	"${FILESDIR}"/loongarch-12/0004-ld-LoongArch-LD-Port.patch
+	"${FILESDIR}"/loongarch-12/0005-opcodes-LoongArch-Opcodes-Port.patch
+	"${FILESDIR}"/loongarch-12/0006-opcodes-LoongArch-make-all-non-native-jumps-desugar-.patch
+	"${FILESDIR}"/loongarch-12/0007-opcodes-LoongArch-add-ret-instruction-to-reduce-typi.patch
+	"${FILESDIR}"/loongarch-12/0008-opcodes-LoongArch-make-beq-bne-s-operand-order-rd-rj.patch
 )
 
 pkg_setup() {
