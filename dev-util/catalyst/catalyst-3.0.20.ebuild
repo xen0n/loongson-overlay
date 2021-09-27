@@ -51,6 +51,10 @@ PDEPEND="system-bootloader? ( >=sys-apps/memtest86+-5.01-r4
 				sys-boot/syslinux
 				sys-boot/shim )"
 
+PATCHES=(
+	"${FILESDIR}"/0001-add-support-for-ARCH-loong.patch
+)
+
 python_prepare_all() {
 	python_setup
 	echo VERSION="${PV}" "${PYTHON}" setup.py set_version
