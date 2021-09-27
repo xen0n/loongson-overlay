@@ -1,0 +1,4 @@
+# required by app-text/atril-1.24.1::gentoo
+# required by mate-base/mate-1.24::gentoo[extras]
+# required by mate-base/mate (argument)
+app-text/poppler cairo
