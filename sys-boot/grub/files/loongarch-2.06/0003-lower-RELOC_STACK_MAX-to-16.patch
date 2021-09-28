@@ -1,7 +1,7 @@
 From dc7f1f8d2b6ccd919dbb19601600064ed590bc83 Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <git@xen0n.name>
 Date: Tue, 28 Sep 2021 14:41:55 +0800
-Subject: [PATCH 3/5] lower RELOC_STACK_MAX to 16
+Subject: [PATCH 3/6] lower RELOC_STACK_MAX to 16
 
 ---
  util/grub-mkimagexx.c | 2 +-

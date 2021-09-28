@@ -1,7 +1,7 @@
 From e63f942f1a6c598c25f003f771aea989957936f7 Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <git@xen0n.name>
 Date: Tue, 28 Sep 2021 14:55:14 +0800
-Subject: [PATCH 4/5] rewrite loongarch64/efi/loongarch64_asm.S
+Subject: [PATCH 4/6] rewrite loongarch64/efi/loongarch64_asm.S
 
 ---
  grub-core/lib/loongarch64/efi/loongarch64_asm.S | 14 ++++++--------
