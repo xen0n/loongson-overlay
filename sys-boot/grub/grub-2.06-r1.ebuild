@@ -56,7 +56,12 @@ PATCHES=(
 	"${FILESDIR}"/grub-2.02_beta2-KERNEL_GLOBS.patch
 	"${FILESDIR}"/grub-2.06-test-words.patch
 	"${FILESDIR}"/grub-2.06-binutils-2.36.patch
-	"${FILESDIR}"/loongarch-2.06/*
+
+	"${FILESDIR}"/loongarch-2.06/0001-add-LoongArch64-support-for-grub.patch
+	"${FILESDIR}"/loongarch-2.06/0002-Modify-the-li-instruction-to-li.w-to-cooperate-with-.patch
+	"${FILESDIR}"/loongarch-2.06/0003-lower-RELOC_STACK_MAX-to-16.patch
+	"${FILESDIR}"/loongarch-2.06/0004-rewrite-loongarch64-efi-loongarch64_asm.S.patch
+	"${FILESDIR}"/loongarch-2.06/0005-remove-gnulib-patch.patch
 )
 
 DEJAVU=dejavu-sans-ttf-2.37
