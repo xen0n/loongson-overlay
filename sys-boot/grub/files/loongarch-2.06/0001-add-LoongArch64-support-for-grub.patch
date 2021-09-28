@@ -4,7 +4,6 @@ Date: Thu, 27 May 2021 16:13:22 +0800
 Subject: [PATCH 1/5] add LoongArch64 support for grub
 
 ---
- bootstrap.conf                                |   1 +
  conf/Makefile.common                          |   4 +
  configure.ac                                  |   9 +
  gentpl.py                                     |   5 +-
@@ -44,7 +43,7 @@ Subject: [PATCH 1/5] add LoongArch64 support for grub
  util/grub-mkimagexx.c                         | 255 +++++++-
  util/grub-module-verifier.c                   |  26 +
  util/mkimage.c                                |  16 +
- 40 files changed, 2863 insertions(+), 12 deletions(-)
+ 39 files changed, 2862 insertions(+), 12 deletions(-)
  create mode 100644 grub-core/kern/loongarch64/cache.S
  create mode 100644 grub-core/kern/loongarch64/dl.c
  create mode 100644 grub-core/kern/loongarch64/efi/init.c
@@ -69,16 +68,6 @@ Subject: [PATCH 1/5] add LoongArch64 support for grub
  create mode 100644 include/grub/loongarch64/time.h
  create mode 100644 include/grub/loongarch64/types.h
 
-diff --git a/bootstrap.conf b/bootstrap.conf
-index 6b043fc35..0294db006 100644
---- a/bootstrap.conf
-+++ b/bootstrap.conf
-@@ -98,4 +98,5 @@ bootstrap_post_import_hook () {
- 
- bootstrap_epilogue () {
-   mv INSTALL.grub INSTALL
-+  patch -p1 -i "grub-core/lib/gnulib-patches/loongarch.patch"
- }
 diff --git a/conf/Makefile.common b/conf/Makefile.common
 index 2a1a886f6..bcbf95156 100644
 --- a/conf/Makefile.common

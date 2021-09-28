@@ -4,21 +4,10 @@ Date: Tue, 28 Sep 2021 14:56:08 +0800
 Subject: [PATCH 5/5] remove gnulib patch
 
 ---
- bootstrap.conf                               |  1 -
  grub-core/lib/gnulib-patches/loongarch.patch | 26 --------------------
- 2 files changed, 27 deletions(-)
+ 1 file changed, 26 deletions(-)
  delete mode 100644 grub-core/lib/gnulib-patches/loongarch.patch
 
-diff --git a/bootstrap.conf b/bootstrap.conf
-index 0294db006..6b043fc35 100644
---- a/bootstrap.conf
-+++ b/bootstrap.conf
-@@ -98,5 +98,4 @@ bootstrap_post_import_hook () {
- 
- bootstrap_epilogue () {
-   mv INSTALL.grub INSTALL
--  patch -p1 -i "grub-core/lib/gnulib-patches/loongarch.patch"
- }
 diff --git a/grub-core/lib/gnulib-patches/loongarch.patch b/grub-core/lib/gnulib-patches/loongarch.patch
 deleted file mode 100644
 index 54cc2e084..000000000
