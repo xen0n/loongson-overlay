@@ -183,9 +183,10 @@ src_prepare() {
 		eautoreconf
 	fi
 
-	# prevent rebuild (i.e. truncation) of this file after the LoongArch
+	# prevent rebuild (i.e. truncation) of these files after the LoongArch
 	# patch touches gentpl.py
 	touch Makefile.util.am
+	touch grub-core/Makefile.core.am
 }
 
 grub_do() {
