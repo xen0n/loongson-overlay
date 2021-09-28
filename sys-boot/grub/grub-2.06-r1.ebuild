@@ -181,6 +181,10 @@ src_prepare() {
 	if [[ -n ${GRUB_AUTORECONF} ]]; then
 		eautoreconf
 	fi
+
+	# prevent rebuild (i.e. truncation) of this file after the LoongArch
+	# patch touches gentpl.py
+	touch Makefile.util.am
 }
 
 grub_do() {
