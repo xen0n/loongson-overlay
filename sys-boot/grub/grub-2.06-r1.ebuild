@@ -62,6 +62,7 @@ PATCHES=(
 	"${FILESDIR}"/loongarch-2.06/0003-lower-RELOC_STACK_MAX-to-16.patch
 	"${FILESDIR}"/loongarch-2.06/0004-rewrite-loongarch64-efi-loongarch64_asm.S.patch
 	"${FILESDIR}"/loongarch-2.06/0005-remove-gnulib-patch.patch
+	"${FILESDIR}"/loongarch-2.06/0006-fix-unrecognized-march-option.patch
 )
 
 DEJAVU=dejavu-sans-ttf-2.37
