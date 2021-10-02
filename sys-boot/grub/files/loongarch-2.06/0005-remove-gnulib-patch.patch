@@ -1,4 +1,4 @@
-From 8bf38b515aa45459ae72a8e3dcf8da9af0092041 Mon Sep 17 00:00:00 2001
+From 9ed25b251e7728d3aa9361bbccb1d2c119dd38b2 Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <git@xen0n.name>
 Date: Tue, 28 Sep 2021 14:56:08 +0800
 Subject: [PATCH 5/6] remove gnulib patch
