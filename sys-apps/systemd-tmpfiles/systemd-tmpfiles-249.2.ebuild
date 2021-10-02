@@ -79,6 +79,14 @@ pkg_setup() {
 }
 
 src_prepare() {
+	# Do NOT add patches here
+	local PATCHES=()
+
+	# Add local patches here
+	PATCHES+=(
+		"${FILESDIR}/loongarch/"*.patch
+	)
+
 	# musl patchset from:
 	# http://cgit.openembedded.org/openembedded-core/tree/meta/recipes-core/systemd/systemd
 	# check SRC_URI_MUSL in systemd_${PV}.bb file for exact list of musl patches
