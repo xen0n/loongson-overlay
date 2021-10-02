@@ -1,0 +1,3 @@
+<sys-apps/usbutils-9999 **
+virtual/libusb **
+<dev-libs/libusb-9999 **

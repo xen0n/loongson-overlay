@@ -1,0 +1,11 @@
+<app-accessibility/brltty-9999 **
+<app-accessibility/espeak-9999 **
+<app-accessibility/flite-9999 **
+<app-accessibility/speech-dispatcher-9999 **
+<x11-libs/libXpm-9999 **
+<dev-libs/dotconf-9999 **
+<media-libs/libsndfile-9999 **
+<media-libs/flac-9999 **
+<media-libs/portaudio-9999 **
+<media-sound/sox-9999 **
+<media-sound/gsm-9999 **
