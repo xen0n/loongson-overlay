@@ -1,7 +1,7 @@
 From ae9c32040e9b4550672cc858accb732456fb6fb5 Mon Sep 17 00:00:00 2001
 From: zeiwai <zylinux94@gmail.com>
 Date: Thu, 27 May 2021 16:13:22 +0800
-Subject: [PATCH 1/6] add LoongArch64 support for grub
+Subject: [PATCH 1/7] add LoongArch64 support for grub
 
 ---
  conf/Makefile.common                          |   4 +

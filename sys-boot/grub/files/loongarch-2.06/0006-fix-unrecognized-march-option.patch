@@ -1,7 +1,7 @@
 From 91edffd89114bbe35242fa3f2e71283b03672958 Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <git@xen0n.name>
 Date: Tue, 28 Sep 2021 21:29:56 +0800
-Subject: [PATCH 6/6] fix unrecognized -march option
+Subject: [PATCH 6/7] fix unrecognized -march option
 
 ---
  conf/Makefile.common | 4 ++--
