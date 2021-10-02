@@ -15,6 +15,10 @@ RESTRICT="!test? ( test )"
 
 DEPEND="test? ( sys-process/time )"
 
+PATCHES=(
+	"${FILESDIR}/0001-Add-LoongArch-support.patch"
+)
+
 src_configure() {
 	local myeconfargs=(
 		--enable-shared
