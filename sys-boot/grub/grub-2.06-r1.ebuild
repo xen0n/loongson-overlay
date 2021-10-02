@@ -20,6 +20,9 @@ if [[ ${PV} == 9999  ]]; then
 	GRUB_BOOTSTRAP=1
 fi
 
+# don't want to manually touch so many files any more
+GRUB_AUTOGEN=1
+
 GRUB_AUTORECONF=1
 PYTHON_COMPAT=( python{2_7,3_{6,7,8,9}} )
 WANT_LIBTOOL=none
