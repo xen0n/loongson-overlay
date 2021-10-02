@@ -3,6 +3,8 @@
 
 EAPI=7
 
+inherit autotools
+
 DESCRIPTION="userspace RCU (read-copy-update) library"
 HOMEPAGE="https://liburcu.org/"
 SRC_URI="https://lttng.org/files/urcu/${P}.tar.bz2"
@@ -18,6 +20,12 @@ DEPEND="test? ( sys-process/time )"
 PATCHES=(
 	"${FILESDIR}/0001-Add-LoongArch-support.patch"
 )
+
+src_prepare() {
+	default
+	# LoongArch support touched build system files
+	eautoreconf
+}
 
 src_configure() {
 	local myeconfargs=(
