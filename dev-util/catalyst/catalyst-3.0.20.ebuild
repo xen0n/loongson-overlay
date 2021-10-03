@@ -61,6 +61,7 @@ PDEPEND="system-bootloader? ( >=sys-apps/memtest86+-5.01-r4
 PATCHES=(
 	"${FILESDIR}"/0001-add-support-for-ARCH-loong.patch
 	"${FILESDIR}"/0002-targets-add-support-for-building-LoongArch-LiveCDs.patch
+	"${FILESDIR}"/0003-functions.sh-use-normal-bzip2-instead-of-lbzip2-whic.patch
 )
 
 python_prepare_all() {

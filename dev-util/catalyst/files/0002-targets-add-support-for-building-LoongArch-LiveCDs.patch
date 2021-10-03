@@ -1,7 +1,7 @@
 From 0b1e1ae407d5936f010364485f65a777839ebdf7 Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <git@xen0n.name>
 Date: Sun, 3 Oct 2021 11:44:46 +0800
-Subject: [PATCH 2/2] targets: add support for building LoongArch LiveCDs
+Subject: [PATCH 2/3] targets: add support for building LoongArch LiveCDs
 
 ---
  targets/support/bootloader-setup.sh | 2 +-
