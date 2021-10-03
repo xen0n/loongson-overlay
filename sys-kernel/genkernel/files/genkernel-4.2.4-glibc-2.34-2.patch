@@ -1,0 +1,26 @@
+From 5e37a3be6a72489ba037a89660bff989a4f8e6e4 Mon Sep 17 00:00:00 2001
+From: WANG Xuerui <git@xen0n.name>
+Date: Sun, 3 Oct 2021 14:57:06 +0800
+Subject: [PATCH 3/3] gen_initramfs.sh: don't install libnss_dns.so on glibc
+ 2.34+
+
+---
+ gen_initramfs.sh | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/gen_initramfs.sh b/gen_initramfs.sh
+index 56d6a03..0423571 100755
+--- a/gen_initramfs.sh
++++ b/gen_initramfs.sh
+@@ -559,7 +559,7 @@ append_busybox() {
+ 	done
+ 
+ 	# allow for DNS resolution
+-	if isTrue "$(is_glibc)"
++	if isTrue "$(is_glibc)" && ! isTrue "$(is_glibc_2_34_or_later)"
+ 	then
+ 		local libdir=$(get_chost_libdir)
+ 		mkdir -p "${TDIR}"/lib || gen_die "Failed to create '${TDIR}/lib'!"
+-- 
+2.33.0
+

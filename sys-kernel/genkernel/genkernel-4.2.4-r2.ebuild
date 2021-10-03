@@ -129,6 +129,8 @@ PATCHES=(
 	"${FILESDIR}"/${P}-fix-dropbear-depend.patch
 	"${FILESDIR}"/${P}-modprobe-d-fix.patch
 	"${FILESDIR}"/${P}-loongarch.patch
+	"${FILESDIR}"/${P}-glibc-2.34-1.patch
+	"${FILESDIR}"/${P}-glibc-2.34-2.patch
 )
 
 src_unpack() {
