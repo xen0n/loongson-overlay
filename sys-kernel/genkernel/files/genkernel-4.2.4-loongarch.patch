@@ -1,17 +1,19 @@
-From 4a1e23585340a38d780634d6e9140b91f14e9100 Mon Sep 17 00:00:00 2001
+From 94c1d96db4cf5080e046604071fba4f4137c49ac Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <git@xen0n.name>
 Date: Sun, 3 Oct 2021 12:54:36 +0800
 Subject: [PATCH] Add LoongArch support
 
 ---
- arch/loongarch64/arch-config  | 724 ++++++++++++++++++++++++++++++++++
- arch/loongarch64/config.sh    |   6 +
- arch/loongarch64/modules_load |   2 +
- gen_arch.sh                   |   3 +
- 4 files changed, 735 insertions(+)
+ arch/loongarch64/arch-config                  | 724 ++++++++++++++++++
+ arch/loongarch64/config.sh                    |   6 +
+ arch/loongarch64/modules_load                 |   2 +
+ gen_arch.sh                                   |   3 +
+ ...1-Add-symbol-version-for-loongarch64.patch |  24 +
+ 5 files changed, 759 insertions(+)
  create mode 100644 arch/loongarch64/arch-config
  create mode 100644 arch/loongarch64/config.sh
  create mode 100644 arch/loongarch64/modules_load
+ create mode 100644 patches/libxcrypt/4.4.23/0001-Add-symbol-version-for-loongarch64.patch
 
 diff --git a/arch/loongarch64/arch-config b/arch/loongarch64/arch-config
 new file mode 100644
@@ -777,6 +779,36 @@ index 6da31aa..2cba192 100755
  		parisc|parisc64)
  			KERNEL_ARCH=parisc
  			;;
+diff --git a/patches/libxcrypt/4.4.23/0001-Add-symbol-version-for-loongarch64.patch b/patches/libxcrypt/4.4.23/0001-Add-symbol-version-for-loongarch64.patch
+new file mode 100644
+index 0000000..cf4bc65
+--- /dev/null
++++ b/patches/libxcrypt/4.4.23/0001-Add-symbol-version-for-loongarch64.patch
+@@ -0,0 +1,24 @@
++From 794fc24345e2868faf78cc3ee8dc8192e642f972 Mon Sep 17 00:00:00 2001
++From: WANG Xuerui <git@xen0n.name>
++Date: Mon, 9 Aug 2021 18:48:52 +0800
++Subject: [PATCH] Add symbol version for loongarch64
++
++---
++ lib/libcrypt.minver | 1 +
++ 1 file changed, 1 insertion(+)
++
++diff --git a/lib/libcrypt.minver b/lib/libcrypt.minver
++index 445b946..952f0ef 100644
++--- a/lib/libcrypt.minver
+++++ b/lib/libcrypt.minver
++@@ -59,6 +59,7 @@ GLIBC_2.3    kfreebsd.*gnu   i[3-9]86
++ ERROR        kfreebsd.*gnu   .
++ 
++ # Linux with GNU libc
+++GLIBC_2.33   linux.*gnu      loongarch64
++ GLIBC_2.33   linux.*gnu      riscv32
++ GLIBC_2.32   linux.*gnu      arc
++ GLIBC_2.29   linux.*gnu      csky
++-- 
++2.30.1
++
 -- 
 2.33.0
 
