@@ -40,6 +40,12 @@ RDEPEND="
 	kernel_FreeBSD? ( app-arch/libarchive[xattr] )
 	amd64? ( >=sys-boot/syslinux-3.72 )
 	x86? ( >=sys-boot/syslinux-3.72 )
+	loong? (
+		iso? (
+			dev-libs/libisoburn
+			sys-fs/mtools
+		)
+	)
 	ccache? ( dev-util/ccache )
 	iso? ( app-cdr/cdrtools )
 	kernel_linux? ( app-misc/zisofs-tools >=sys-fs/squashfs-tools-2.1 )
@@ -47,12 +53,14 @@ RDEPEND="
 PDEPEND="system-bootloader? ( >=sys-apps/memtest86+-5.01-r4
 				sys-boot/grub:2
 				amd64? ( sys-boot/grub[grub_platforms_efi-32,grub_platforms_efi-64] )
+				loong? ( sys-boot/grub[grub_platforms_efi-64] )
 				x86? ( sys-boot/grub[grub_platforms_efi-32] )
 				sys-boot/syslinux
 				sys-boot/shim )"
 
 PATCHES=(
 	"${FILESDIR}"/0001-add-support-for-ARCH-loong.patch
+	"${FILESDIR}"/0002-targets-add-support-for-building-LoongArch-LiveCDs.patch
 )
 
 python_prepare_all() {
