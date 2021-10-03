@@ -19,7 +19,7 @@ detect_arch
 inherit git-r3
 EGIT_REPO_URI="https://github.com/xen0n/linux.git -> loongarch-linux.git"
 EGIT_BRANCH="loongarch-playground-v${PR##r}"
-EGIT_CHECKOUT_DIR="${WORKDIR}/linux-loongarch-${PV}"
+EGIT_CHECKOUT_DIR="${WORKDIR}/linux-${PV}"
 EGIT_CLONE_TYPE="shallow"
 
 DESCRIPTION="The loongarch-next version of the Linux kernel, with minimal xen0n patches"
