@@ -1,7 +1,7 @@
 From 41977d81ce45346410d9384844cee251b3eec0ef Mon Sep 17 00:00:00 2001
 From: Sun Haiyong <sunhaiyong@loongson.cn>
 Date: Tue, 10 Aug 2021 15:11:56 +0000
-Subject: [PATCH 2/7] Modify the li instruction to li.w to cooperate with the
+Subject: [PATCH 2/8] Modify the li instruction to li.w to cooperate with the
  open source gcc-12 for LoongArch64.
 
 ---

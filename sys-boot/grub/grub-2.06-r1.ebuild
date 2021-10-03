@@ -67,6 +67,7 @@ PATCHES=(
 	"${FILESDIR}"/loongarch-2.06/0005-remove-gnulib-patch.patch
 	"${FILESDIR}"/loongarch-2.06/0006-fix-unrecognized-march-option.patch
 	"${FILESDIR}"/loongarch-2.06/0007-initrd-0xXXXXXXXXXXXXXXXX-0xXXXXXXXXXXXXXXXX.patch
+	"${FILESDIR}"/loongarch-2.06/0008-add-LoongArch-support-to-grub-mkrescue.patch
 )
 
 DEJAVU=dejavu-sans-ttf-2.37
