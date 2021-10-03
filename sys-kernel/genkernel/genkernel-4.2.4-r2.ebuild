@@ -128,6 +128,7 @@ fi
 PATCHES=(
 	"${FILESDIR}"/${P}-fix-dropbear-depend.patch
 	"${FILESDIR}"/${P}-modprobe-d-fix.patch
+	"${FILESDIR}"/${P}-loongarch.patch
 )
 
 src_unpack() {
