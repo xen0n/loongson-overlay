@@ -1,3 +1,5 @@
+# we're targeting at least 6.2 (in development as of 2021/10)
+=app-emulation/qemu-9999 **
 <app-emulation/spice-9999 **
 <app-emulation/spice-protocol-9999 **
 <dev-lang/orc-9999 **

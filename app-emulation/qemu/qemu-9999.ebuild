@@ -6,10 +6,10 @@ EAPI="7"
 PYTHON_COMPAT=( python3_{7,8,9,10} )
 PYTHON_REQ_USE="ncurses,readline"
 
-FIRMWARE_ABI_VERSION="6.0.0-r50"
+FIRMWARE_ABI_VERSION="6.1.0"
 
-inherit eutils linux-info toolchain-funcs multilib python-r1
-inherit udev fcaps readme.gentoo-r1 pax-utils xdg-utils
+inherit linux-info toolchain-funcs python-r1 udev fcaps readme.gentoo-r1 \
+		pax-utils xdg-utils
 
 if [[ ${PV} = *9999* ]]; then
 	EGIT_REPO_URI="https://git.qemu.org/git/qemu.git"
@@ -39,7 +39,7 @@ IUSE="accessibility +aio alsa bzip2 capstone +caps +curl debug +doc
 	ncurses nfs nls numa opengl +oss +pin-upstream-blobs
 	plugins +png pulseaudio python rbd sasl +seccomp sdl sdl-image selinux
 	+slirp
-	smartcard snappy spice ssh static static-user systemtap tci test udev usb
+	smartcard snappy spice ssh static static-user systemtap test udev usb
 	usbredir vde +vhost-net vhost-user-fs virgl virtfs +vnc vte xattr xen
 	xfs zstd"
 
@@ -75,11 +75,8 @@ COMMON_TARGETS="
 IUSE_SOFTMMU_TARGETS="
 	${COMMON_TARGETS}
 	avr
-	lm32
-	moxie
 	rx
 	tricore
-	unicore32
 "
 IUSE_USER_TARGETS="
 	${COMMON_TARGETS}
@@ -243,7 +240,10 @@ BDEPEND="
 	dev-lang/perl
 	sys-apps/texinfo
 	virtual/pkgconfig
-	doc? ( dev-python/sphinx )
+	doc? (
+		dev-python/sphinx
+		dev-python/sphinx_rtd_theme
+	)
 	gtk? ( nls? ( sys-devel/gettext ) )
 	test? (
 		dev-libs/glib[utils]
@@ -273,11 +273,40 @@ RDEPEND="${CDEPEND}
 
 PATCHES=(
 	"${FILESDIR}"/${PN}-2.11.1-capstone_include_path.patch
-	"${FILESDIR}"/${PN}-5.2.0-strings.patch
-	"${FILESDIR}"/${PN}-5.2.0-cleaner-werror.patch
 	"${FILESDIR}"/${PN}-5.2.0-disable-keymap.patch
-	"${FILESDIR}"/${PN}-5.2.0-dce-locks.patch
 	"${FILESDIR}"/${PN}-6.0.0-make.patch
+	"${FILESDIR}"/${PN}-6.1.0-strings.patch
+
+	"${FILESDIR}"/loongarch/v6-0001-elf-Add-machine-type-value-for-LoongArch.patch
+	"${FILESDIR}"/loongarch/v6-0002-MAINTAINERS-Add-tcg-loongarch64-entry-with-myself.patch
+	"${FILESDIR}"/loongarch/v6-0003-tcg-loongarch64-Add-the-tcg-target.h-file.patch
+	"${FILESDIR}"/loongarch/v6-0004-tcg-loongarch64-Add-generated-instruction-opcodes.patch
+	"${FILESDIR}"/loongarch/v6-0005-tcg-loongarch64-Add-register-names-allocation-ord.patch
+	"${FILESDIR}"/loongarch/v6-0006-tcg-loongarch64-Define-the-operand-constraints.patch
+	"${FILESDIR}"/loongarch/v6-0007-tcg-loongarch64-Implement-necessary-relocation-op.patch
+	"${FILESDIR}"/loongarch/v6-0008-tcg-loongarch64-Implement-the-memory-barrier-op.patch
+	"${FILESDIR}"/loongarch/v6-0009-tcg-loongarch64-Implement-tcg_out_mov-and-tcg_out.patch
+	"${FILESDIR}"/loongarch/v6-0010-tcg-loongarch64-Implement-goto_ptr.patch
+	"${FILESDIR}"/loongarch/v6-0011-tcg-loongarch64-Implement-sign-zero-extension-ops.patch
+	"${FILESDIR}"/loongarch/v6-0012-tcg-loongarch64-Implement-not-and-or-xor-nor-andc.patch
+	"${FILESDIR}"/loongarch/v6-0013-tcg-loongarch64-Implement-deposit-extract-ops.patch
+	"${FILESDIR}"/loongarch/v6-0014-tcg-loongarch64-Implement-bswap-16-32-64-ops.patch
+	"${FILESDIR}"/loongarch/v6-0015-tcg-loongarch64-Implement-clz-ctz-ops.patch
+	"${FILESDIR}"/loongarch/v6-0016-tcg-loongarch64-Implement-shl-shr-sar-rotl-rotr-o.patch
+	"${FILESDIR}"/loongarch/v6-0017-tcg-loongarch64-Implement-add-sub-ops.patch
+	"${FILESDIR}"/loongarch/v6-0018-tcg-loongarch64-Implement-mul-mulsh-muluh-div-div.patch
+	"${FILESDIR}"/loongarch/v6-0019-tcg-loongarch64-Implement-br-brcond-ops.patch
+	"${FILESDIR}"/loongarch/v6-0020-tcg-loongarch64-Implement-setcond-ops.patch
+	"${FILESDIR}"/loongarch/v6-0021-tcg-loongarch64-Implement-tcg_out_call.patch
+	"${FILESDIR}"/loongarch/v6-0022-tcg-loongarch64-Implement-simple-load-store-ops.patch
+	"${FILESDIR}"/loongarch/v6-0023-tcg-loongarch64-Add-softmmu-load-store-helpers-im.patch
+	"${FILESDIR}"/loongarch/v6-0024-tcg-loongarch64-Implement-tcg_target_qemu_prologu.patch
+	"${FILESDIR}"/loongarch/v6-0025-tcg-loongarch64-Implement-exit_tb-goto_tb.patch
+	"${FILESDIR}"/loongarch/v6-0026-tcg-loongarch64-Implement-tcg_target_init.patch
+	"${FILESDIR}"/loongarch/v6-0027-tcg-loongarch64-Register-the-JIT.patch
+	"${FILESDIR}"/loongarch/v6-0028-linux-user-Add-safe-syscall-handling-for-loongarc.patch
+	"${FILESDIR}"/loongarch/v6-0029-accel-tcg-user-exec-Implement-CPU-specific-signal.patch
+	"${FILESDIR}"/loongarch/v6-0030-configure-meson.build-Mark-support-for-loongarch6.patch
 )
 
 QA_PREBUILT="
@@ -390,7 +419,7 @@ check_targets() {
 	local var=$1 mak=$2
 	local detected sorted
 
-	pushd "${S}"/default-configs/targets/ >/dev/null || die
+	pushd "${S}"/configs/targets/ >/dev/null || die
 
 	# Force C locale until glibc is updated. #564936
 	detected=$(echo $(printf '%s\n' *-${mak}.mak | sed "s:-${mak}.mak::" | LC_COLLATE=C sort -u))
@@ -447,6 +476,16 @@ qemu_src_configure() {
 		--disable-containers # bug #732972
 		--disable-guest-agent
 		--disable-strip
+
+		# bug #746752: TCG interpreter has a few limitations:
+		# - it does not support FPU
+		# - it's generally slower on non-self-modifying code
+		# It's advantage is support for host architectures
+		# where native codegeneration is not implemented.
+		# Gentoo has qemu keyworded only on targets with
+		# native code generation available. Avoid the interpreter.
+		--disable-tcg-interpreter
+
 		--disable-werror
 		# We support gnutls/nettle for crypto operations.  It is possible
 		# to use gcrypt when gnutls/nettle are disabled (but not when they
@@ -462,7 +501,6 @@ qemu_src_configure() {
 		$(use_enable doc docs)
 		$(use_enable nls gettext)
 		$(use_enable plugins)
-		$(use_enable tci tcg-interpreter)
 		$(use_enable xattr attr)
 	)
 

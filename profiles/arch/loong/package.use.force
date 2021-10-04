@@ -4,6 +4,3 @@
 
 # gcc-12 is live ebuild, hence requiring this
 dev-vcs/git curl
-
-# QEMU has no native TCG port yet
-app-emulation/qemu tci
