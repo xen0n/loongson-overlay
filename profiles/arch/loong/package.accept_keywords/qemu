@@ -22,6 +22,7 @@
 <dev-python/sphinxcontrib-jsmath-9999 **
 <dev-python/sphinxcontrib-qthelp-9999 **
 <dev-python/sphinxcontrib-serializinghtml-9999 **
+<dev-python/sphinx_rtd_theme-9999 **
 <media-libs/alsa-lib-9999 **
 <media-libs/alsa-topology-conf-9999 **
 <media-libs/alsa-ucm-conf-9999 **
