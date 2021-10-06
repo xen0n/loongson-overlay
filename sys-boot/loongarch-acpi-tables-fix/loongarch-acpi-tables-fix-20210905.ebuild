@@ -13,9 +13,13 @@ SRC_URI="https://github.com/sunhaiyong1978/CLFS-for-LoongArch/releases/download/
 RESTRICT="mirror"
 KEYWORDS="~loong"
 
-IUSE="+initrd"
+IUSE="+dracut +initrd"
 
-RDEPEND=""
+RDEPEND="
+	dracut? (
+		sys-kernel/dracut
+	)
+"
 DEPEND=""
 BDEPEND="
 	initrd? (
@@ -41,11 +45,16 @@ src_compile() {
 }
 
 src_install() {
-	dodir /opt/loongarch-acpi-tables-fix
-	cp "${S}"/kernel/firmware/acpi/* "${D}"/opt/loongarch-acpi-tables-fix/
+	insinto /opt/loongarch-acpi-tables-fix
+	doins kernel/firmware/acpi/*
+
+	if use dracut; then
+		insinto /etc/dracut.conf.d
+		doins "${FILESDIR}"/10-loongarch-acpi-tables-fix.conf
+	fi
 
 	if use initrd; then
-		dodir /boot
-		cp "${WORKDIR}"/loongarch-acpi-initrd.img "${D}"/boot/
+		insinto /boot
+		doins "${WORKDIR}"/loongarch-acpi-initrd.img
 	fi
 }
