@@ -1,4 +1,4 @@
-From 853b1ac497ffef0d7ea24a212301059b5b107d0a Mon Sep 17 00:00:00 2001
+From 9227ba1cdbed9d2554f2aa8ae0851c931d661bfa Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <git@xen0n.name>
 Date: Wed, 6 Oct 2021 20:17:12 +0800
 Subject: [PATCH 4/5] refine LoongArch bootloader setup
@@ -78,7 +78,7 @@ index 4a9a0e4a..dedd1927 100755
  		# detect if an EFI bootloader is desired
  		if 	[ -d "${clst_target_path}/boot/efi" ] || \
 diff --git a/targets/support/functions.sh b/targets/support/functions.sh
-index 0727adb4..2f212df6 100755
+index 0727adb4..c207cf8a 100755
 --- a/targets/support/functions.sh
 +++ b/targets/support/functions.sh
 @@ -125,6 +125,39 @@ create_bootloader() {
@@ -110,7 +110,7 @@ index 0727adb4..2f212df6 100755
 +    --compress=xz \
 +    --modules='fat ext2' \
 +    -O loongarch64-efi \
-+    -o ./EFI/BOOT/BOOTLOONGARCH.EFI
++    -o ./EFI/BOOT/BOOTLOONGARCH.EFI \
 +    --themes= || die "Failed to make BOOTLOONGARCH.EFI"
 +  # loong has no secure boot shim support yet
 +

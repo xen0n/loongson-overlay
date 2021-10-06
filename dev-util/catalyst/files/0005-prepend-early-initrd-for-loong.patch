@@ -1,4 +1,4 @@
-From 737a40209ae62d106730e89c0978a0f467489a49 Mon Sep 17 00:00:00 2001
+From f68cd6cbea0130c24f7646049b596f2e9916278b Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <git@xen0n.name>
 Date: Thu, 7 Oct 2021 00:46:46 +0800
 Subject: [PATCH 5/5] prepend early initrd for loong
