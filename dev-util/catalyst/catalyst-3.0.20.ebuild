@@ -62,6 +62,7 @@ PATCHES=(
 	"${FILESDIR}"/0001-add-support-for-ARCH-loong.patch
 	"${FILESDIR}"/0002-targets-add-support-for-building-LoongArch-LiveCDs.patch
 	"${FILESDIR}"/0003-functions.sh-use-normal-bzip2-instead-of-lbzip2-whic.patch
+	"${FILESDIR}"/0004-refine-LoongArch-bootloader-setup.patch
 )
 
 python_prepare_all() {
