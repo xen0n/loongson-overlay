@@ -43,7 +43,7 @@ RDEPEND="
 	loong? (
 		iso? (
 			dev-libs/libisoburn
-			sys-boot/loongarch-acpi-tables-fix
+			sys-boot/loongarch-acpi-tables-fix[initrd]
 			sys-fs/mtools
 		)
 	)
@@ -64,6 +64,7 @@ PATCHES=(
 	"${FILESDIR}"/0002-targets-add-support-for-building-LoongArch-LiveCDs.patch
 	"${FILESDIR}"/0003-functions.sh-use-normal-bzip2-instead-of-lbzip2-whic.patch
 	"${FILESDIR}"/0004-refine-LoongArch-bootloader-setup.patch
+	"${FILESDIR}"/0005-prepend-early-initrd-for-loong.patch
 )
 
 python_prepare_all() {

@@ -1,7 +1,7 @@
 From 853b1ac497ffef0d7ea24a212301059b5b107d0a Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <git@xen0n.name>
 Date: Wed, 6 Oct 2021 20:17:12 +0800
-Subject: [PATCH 4/4] refine LoongArch bootloader setup
+Subject: [PATCH 4/5] refine LoongArch bootloader setup
 
 ---
  targets/support/bootloader-setup.sh |  3 +++

@@ -1,7 +1,7 @@
 From 2fd8dad1fe5f477449b4e92c2234bac040abcc3c Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <git@xen0n.name>
 Date: Sun, 3 Oct 2021 15:49:09 +0800
-Subject: [PATCH 3/4] functions.sh: use normal bzip2 instead of lbzip2 which is
+Subject: [PATCH 3/5] functions.sh: use normal bzip2 instead of lbzip2 which is
  broken on loong
 
 ---
