@@ -13,6 +13,7 @@ PATCH_VER="20211008"
 SRC_URI="
 	${KERNEL_URI}
 	${PATCH_VER:+http://loongson-pub-gz.qnbkt.xen0n.name/loongarch-headers-${PATCH_PV}-${PATCH_VER}.tar.xz}"
+RESTRICT="mirror"
 S="${WORKDIR}/linux-${PV}"
 
 # This is for testing the LoongArch port only.
