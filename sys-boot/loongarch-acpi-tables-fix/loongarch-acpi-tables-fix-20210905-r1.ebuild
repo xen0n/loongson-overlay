@@ -13,18 +13,12 @@ SRC_URI="https://github.com/sunhaiyong1978/CLFS-for-LoongArch/releases/download/
 RESTRICT="mirror"
 KEYWORDS="~loong"
 
-IUSE="+dracut +initrd"
+IUSE=""
 
-RDEPEND="
-	dracut? (
-		sys-kernel/dracut
-	)
-"
+RDEPEND=""
 DEPEND=""
 BDEPEND="
-	initrd? (
-		app-arch/cpio
-	)
+	app-arch/cpio
 "
 
 S="${WORKDIR}/acpi-update-${PV}"
@@ -37,24 +31,18 @@ src_prepare() {
 }
 
 src_compile() {
-	if use initrd; then
-		find . -print0 | \
-			sort -z | \
-			cpio --reproducible --null -R '0:0' -H newc -o --quiet > "${WORKDIR}"/loongarch-acpi-initrd.img
-	fi
+	find . -print0 | \
+		sort -z | \
+		cpio --reproducible --null -R '0:0' -H newc -o --quiet > "${WORKDIR}"/loongarch-acpi-initrd.img
 }
 
 src_install() {
 	insinto /opt/loongarch-acpi-tables-fix
 	doins kernel/firmware/acpi/*
 
-	if use dracut; then
-		insinto /etc/dracut.conf.d
-		doins "${FILESDIR}"/10-loongarch-acpi-tables-fix.conf
-	fi
+	insinto /etc/dracut.conf.d
+	doins "${FILESDIR}"/10-loongarch-acpi-tables-fix.conf
 
-	if use initrd; then
-		insinto /boot
-		doins "${WORKDIR}"/loongarch-acpi-initrd.img
-	fi
+	insinto /boot
+	doins "${WORKDIR}"/loongarch-acpi-initrd.img
 }
