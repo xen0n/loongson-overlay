@@ -1,4 +1,4 @@
-# Copyright 1999-2021 Gentoo Authors
+# Copyright 2021 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -34,11 +34,9 @@ src_prepare() {
 }
 
 src_configure() {
-	local myeconfargs=(
-		$(use_enable fuse)
-		$(use_enable lz4)
-		$(use_with selinux)
+	econf \
+		$(use_enable fuse) \
+		$(use_enable lz4) \
+		$(use_with selinux) \
 		$(use_with uuid)
-	)
-	econf "${myeconfargs[@]}"
 }
