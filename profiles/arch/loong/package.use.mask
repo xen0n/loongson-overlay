@@ -22,3 +22,8 @@ dev-libs/libpcre2 jit
 dev-libs/libpcre jit
 <dev-vcs/git-2.31.0 pcre-jit
 www-servers/nginx pcre-jit
+
+# end riscv snippet
+
+# Mask io-uring & zbc pending keywording
+sys-block/fio -io-uring -zbc
