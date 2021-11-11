@@ -9,7 +9,7 @@ inherit kernel-2 toolchain-funcs
 detect_version
 
 PATCH_PV=${PV} # to ease testing new versions against not existing patches
-PATCH_VER="20211008"
+PATCH_VER="20211111"
 SRC_URI="
 	${KERNEL_URI}
 	${PATCH_VER:+http://loongson-pub-gz.qnbkt.xen0n.name/loongarch-headers-${PATCH_PV}-${PATCH_VER}.tar.xz}"
