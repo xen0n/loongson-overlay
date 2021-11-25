@@ -261,6 +261,18 @@ index f3d66b8e8b6..ff11adb0f70 100644
  
  # The mips instruction table specification lexical analyzer and parser.
  
+diff --git a/gas/NEWS b/gas/NEWS
+index de4c61b320d..09fade54087 100644
+--- a/gas/NEWS
++++ b/gas/NEWS
+@@ -1,5 +1,7 @@
+ -*- text -*-
+ 
++* Add support for the LoongArch instruction set.
++
+ * Add a command-line option, -muse-unaligned-vector-move, for x86 target
+   to encode aligned vector move as unaligned vector move.
+ 
 diff --git a/gas/config/loongarch-lex-wrapper.c b/gas/config/loongarch-lex-wrapper.c
 new file mode 100644
 index 00000000000..b3d290dc9fe
