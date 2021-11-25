@@ -1,0 +1,73 @@
+From 142c663124c17aa8886bc641eeee44d16837145b Mon Sep 17 00:00:00 2001
+From: liuzhensong <liuzhensong@loongson.cn>
+Date: Fri, 13 Aug 2021 09:50:24 +0800
+Subject: [PATCH 01/11] gdb: LoongArch GDB Port.
+
+  gdb/Makefile.in
+  gdb/arch/loongarch-linux-nat.c
+  gdb/arch/loongarch-linux-nat.h
+  gdb/arch/loongarch.c
+  gdb/arch/loongarch.h
+  gdb/configure.host
+  gdb/configure.nat
+  gdb/configure.tgt
+  gdb/corelow.c
+  gdb/features/Makefile
+  gdb/features/loongarch/base32.c
+  gdb/features/loongarch/base32.xml
+  gdb/features/loongarch/base64.c
+  gdb/features/loongarch/base64.xml
+  gdb/features/loongarch/fpu32.c
+  gdb/features/loongarch/fpu32.xml
+  gdb/features/loongarch/fpu64.c
+  gdb/features/loongarch/fpu64.xml
+  gdb/features/loongarch/lasx.c
+  gdb/features/loongarch/lasx.xml
+  gdb/features/loongarch/lbt32.c
+  gdb/features/loongarch/lbt32.xml
+  gdb/features/loongarch/lbt64.c
+  gdb/features/loongarch/lbt64.xml
+  gdb/features/loongarch/lsx.c
+  gdb/features/loongarch/lsx.xml
+  gdb/loongarch-linux-nat.c
+  gdb/loongarch-linux-tdep.c
+  gdb/loongarch-linux-tdep.h
+  gdb/loongarch-tdep.c
+  gdb/loongarch-tdep.h
+  gdb/nat/loongarch-linux-watch.c
+  gdb/nat/loongarch-linux-watch.h
+  gdb/remote.c
+  gdb/target.h
+  gdb/testsuite/gdb.base/dump.exp
+  gdb/testsuite/gdb.base/float.exp
+  gdb/testsuite/gdb.trace/entry-values.exp
+  gdb/testsuite/gdb.xml/tdesc-regs.exp
+  include/elf/common.h
+---
+ include/elf/common.h | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/include/elf/common.h b/include/elf/common.h
+index 95ade894e98..52ffce0c169 100644
+--- a/include/elf/common.h
++++ b/include/elf/common.h
+@@ -687,6 +687,16 @@
+ #define NT_ARC_V2	0x600		/* ARC HS accumulator/extra registers.  */
+ 					/*   note name must be "LINUX".  */
+ #define NT_RISCV_CSR    0x900		/* RISC-V Control and Status Registers */
++					/*   note name must be "LINUX".  */
++#define NT_LARCH_CPUCFG 0xa00		/* LoongArch CPU config registers */
++					/*   note name must be "LINUX".  */
++#define NT_LARCH_CSR    0xa01		/* LoongArch control state registers */
++					/*   note name must be "LINUX".  */
++#define NT_LARCH_LSX    0xa02		/* LoongArch Loongson SIMD Extension registers */
++					/*   note name must be "LINUX".  */
++#define NT_LARCH_LASX   0xa03		/* LoongArch Loongson Advanced SIMD Extension registers */
++					/*   note name must be "LINUX".  */
++#define NT_LARCH_LBT    0xa04		/* LoongArch Loongson Binary Translation registers */
+ 					/*   note name must be "CORE".  */
+ #define NT_SIGINFO	0x53494749	/* Fields of siginfo_t.  */
+ #define NT_FILE		0x46494c45	/* Description of mapped files.  */
+-- 
+2.33.0
+
