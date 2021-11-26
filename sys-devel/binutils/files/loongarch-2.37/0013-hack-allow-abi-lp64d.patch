@@ -1,0 +1,13 @@
+diff --git a/gas/config/tc-loongarch.c b/gas/config/tc-loongarch.c
+index f7235a18864..e0d30b57f7c 100644
+--- a/gas/config/tc-loongarch.c
++++ b/gas/config/tc-loongarch.c
+@@ -142,7 +142,7 @@ md_parse_option (int c, const char *arg)
+   switch (c)
+     {
+     case OPTION_ABI:
+-      if (strcasecmp (arg, "lp64") == 0)
++      if (strcasecmp (arg, "lp64") == 0 || strcasecmp (arg, "lp64d") == 0)
+ 	{
+ 	  LARCH_opts.ase_abi |= EF_LOONGARCH_ABI_LP64;
+ 	  LARCH_opts.ase_ilp32 = 1;
