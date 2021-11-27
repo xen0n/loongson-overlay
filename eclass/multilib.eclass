@@ -369,7 +369,7 @@ multilib_env() {
 			esac
 		;;
 		loongarch64*)
-			export CFLAGS_lp64d=${CFLAGS_lp64d-}
+			export CFLAGS_lp64d=${CFLAGS_lp64d--mabi=lp64d}
 			export CHOST_lp64d=${CTARGET}
 			export CTARGET_lp64d=${CTARGET}
 			export LIBDIR_lp64d=${LIBDIR_lp64d-lib64}
