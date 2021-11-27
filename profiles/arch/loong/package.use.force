@@ -1,6 +1,6 @@
 # missing libpthread.a has caused many troubles, include them for now
 # TODO: properly fix later
->=sys-libs/glibc-2.34 static-libc
+>=sys-libs/glibc-2.34 static-libs
 
 # gcc-12 is live ebuild, hence requiring this
 dev-vcs/git curl
