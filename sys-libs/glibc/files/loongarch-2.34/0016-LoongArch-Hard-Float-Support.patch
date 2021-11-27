@@ -1,7 +1,7 @@
-From 6c75f4f1be06ed0de207848d8e3c1d7c99557de7 Mon Sep 17 00:00:00 2001
+From 09b615eb2ed5f29ebf04443cdeb8960ddb72114a Mon Sep 17 00:00:00 2001
 From: caiyinyu <caiyinyu@loongson.cn>
 Date: Tue, 27 Jul 2021 16:15:06 +0800
-Subject: [PATCH 16/24] LoongArch: Hard Float Support
+Subject: [PATCH 16/46] LoongArch: Hard Float Support
 
 This patch contains hardware floating-point support for the LoongArch ISA.
 
@@ -2627,5 +2627,5 @@ index 0000000000..9463f653d0
 +
 +#endif
 -- 
-2.33.0
+2.34.0
 

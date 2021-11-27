@@ -1,7 +1,7 @@
-From da3a98ad29ff08f0df0f5ab6e45a35c4b1b28fb9 Mon Sep 17 00:00:00 2001
+From e5de01c5e9868f70dc8fa0d26bb5f20607437f90 Mon Sep 17 00:00:00 2001
 From: caiyinyu <caiyinyu@loongson.cn>
 Date: Tue, 27 Jul 2021 15:49:52 +0800
-Subject: [PATCH 11/24] LoongArch: Linux Syscall Interface
+Subject: [PATCH 11/46] LoongArch: Linux Syscall Interface
 
 Contains the Linux system call interface, as well as the definitions of
 a handful of system calls.
@@ -24,14 +24,14 @@ a handful of system calls.
  sysdeps/loongarch/nptl/nptl-sysdep.S          |   2 +
  .../unix/sysv/linux/loongarch/arch-syscall.h  | 296 ++++++++++++++++
  .../unix/sysv/linux/loongarch/bits/signum.h   |  58 ++++
- sysdeps/unix/sysv/linux/loongarch/clone.S     |  92 +++++
+ sysdeps/unix/sysv/linux/loongarch/clone.S     |  91 +++++
  sysdeps/unix/sysv/linux/loongarch/ipc_priv.h  |  22 ++
  .../sysv/linux/loongarch/kernel-features.h    |  23 ++
  sysdeps/unix/sysv/linux/loongarch/syscall.c   |  34 ++
- sysdeps/unix/sysv/linux/loongarch/sysdep.S    |  53 +++
+ sysdeps/unix/sysv/linux/loongarch/sysdep.S    |  52 +++
  sysdeps/unix/sysv/linux/loongarch/sysdep.h    | 320 ++++++++++++++++++
- sysdeps/unix/sysv/linux/loongarch/vfork.S     |  49 +++
- 12 files changed, 993 insertions(+)
+ sysdeps/unix/sysv/linux/loongarch/vfork.S     |  50 +++
+ 12 files changed, 992 insertions(+)
  create mode 100644 sysdeps/loongarch/abort-instr.h
  create mode 100644 sysdeps/loongarch/hp-timing.h
  create mode 100644 sysdeps/loongarch/nptl/nptl-sysdep.S
@@ -55,7 +55,7 @@ index 0000000000..92e22edfea
 +#define ABORT_INSTRUCTION asm("break 0")
 diff --git a/sysdeps/loongarch/hp-timing.h b/sysdeps/loongarch/hp-timing.h
 new file mode 100644
-index 0000000000..4ea64d61a6
+index 0000000000..53d39c090e
 --- /dev/null
 +++ b/sysdeps/loongarch/hp-timing.h
 @@ -0,0 +1,42 @@
@@ -90,7 +90,7 @@ index 0000000000..4ea64d61a6
 +/* We use 64bit values for the times.  */
 +typedef unsigned long long int hp_timing_t;
 +
-+/* Read the stable counter.  */
++/* Read the cp0 count, this maybe inaccurate.  */
 +#define HP_TIMING_NOW(Var) \
 +  ({ \
 +    unsigned long long int _count; \
@@ -477,10 +477,10 @@ index 0000000000..111759778b
 +#endif /* <signal.h> included.  */
 diff --git a/sysdeps/unix/sysv/linux/loongarch/clone.S b/sysdeps/unix/sysv/linux/loongarch/clone.S
 new file mode 100644
-index 0000000000..0b5c467bd6
+index 0000000000..8b4d57b688
 --- /dev/null
 +++ b/sysdeps/unix/sysv/linux/loongarch/clone.S
-@@ -0,0 +1,92 @@
+@@ -0,0 +1,91 @@
 +/* Copyright (C) 2021 Free Software Foundation, Inc.
 +
 +   This file is part of the GNU C Library.
@@ -504,72 +504,71 @@ index 0000000000..0b5c467bd6
 +
 +#include <sys/asm.h>
 +#include <sysdep.h>
-+#define _ERRNO_H  1
++#define _ERRNO_H    1
 +#include <bits/errno.h>
 +#include <tls.h>
 +#include "tcb-offsets.h"
 +
 +/* int clone(int (*fn)(void *arg), void *child_stack, int flags, void *arg,
-+   void *parent_tidptr, void *tls, void *child_tidptr) */
++	     void *parent_tidptr, void *tls, void *child_tidptr) */
 +
 +ENTRY (__clone)
 +
-+	/* Sanity check arguments.  */
-+	beqz		a0, L (invalid) /* No NULL function pointers.  */
-+	beqz		a1, L (invalid) /* No NULL stack pointers.  */
++    /* Sanity check arguments.  */
++    beqz    a0, L (invalid) /* No NULL function pointers.  */
++    beqz    a1, L (invalid) /* No NULL stack pointers.  */
 +
-+	addi.d 		a1, a1, -16 /* Reserve argument save space.  */
-+	st.d		a0, a1, 0   /* Save function pointer.  */
-+	st.d		a3, a1, SZREG   /* Save argument pointer.  */
++    addi.d  a1, a1, -16 /* Reserve argument save space.  */
++    st.d    a0, a1, 0   /* Save function pointer.  */
++    st.d    a3, a1, SZREG   /* Save argument pointer.  */
 +
-+	/* The syscall expects the args to be in different slots.  */
-+	or		a0, a2, zero
-+	or		a2, a4, zero
-+	or		a3, a6, zero
-+	or		a4, a5, zero
++    /* The syscall expects the args to be in different slots.  */
++    or      a0, a2, zero
++    or      a2, a4, zero
++    or      a3, a6, zero
++    or      a4, a5, zero
 +
-+	/* Do the system call.  */
-+	li.d		a7,__NR_clone
-+	syscall		0
++    /* Do the system call.  */
++    li.d    a7,__NR_clone
++    syscall 0
 +
-+	blt		a0, zero ,L (error)
-+	beqz		a0,L (thread_start)
++    blt     a0, zero ,L (error)
++    beqz    a0,L (thread_start)
 +
-+	/* Successful return from the parent.  */
-+	ret
++    /* Successful return from the parent.  */
++    ret
 +
 +L (invalid):
-+	li.d		a0, -EINVAL
-+
-+	/* Something bad happened -- no child created.  */
++    li.d    a0, -EINVAL
++    /* Something bad happened -- no child created.  */
 +L (error):
-+	b		__syscall_error
++    b       __syscall_error
 +
 +END (__clone)
 +
 +/* Load up the arguments to the function.  Put this block of code in
 +   its own function so that we can terminate the stack trace with our
 +   debug info.  */
++
 +ENTRY (__thread_start)
 +L (thread_start):
++    /* Terminate call stack by noting ra is undefined.  Use a dummy
++       .cfi_label to force starting the FDE.  */
++    .cfi_label .Ldummy
++    cfi_undefined (1)
 +
-+/* Terminate call stack by noting ra is undefined.  Use a dummy
-+   .cfi_label to force starting the FDE.  */
-+	.cfi_label .Ldummy
-+	cfi_undefined (1)
++    /* Restore the arg for user's function.  */
++    ld.d    a1, sp, 0   /* Function pointer.  */
++    ld.d    a0, sp, SZREG   /* Argument pointer.  */
 +
-+	/* Restore the arg for user's function.  */
-+	ld.d		a1, sp, 0   /* Function pointer.  */
-+	ld.d		a0, sp, SZREG   /* Argument pointer.  */
++    /* Call the user's function.  */
++    jirl    ra, a1, 0
 +
-+	/* Call the user's function.  */
-+	jirl		ra, a1, 0
++    /* Call exit with the function's return value.  */
++    li.d    a7, __NR_exit
++    syscall 0
 +
-+	/* Call exit with the function's return value.  */
-+	li.d		a7, __NR_exit
-+	syscall		0
-+
-+	END (__thread_start)
++    END (__thread_start)
 +
 +libc_hidden_def (__clone)
 +weak_alias (__clone, clone)
@@ -672,10 +671,10 @@ index 0000000000..3e4a6063aa
 +}
 diff --git a/sysdeps/unix/sysv/linux/loongarch/sysdep.S b/sysdeps/unix/sysv/linux/loongarch/sysdep.S
 new file mode 100644
-index 0000000000..865de9b235
+index 0000000000..ba238db258
 --- /dev/null
 +++ b/sysdeps/unix/sysv/linux/loongarch/sysdep.S
-@@ -0,0 +1,53 @@
+@@ -0,0 +1,52 @@
 +/* syscall error handlers
 +   Copyright (C) 2021 Free Software Foundation, Inc.
 +   This file is part of the GNU C Library.
@@ -701,33 +700,32 @@ index 0000000000..865de9b235
 +#endif
 +
 +ENTRY (__syscall_error)
-+/* Fall through to __syscall_set_errno */
++    /* Fall through to __syscall_set_errno.  */
 +END (__syscall_error)
 +
 +/* Non-standard calling convention: argument in a0, return address in t0,
-+   and clobber only t1.
-+ */
++   and clobber only t1.  */
 +ENTRY (__syscall_set_errno)
++    /* We got here because a0 < 0, but only codes in the range [-4095,-1]
++      represent errors.  Otherwise, just return the result normally.  */
 +
-+/* We got here because a0 < 0, but only codes in the range [-4095, -1]
-+   represent errors.	Otherwise, just return the result normally.
-+ */
-+	li.d		t1, -4096
-+	bgeu		t1, a0, L (out)
-+	sub.w		a0, zero, a0
++    li.d    t1, -4096
++    bgeu    t1, a0, L (out)
++    sub.w   a0, zero, a0
++
 +#if RTLD_PRIVATE_ERRNO
-+	la		t1, rtld_errno
++    la      t1, rtld_errno
 +#elif defined(__PIC__)
-+	la.tls.ie	t1, errno
-+	add.d		t1, tp, t1
++    la.tls.ie   t1, errno
++    add.d   t1, tp, t1
 +#else
-+	la.tls.le	t1, errno
-+	add.d		t1, tp, t1
++    la.tls.le   t1, errno
++    add.d   t1, tp, t1
 +#endif
-+	st.w		a0, t1, 0
-+	li.d		a0, -1
++    st.w    a0, t1, 0
++    li.d    a0, -1
 +L (out):
-+	ret
++    ret
 +END (__syscall_set_errno)
 diff --git a/sysdeps/unix/sysv/linux/loongarch/sysdep.h b/sysdeps/unix/sysv/linux/loongarch/sysdep.h
 new file mode 100644
@@ -1057,10 +1055,10 @@ index 0000000000..5d205d71ea
 +#endif /* linux/loongarch/sysdep.h */
 diff --git a/sysdeps/unix/sysv/linux/loongarch/vfork.S b/sysdeps/unix/sysv/linux/loongarch/vfork.S
 new file mode 100644
-index 0000000000..876b5c1b47
+index 0000000000..43ee24284a
 --- /dev/null
 +++ b/sysdeps/unix/sysv/linux/loongarch/vfork.S
-@@ -0,0 +1,49 @@
+@@ -0,0 +1,50 @@
 +/* Copyright (C) 2021 Free Software Foundation, Inc.
 +
 +   This file is part of the GNU C Library.
@@ -1080,7 +1078,7 @@ index 0000000000..876b5c1b47
 +   <https://www.gnu.org/licenses/>.  */
 +
 +#include <sysdep.h>
-+#define _ERRNO_H  1
++#define _ERRNO_H    1
 +#include <bits/errno.h>
 +
 +/* Clone the calling process, but without copying the whole address space.
@@ -1090,19 +1088,20 @@ index 0000000000..876b5c1b47
 +
 +ENTRY (__vfork)
 +
-+	li.d	a0, 0x4111 /* CLONE_VM | CLONE_VFORK | SIGCHLD */
-+	add.d   a1, zero, sp
 +
-+	/* Do the system call.  */
-+	li.d	a7, __NR_clone
-+	syscall	0
++    li.d    a0, 0x4111 /* CLONE_VM | CLONE_VFORK | SIGCHLD */
++    add.d   a1, zero, sp
 +
-+	blt	a0, zero ,L (error)
++    /* Do the system call.  */
++    li.d    a7, __NR_clone
++    syscall 0
 +
-+	ret
++    blt     a0, zero ,L (error)
++
++    ret
 +
 +L (error):
-+	b	__syscall_error
++    b       __syscall_error
 +
 +END (__vfork)
 +
@@ -1111,5 +1110,5 @@ index 0000000000..876b5c1b47
 +weak_alias (__vfork, vfork)
 +strong_alias (__vfork, __libc_vfork)
 -- 
-2.33.0
+2.34.0
 

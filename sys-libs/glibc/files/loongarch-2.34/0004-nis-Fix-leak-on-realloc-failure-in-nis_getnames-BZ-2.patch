@@ -1,7 +1,7 @@
 From 60698263122b7c54ded3f70a466176e17a529480 Mon Sep 17 00:00:00 2001
 From: Robbie Harwood <rharwood@redhat.com>
 Date: Wed, 28 Jul 2021 14:23:32 -0400
-Subject: [PATCH 04/24] nis: Fix leak on realloc failure in nis_getnames [BZ
+Subject: [PATCH 04/46] nis: Fix leak on realloc failure in nis_getnames [BZ
  #28150]
 
 If pos >= count but realloc fails, tmp will not have been placed in
@@ -43,5 +43,5 @@ index dd0e30071d..6784fc353f 100644
  	    }
  	  getnames[pos] = tmp;
 -- 
-2.33.0
+2.34.0
 

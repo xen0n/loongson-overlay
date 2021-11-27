@@ -1,7 +1,7 @@
-From a048b68af7c3433143d7bc2c036927601f3f7aea Mon Sep 17 00:00:00 2001
+From 6906ed705491340c6d0f9920a0ba58c7f0402c3d Mon Sep 17 00:00:00 2001
 From: caiyinyu <caiyinyu@loongson.cn>
 Date: Tue, 27 Jul 2021 16:00:50 +0800
-Subject: [PATCH 14/24] LoongArch: Add ABI Lists
+Subject: [PATCH 14/46] LoongArch: Add ABI Lists
 
         * sysdeps/unix/sysv/linux/loongarch/lp64/c++-types.data: New
           file.
@@ -4049,5 +4049,5 @@ index 0000000000..c2cbef8fce
 @@ -0,0 +1 @@
 +GLIBC_2.27 __libutil_version_placeholder F
 -- 
-2.33.0
+2.34.0
 

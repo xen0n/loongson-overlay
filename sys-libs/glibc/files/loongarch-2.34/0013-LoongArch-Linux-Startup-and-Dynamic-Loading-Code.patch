@@ -1,7 +1,7 @@
-From 58435ff9a4a9365ac3a914269be84e840374877f Mon Sep 17 00:00:00 2001
+From df94ecf860c55855d4a5aed302fb3e160384f73c Mon Sep 17 00:00:00 2001
 From: caiyinyu <caiyinyu@loongson.cn>
 Date: Tue, 27 Jul 2021 15:59:12 +0800
-Subject: [PATCH 13/24] LoongArch: Linux Startup and Dynamic Loading Code
+Subject: [PATCH 13/46] LoongArch: Linux Startup and Dynamic Loading Code
 
 This contains the Linux-specific code for loading programs on LoongArch.
 
@@ -138,5 +138,5 @@ index 0000000000..137b0801c0
 +
 +#endif /* ldsodefs.h */
 -- 
-2.33.0
+2.34.0
 

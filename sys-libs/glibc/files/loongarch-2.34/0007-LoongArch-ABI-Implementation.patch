@@ -1,7 +1,7 @@
-From fab4de66152225dde479437736ecbdc02c1e48fd Mon Sep 17 00:00:00 2001
+From 9bbe25ab3ccda635f1de4f6078d11db5ff2c8e74 Mon Sep 17 00:00:00 2001
 From: caiyinyu <caiyinyu@loongson.cn>
 Date: Tue, 27 Jul 2021 15:29:12 +0800
-Subject: [PATCH 07/24] LoongArch: ABI Implementation
+Subject: [PATCH 07/46] LoongArch: ABI Implementation
 
 This is meant to contain all the LoongArch code that needs to explicitly
 name registers or manage in-memory structure layout.  This does not
@@ -12,8 +12,6 @@ contain any of the Linux-specific code.
         * sysdeps/loongarch/bits/link.h: Likewise.
         * sysdeps/loongarch/bits/setjmp.h: Likewise.
         * sysdeps/loongarch/bits/wordsize.h: Likewise.
-	* sysdeps/loongarch/bsd-_setjmp.c: Likewise.
-	* sysdeps/loongarch/bsd-setjmp.c: Likewise.
         * sysdeps/loongarch/dl-machine.h: Likewise.
         * sysdeps/loongarch/dl-trampoline.S: Likewise.
         * sysdeps/loongarch/gccframe.h: Likewise.
@@ -38,8 +36,6 @@ contain any of the Linux-specific code.
  sysdeps/loongarch/bits/link.h                 |  58 +++
  sysdeps/loongarch/bits/setjmp.h               |  39 ++
  sysdeps/loongarch/bits/wordsize.h             |  25 ++
- sysdeps/loongarch/bsd-_setjmp.c               |   1 +
- sysdeps/loongarch/bsd-setjmp.c                |   1 +
  sysdeps/loongarch/dl-machine.h                | 365 ++++++++++++++++++
  sysdeps/loongarch/dl-trampoline.S             | 108 ++++++
  sysdeps/loongarch/gccframe.h                  |  21 +
@@ -49,22 +45,20 @@ contain any of the Linux-specific code.
  sysdeps/loongarch/linkmap.h                   |   4 +
  sysdeps/loongarch/machine-gmon.h              |  37 ++
  sysdeps/loongarch/memusage.h                  |  25 ++
- sysdeps/loongarch/setjmp.S                    |  64 +++
+ sysdeps/loongarch/setjmp.S                    |  53 +++
  sysdeps/loongarch/sotruss-lib.c               |  50 +++
- sysdeps/loongarch/start.S                     |  72 ++++
+ sysdeps/loongarch/start.S                     |  71 ++++
  sysdeps/loongarch/sys/asm.h                   |  67 ++++
  sysdeps/loongarch/tls-macros.h                |  49 +++
  sysdeps/loongarch/tst-audit.h                 |  23 ++
  .../unix/sysv/linux/loongarch/localplt.data   |  19 +
  .../linux/loongarch/lp64/jmp_buf-macros.h     |  43 +++
- 24 files changed, 1244 insertions(+)
+ 22 files changed, 1230 insertions(+)
  create mode 100644 sysdeps/loongarch/__longjmp.S
  create mode 100644 sysdeps/loongarch/bits/endianness.h
  create mode 100644 sysdeps/loongarch/bits/link.h
  create mode 100644 sysdeps/loongarch/bits/setjmp.h
  create mode 100644 sysdeps/loongarch/bits/wordsize.h
- create mode 100644 sysdeps/loongarch/bsd-_setjmp.c
- create mode 100644 sysdeps/loongarch/bsd-setjmp.c
  create mode 100644 sysdeps/loongarch/dl-machine.h
  create mode 100644 sysdeps/loongarch/dl-trampoline.S
  create mode 100644 sysdeps/loongarch/gccframe.h
@@ -85,7 +79,7 @@ contain any of the Linux-specific code.
 
 diff --git a/sysdeps/loongarch/__longjmp.S b/sysdeps/loongarch/__longjmp.S
 new file mode 100644
-index 0000000000..32325753f6
+index 0000000000..18b5ef67a5
 --- /dev/null
 +++ b/sysdeps/loongarch/__longjmp.S
 @@ -0,0 +1,50 @@
@@ -111,32 +105,32 @@ index 0000000000..32325753f6
 +#include <sys/asm.h>
 +
 +ENTRY (__longjmp)
-+	REG_L ra, a0, 0*SZREG
-+	REG_L sp, a0, 1*SZREG
-+	REG_L x,  a0, 2*SZREG
-+	REG_L fp, a0, 3*SZREG
-+	REG_L s0, a0, 4*SZREG
-+	REG_L s1, a0, 5*SZREG
-+	REG_L s2, a0, 6*SZREG
-+	REG_L s3, a0, 7*SZREG
-+	REG_L s4, a0, 8*SZREG
-+	REG_L s5, a0, 9*SZREG
-+	REG_L s6, a0, 10*SZREG
-+	REG_L s7, a0, 11*SZREG
-+	REG_L s8, a0, 12*SZREG
++  REG_L ra, a0, 0*SZREG
++  REG_L sp, a0, 1*SZREG
++  REG_L x,  a0, 2*SZREG
++  REG_L fp, a0, 3*SZREG
++  REG_L s0, a0, 4*SZREG
++  REG_L s1, a0, 5*SZREG
++  REG_L s2, a0, 6*SZREG
++  REG_L s3, a0, 7*SZREG
++  REG_L s4, a0, 8*SZREG
++  REG_L s5, a0, 9*SZREG
++  REG_L s6, a0, 10*SZREG
++  REG_L s7, a0, 11*SZREG
++  REG_L s8, a0, 12*SZREG
 +
-+	FREG_L $f24, a0, 13*SZREG + 0*SZFREG
-+	FREG_L $f25, a0, 13*SZREG + 1*SZFREG
-+	FREG_L $f26, a0, 13*SZREG + 2*SZFREG
-+	FREG_L $f27, a0, 13*SZREG + 3*SZFREG
-+	FREG_L $f28, a0, 13*SZREG + 4*SZFREG
-+	FREG_L $f29, a0, 13*SZREG + 5*SZFREG
-+	FREG_L $f30, a0, 13*SZREG + 6*SZFREG
-+	FREG_L $f31, a0, 13*SZREG + 7*SZFREG
++  FREG_L $f24, a0, 13*SZREG + 0*SZFREG
++  FREG_L $f25, a0, 13*SZREG + 1*SZFREG
++  FREG_L $f26, a0, 13*SZREG + 2*SZFREG
++  FREG_L $f27, a0, 13*SZREG + 3*SZFREG
++  FREG_L $f28, a0, 13*SZREG + 4*SZFREG
++  FREG_L $f29, a0, 13*SZREG + 5*SZFREG
++  FREG_L $f30, a0, 13*SZREG + 6*SZFREG
++  FREG_L $f31, a0, 13*SZREG + 7*SZFREG
 +
-+	sltui	a0,a1,1
-+	add.d	a0, a0, a1	 # a0 = (a1 == 0) ? 1 : a1
-+	jirl	zero,ra,0
++  sltui a0,a1,1
++  add.d a0, a0, a1   # a0 = (a1 == 0) ? 1 : a1
++  jirl  zero,ra,0
 +
 +END (__longjmp)
 diff --git a/sysdeps/loongarch/bits/endianness.h b/sysdeps/loongarch/bits/endianness.h
@@ -296,20 +290,6 @@ index 0000000000..e12709cc65
 +#endif
 +
 +#define __WORDSIZE_TIME64_COMPAT32 0
-diff --git a/sysdeps/loongarch/bsd-_setjmp.c b/sysdeps/loongarch/bsd-_setjmp.c
-new file mode 100644
-index 0000000000..32f49441c3
---- /dev/null
-+++ b/sysdeps/loongarch/bsd-_setjmp.c
-@@ -0,0 +1 @@
-+/* _setjmp is implemented in setjmp.S.  */
-diff --git a/sysdeps/loongarch/bsd-setjmp.c b/sysdeps/loongarch/bsd-setjmp.c
-new file mode 100644
-index 0000000000..45fd802aac
---- /dev/null
-+++ b/sysdeps/loongarch/bsd-setjmp.c
-@@ -0,0 +1 @@
-+/* setjmp is implemented in setjmp.S.  */
 diff --git a/sysdeps/loongarch/dl-machine.h b/sysdeps/loongarch/dl-machine.h
 new file mode 100644
 index 0000000000..5f2656e574
@@ -683,7 +663,7 @@ index 0000000000..5f2656e574
 +#endif /* RESOLVE_MAP */
 diff --git a/sysdeps/loongarch/dl-trampoline.S b/sysdeps/loongarch/dl-trampoline.S
 new file mode 100644
-index 0000000000..e7dc68a1b0
+index 0000000000..2343a18a94
 --- /dev/null
 +++ b/sysdeps/loongarch/dl-trampoline.S
 @@ -0,0 +1,108 @@
@@ -718,82 +698,82 @@ index 0000000000..e7dc68a1b0
 +#endif
 +
 +ENTRY (_dl_runtime_resolve)
++  # Save arguments to stack.
 +
-+	/* Save arguments to stack. */
-+#if _LOONGARCH_SIM == _ABILP64
-+	addi.d	sp, sp, -FRAME_SIZE
-+#elif _LOONGARCH_SIM == _ABILP32
-+	addi.w	sp, sp, -FRAME_SIZE
++#ifdef __loongarch64
++    addi.d  sp, sp, -FRAME_SIZE
++#elif defined __loongarch32
++    addi.w  sp, sp, -FRAME_SIZE
 +#endif
 +
-+	REG_S	ra, sp, 9*SZREG
-+	REG_S	a0, sp, 1*SZREG
-+	REG_S	a1, sp, 2*SZREG
-+	REG_S	a2, sp, 3*SZREG
-+	REG_S	a3, sp, 4*SZREG
-+	REG_S	a4, sp, 5*SZREG
-+	REG_S	a5, sp, 6*SZREG
-+	REG_S	a6, sp, 7*SZREG
-+	REG_S	a7, sp, 8*SZREG
++    REG_S   ra, sp, 9*SZREG
++    REG_S   a0, sp, 1*SZREG
++    REG_S   a1, sp, 2*SZREG
++    REG_S   a2, sp, 3*SZREG
++    REG_S   a3, sp, 4*SZREG
++    REG_S   a4, sp, 5*SZREG
++    REG_S   a5, sp, 6*SZREG
++    REG_S   a6, sp, 7*SZREG
++    REG_S   a7, sp, 8*SZREG
 +
 +#ifndef __loongarch_soft_float
-+	FREG_S	fa0, sp, 10*SZREG + 0*SZFREG
-+	FREG_S	fa1, sp, 10*SZREG + 1*SZFREG
-+	FREG_S	fa2, sp, 10*SZREG + 2*SZFREG
-+	FREG_S	fa3, sp, 10*SZREG + 3*SZFREG
-+	FREG_S	fa4, sp, 10*SZREG + 4*SZFREG
-+	FREG_S	fa5, sp, 10*SZREG + 5*SZFREG
-+	FREG_S	fa6, sp, 10*SZREG + 6*SZFREG
-+	FREG_S	fa7, sp, 10*SZREG + 7*SZFREG
++    FREG_S  fa0, sp, 10*SZREG + 0*SZFREG
++    FREG_S  fa1, sp, 10*SZREG + 1*SZFREG
++    FREG_S  fa2, sp, 10*SZREG + 2*SZFREG
++    FREG_S  fa3, sp, 10*SZREG + 3*SZFREG
++    FREG_S  fa4, sp, 10*SZREG + 4*SZFREG
++    FREG_S  fa5, sp, 10*SZREG + 5*SZFREG
++    FREG_S  fa6, sp, 10*SZREG + 6*SZFREG
++    FREG_S  fa7, sp, 10*SZREG + 7*SZFREG
 +#endif
 +
-+	/* Update .got.plt and obtain runtime address of callee */
-+#if _LOONGARCH_SIM == _ABILP64
-+	slli.d	a1, t1, 1
-+	or	a0, t0, zero
-+	add.d	a1, a1, t1
-+	la	a2, _dl_fixup
-+	jirl	ra, a2, 0
-+	or	t1, v0, zero
-+#elif _LOONGARCH_SIM == _ABILP32
-+	slli.w	a1, t1, 1
-+	or	a0, t0, zero
-+	add.w	a1, a1, t1
-+	la	a2, _dl_fixup
-+	jirl	ra, a2, 0
-+	or	t1, v0, zero
++  # Update .got.plt and obtain runtime address of callee.
++#ifdef __loongarch64
++    slli.d  a1, t1, 1
++    or      a0, t0, zero
++    add.d   a1, a1, t1
++    la      a2, _dl_fixup
++    jirl    ra, a2, 0
++    or      t1, v0, zero
++#elif defined __loongarch32
++    slli.w  a1, t1, 1
++    or      a0, t0, zero
++    add.w   a1, a1, t1
++    la      a2, _dl_fixup
++    jirl    ra, a2, 0
++    or      t1, v0, zero
 +#endif
 +
-+	/* Restore arguments from stack. */
-+	REG_L	ra, sp, 9*SZREG
-+	REG_L	a0, sp, 1*SZREG
-+	REG_L	a1, sp, 2*SZREG
-+	REG_L	a2, sp, 3*SZREG
-+	REG_L	a3, sp, 4*SZREG
-+	REG_L	a4, sp, 5*SZREG
-+	REG_L	a5, sp, 6*SZREG
-+	REG_L	a6, sp, 7*SZREG
-+	REG_L	a7, sp, 8*SZREG
++  # Restore arguments from stack.
++    REG_L   ra, sp, 9*SZREG
++    REG_L   a0, sp, 1*SZREG
++    REG_L   a1, sp, 2*SZREG
++    REG_L   a2, sp, 3*SZREG
++    REG_L   a3, sp, 4*SZREG
++    REG_L   a4, sp, 5*SZREG
++    REG_L   a5, sp, 6*SZREG
++    REG_L   a6, sp, 7*SZREG
++    REG_L   a7, sp, 8*SZREG
 +
 +#ifndef __loongarch_soft_float
-+	FREG_L	fa0, sp, 10*SZREG + 0*SZFREG
-+	FREG_L	fa1, sp, 10*SZREG + 1*SZFREG
-+	FREG_L	fa2, sp, 10*SZREG + 2*SZFREG
-+	FREG_L	fa3, sp, 10*SZREG + 3*SZFREG
-+	FREG_L	fa4, sp, 10*SZREG + 4*SZFREG
-+	FREG_L	fa5, sp, 10*SZREG + 5*SZFREG
-+	FREG_L	fa6, sp, 10*SZREG + 6*SZFREG
-+	FREG_L	fa7, sp, 10*SZREG + 7*SZFREG
++    FREG_L  fa0, sp, 10*SZREG + 0*SZFREG
++    FREG_L  fa1, sp, 10*SZREG + 1*SZFREG
++    FREG_L  fa2, sp, 10*SZREG + 2*SZFREG
++    FREG_L  fa3, sp, 10*SZREG + 3*SZFREG
++    FREG_L  fa4, sp, 10*SZREG + 4*SZFREG
++    FREG_L  fa5, sp, 10*SZREG + 5*SZFREG
++    FREG_L  fa6, sp, 10*SZREG + 6*SZFREG
++    FREG_L  fa7, sp, 10*SZREG + 7*SZFREG
 +#endif
 +
-+#if _LOONGARCH_SIM == _ABILP64
-+	addi.d	sp, sp, FRAME_SIZE
-+#elif _LOONGARCH_SIM == _ABILP32
-+	addi.w	sp, sp, FRAME_SIZE
++#ifdef __loongarch64
++    addi.d  sp, sp, FRAME_SIZE
++#elif defined __loongarch32
++    addi.w  sp, sp, FRAME_SIZE
 +#endif
 +
-+	/* Invoke the callee. */
-+	jirl		zero, t1, 0
++  # Invoke the callee.
++    jirl    zero, t1, 0
 +END (_dl_runtime_resolve)
 diff --git a/sysdeps/loongarch/gccframe.h b/sysdeps/loongarch/gccframe.h
 new file mode 100644
@@ -1038,10 +1018,10 @@ index 0000000000..c79d0ecb82
 +#include <sysdeps/generic/memusage.h>
 diff --git a/sysdeps/loongarch/setjmp.S b/sysdeps/loongarch/setjmp.S
 new file mode 100644
-index 0000000000..e7fec53a3a
+index 0000000000..278c8f38e2
 --- /dev/null
 +++ b/sysdeps/loongarch/setjmp.S
-@@ -0,0 +1,64 @@
+@@ -0,0 +1,53 @@
 +/* setjmp for LoongArch.
 +   Copyright (C) 2021 Free Software Foundation, Inc.
 +   This file is part of the GNU C Library.
@@ -1063,49 +1043,38 @@ index 0000000000..e7fec53a3a
 +#include <sysdep.h>
 +#include <sys/asm.h>
 +
-+ENTRY (_setjmp)
-+	li.w		a1,0
-+	b		__sigsetjmp
-+END (_setjmp)
-+
-+ENTRY (setjmp)
-+	li.w		a1,1
-+END (setjmp)
-+
 +ENTRY (__sigsetjmp)
-+	REG_S ra, a0, 0*SZREG
-+	REG_S sp, a0, 1*SZREG
-+	REG_S x,  a0, 2*SZREG
-+	REG_S fp, a0, 3*SZREG
-+	REG_S s0, a0, 4*SZREG
-+	REG_S s1, a0, 5*SZREG
-+	REG_S s2, a0, 6*SZREG
-+	REG_S s3, a0, 7*SZREG
-+	REG_S s4, a0, 8*SZREG
-+	REG_S s5, a0, 9*SZREG
-+	REG_S s6, a0, 10*SZREG
-+	REG_S s7, a0, 11*SZREG
-+	REG_S s8, a0, 12*SZREG
++  REG_S ra, a0, 0*SZREG
++  REG_S sp, a0, 1*SZREG
++  REG_S x,  a0, 2*SZREG
++  REG_S fp, a0, 3*SZREG
++  REG_S s0, a0, 4*SZREG
++  REG_S s1, a0, 5*SZREG
++  REG_S s2, a0, 6*SZREG
++  REG_S s3, a0, 7*SZREG
++  REG_S s4, a0, 8*SZREG
++  REG_S s5, a0, 9*SZREG
++  REG_S s6, a0, 10*SZREG
++  REG_S s7, a0, 11*SZREG
++  REG_S s8, a0, 12*SZREG
 +
-+	FREG_S $f24, a0, 13*SZREG + 0*SZFREG
-+	FREG_S $f25, a0, 13*SZREG + 1*SZFREG
-+	FREG_S $f26, a0, 13*SZREG + 2*SZFREG
-+	FREG_S $f27, a0, 13*SZREG + 3*SZFREG
-+	FREG_S $f28, a0, 13*SZREG + 4*SZFREG
-+	FREG_S $f29, a0, 13*SZREG + 5*SZFREG
-+	FREG_S $f30, a0, 13*SZREG + 6*SZFREG
-+	FREG_S $f31, a0, 13*SZREG + 7*SZFREG
++  FREG_S $f24, a0, 13*SZREG + 0*SZFREG
++  FREG_S $f25, a0, 13*SZREG + 1*SZFREG
++  FREG_S $f26, a0, 13*SZREG + 2*SZFREG
++  FREG_S $f27, a0, 13*SZREG + 3*SZFREG
++  FREG_S $f28, a0, 13*SZREG + 4*SZFREG
++  FREG_S $f29, a0, 13*SZREG + 5*SZFREG
++  FREG_S $f30, a0, 13*SZREG + 6*SZFREG
++  FREG_S $f31, a0, 13*SZREG + 7*SZFREG
 +
-+#if !IS_IN (libc) && IS_IN(rtld)
-+	li.w		v0, 0
-+	jirl		zero,ra,0
++#if IS_IN(rtld)
++  li.w  v0, 0
++  jirl  zero,ra,0
 +#else
-+	b		__sigjmp_save
++  b     C_SYMBOL_NAME(__sigjmp_save)
 +#endif
 +END (__sigsetjmp)
-+
 +hidden_def (__sigsetjmp)
-+weak_alias (_setjmp, __GI__setjmp)
 diff --git a/sysdeps/loongarch/sotruss-lib.c b/sysdeps/loongarch/sotruss-lib.c
 new file mode 100644
 index 0000000000..8a7a438ba0
@@ -1164,10 +1133,10 @@ index 0000000000..8a7a438ba0
 +}
 diff --git a/sysdeps/loongarch/start.S b/sysdeps/loongarch/start.S
 new file mode 100644
-index 0000000000..b008b195af
+index 0000000000..f1a8b03b2f
 --- /dev/null
 +++ b/sysdeps/loongarch/start.S
-@@ -0,0 +1,72 @@
+@@ -0,0 +1,71 @@
 +/* Startup code compliant to the ELF LoongArch ABI.
 +   Copyright (C) 2021 Free Software Foundation, Inc.
 +   This file is part of the GNU C Library.
@@ -1205,39 +1174,38 @@ index 0000000000..b008b195af
 +		   void (*fini) (void),
 +		   void (*rtld_fini) (void),
 +		   void *stack_end);
-+ */
++*/
 +
 +ENTRY (ENTRY_POINT)
++    /* Terminate call stack by noting ra is undefined.  Use a dummy
++       .cfi_label to force starting the FDE.  */
++    .cfi_label .Ldummy
++    cfi_undefined (1)
++    or      a5, a0, zero /* rtld_fini */
 +
-+/* Terminate call stack by noting ra is undefined.  Use a dummy
-+   .cfi_label to force starting the FDE.  */
-+	.cfi_label .Ldummy
-+	cfi_undefined (1)
-+	or		a5, a0, zero /* rtld_fini */
-+
-+/* We must get symbol main through GOT table, since main may not be local.
-+   For instance: googletest defines main in dynamic library.  */
-+	la.got		a0, t0, main
-+#if _LOONGARCH_SIM == _ABILP64
-+	ld.d		a1, sp, 0
-+	addi.d		a2, sp, SZREG
-+#elif _LOONGARCH_SIM == _ABILP32
-+	ld.w		a1, sp, 0
-+	addi.w		a2, sp, SZREG
++    /* We must get symbol main through GOT table, since main may not be local.
++       For instance: googletest defines main in dynamic library.  */
++    la.got  a0, t0, main
++#ifdef __loongarch64
++    ld.d    a1, sp, 0
++    addi.d  a2, sp, SZREG
++#elif defined __loongarch32
++    ld.w    a1, sp, 0
++    addi.w  a2, sp, SZREG
 +#endif
-+	/* Adjust $sp for 16-aligned */
-+	srli.d		sp, sp, 4
-+	slli.d		sp, sp, 4
++    /* Adjust $sp for 16-aligned */
++    srli.d  sp, sp, 4
++    slli.d  sp, sp, 4
 +
-+	move		a3, zero /* used to be init */
-+	move		a4, zero /* used to be fini */
-+	or		a6, sp, zero /* stack_end */
++    move    a3, zero /* used to be init */
++    move    a4, zero /* used to be fini */
++    or      a6, sp, zero /* stack_end */
 +
-+	la.got		ra, t0, __libc_start_main
-+	jirl		ra, ra, 0
++    la.got  ra, t0, __libc_start_main
++    jirl    ra, ra, 0
 +
-+	la.got		ra, t0, abort
-+	jirl		ra, ra, 0
++    la.got  ra, t0, abort
++    jirl    ra, ra, 0
 +END (ENTRY_POINT)
 +
 diff --git a/sysdeps/loongarch/sys/asm.h b/sysdeps/loongarch/sys/asm.h
@@ -1472,5 +1440,5 @@ index 0000000000..b1422273c5
 +#define MASK_WAS_SAVED_OFFSET 168
 +#define SAVED_MASK_OFFSET 176
 -- 
-2.33.0
+2.34.0
 

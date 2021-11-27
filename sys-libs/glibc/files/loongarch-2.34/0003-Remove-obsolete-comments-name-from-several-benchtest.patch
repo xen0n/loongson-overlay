@@ -1,7 +1,7 @@
 From db737c79c694d0cb65dbc40696c8765b4299310c Mon Sep 17 00:00:00 2001
 From: Paul Zimmermann <Paul.Zimmermann@inria.fr>
 Date: Mon, 2 Aug 2021 15:19:21 +0200
-Subject: [PATCH 03/24] Remove obsolete comments/name from several benchtest
+Subject: [PATCH 03/46] Remove obsolete comments/name from several benchtest
  input files.
 
 These comments refer to slow paths that were removed in
@@ -122,5 +122,5 @@ index 982c2610a1..5a746550ec 100644
  0x1.810f60836538dp143
  -0x1.e877a52501e08p134
 -- 
-2.33.0
+2.34.0
 

@@ -1,7 +1,7 @@
 From a85c93c42433aa52d4c5bc18e1dff038a82415bf Mon Sep 17 00:00:00 2001
 From: Carlos O'Donell <carlos@redhat.com>
 Date: Sun, 1 Aug 2021 21:54:40 -0400
-Subject: [PATCH 01/24] Open master branch for glibc 2.35 development
+Subject: [PATCH 01/46] Open master branch for glibc 2.35 development
 
 ---
  NEWS      | 24 ++++++++++++++++++++++++
@@ -55,5 +55,5 @@ index adecc3bbd6..d84e58ef06 100644
 +#define RELEASE "development"
 +#define VERSION "2.34.9000"
 -- 
-2.33.0
+2.34.0
 

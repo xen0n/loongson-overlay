@@ -1,7 +1,7 @@
-From b0b1fd132cd77a3a9b2b627990decd9d1a269244 Mon Sep 17 00:00:00 2001
+From 63683785abe1a9069146ae621c8e0a06bc8557b9 Mon Sep 17 00:00:00 2001
 From: caiyinyu <caiyinyu@loongson.cn>
 Date: Tue, 27 Jul 2021 15:36:00 +0800
-Subject: [PATCH 08/24] LoongArch: Thread-Local Storage Support
+Subject: [PATCH 08/46] LoongArch: Thread-Local Storage Support
 
 This patch implements TLS support for LoongArch.  We support all four
 standard TLS addressing modes (LE, IE, LD, and GD) when running on
@@ -27,7 +27,7 @@ Linux via NPTL.
 
 diff --git a/sysdeps/loongarch/dl-tls.h b/sysdeps/loongarch/dl-tls.h
 new file mode 100644
-index 0000000000..9f9ac39c9c
+index 0000000000..82316dc847
 --- /dev/null
 +++ b/sysdeps/loongarch/dl-tls.h
 @@ -0,0 +1,46 @@
@@ -59,7 +59,7 @@ index 0000000000..9f9ac39c9c
 +/* The thread pointer points to the first static TLS block.  */
 +#define TLS_TP_OFFSET 0
 +
-+/* Dynamic thread vector pointers point to the start of each
++/* Dynamic thread vector pointers point 0x800 past the start of each
 +   TLS block.  */
 +#define TLS_DTV_OFFSET 0
 +
@@ -315,5 +315,5 @@ index 0000000000..a990a471f4
 +
 +#endif /* stackinfo.h */
 -- 
-2.33.0
+2.34.0
 

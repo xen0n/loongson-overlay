@@ -1,7 +1,7 @@
-From 07569b3406100ecc60b175cb7cfadf13547fe38d Mon Sep 17 00:00:00 2001
+From db6ffb11f43cf5717cee704ce127c86bbadd5588 Mon Sep 17 00:00:00 2001
 From: caiyinyu <caiyinyu@loongson.cn>
 Date: Tue, 27 Jul 2021 15:14:34 +0800
-Subject: [PATCH 06/24] LoongArch: Add relocations and ELF flags to elf.h
+Subject: [PATCH 06/46] LoongArch: Add relocations and ELF flags to elf.h
 
         * elf/elf.h (EM_LOONGARCH): New define.
         (EF_LARCH_ABI): Likewise.
@@ -60,23 +60,20 @@ Subject: [PATCH 06/24] LoongArch: Add relocations and ELF flags to elf.h
         (R_LARCH_GNU_VTINHERIT): Likewise.
         (R_LARCH_GNU_VTENTRY): Likewise.
 ---
- elf/elf.h | 72 ++++++++++++++++++++++++++++++++++++++++++++++++++++++-
- 1 file changed, 71 insertions(+), 1 deletion(-)
+ elf/elf.h | 70 +++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 70 insertions(+)
 
 diff --git a/elf/elf.h b/elf/elf.h
-index 4738dfa28f..03ece6832d 100644
+index 4738dfa28f..5b5a509c6d 100644
 --- a/elf/elf.h
 +++ b/elf/elf.h
-@@ -358,8 +358,9 @@ typedef struct
+@@ -358,6 +358,7 @@ typedef struct
  
  #define EM_BPF		247	/* Linux BPF -- in-kernel virtual machine */
  #define EM_CSKY		252     /* C-SKY */
-+#define EM_LOONGARCH	258	/* LoongArch */
++#define	EM_LOONGARCH	258	/* LoongArch */
  
--#define EM_NUM		253
-+#define EM_NUM		259
- 
- /* Old spellings/synonyms.  */
+ #define EM_NUM		253
  
 @@ -4034,6 +4035,75 @@ enum
  #define R_NDS32_TLS_TPOFF	102
@@ -155,5 +152,5 @@ index 4738dfa28f..03ece6832d 100644
  #define R_ARC_NONE		0x0
  #define R_ARC_8			0x1
 -- 
-2.33.0
+2.34.0
 

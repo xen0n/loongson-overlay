@@ -1,7 +1,7 @@
-From 9f8f4f9a496a52e8f17df5815bbf90ce51ddaeeb Mon Sep 17 00:00:00 2001
+From 1bd9fa3d6621f99ee15addf376925e2971986dc7 Mon Sep 17 00:00:00 2001
 From: caiyinyu <caiyinyu@loongson.cn>
 Date: Tue, 27 Jul 2021 15:53:52 +0800
-Subject: [PATCH 12/24] LoongArch: Linux ABI
+Subject: [PATCH 12/46] LoongArch: Linux ABI
 
 Linux-specific code that is required for maintaining ABI compatibility.
 
@@ -33,18 +33,18 @@ Linux-specific code that is required for maintaining ABI compatibility.
  .../unix/sysv/linux/loongarch/bits/fcntl.h    |  61 ++++++++
  sysdeps/unix/sysv/linux/loongarch/bits/mman.h |  42 ++++++
  .../sysv/linux/loongarch/bits/sigcontext.h    |  49 +++++++
- .../unix/sysv/linux/loongarch/getcontext.S    |  74 ++++++++++
+ .../unix/sysv/linux/loongarch/getcontext.S    |  73 ++++++++++
  .../unix/sysv/linux/loongarch/makecontext.c   |  78 ++++++++++
  .../unix/sysv/linux/loongarch/register-dump.h |  61 ++++++++
- .../unix/sysv/linux/loongarch/setcontext.S    | 115 +++++++++++++++
+ .../unix/sysv/linux/loongarch/setcontext.S    | 112 +++++++++++++++
  .../sysv/linux/loongarch/sigcontextinfo.h     |  31 ++++
- .../unix/sysv/linux/loongarch/swapcontext.S   | 123 ++++++++++++++++
+ .../unix/sysv/linux/loongarch/swapcontext.S   | 122 ++++++++++++++++
  .../unix/sysv/linux/loongarch/sys/procfs.h    | 133 ++++++++++++++++++
- .../unix/sysv/linux/loongarch/sys/ucontext.h  |  80 +++++++++++
+ .../unix/sysv/linux/loongarch/sys/ucontext.h  |  82 +++++++++++
  sysdeps/unix/sysv/linux/loongarch/sys/user.h  |  31 ++++
  .../sysv/linux/loongarch/ucontext-macros.h    |  42 ++++++
  .../unix/sysv/linux/loongarch/ucontext_i.sym  |  33 +++++
- 19 files changed, 1120 insertions(+)
+ 19 files changed, 1117 insertions(+)
  create mode 100644 sysdeps/loongarch/dl-irel.h
  create mode 100644 sysdeps/loongarch/libc-start.h
  create mode 100644 sysdeps/loongarch/nptl/bits/struct_rwlock.h
@@ -434,10 +434,10 @@ index 0000000000..124bda8f15
 +#endif /* _BITS_SIGCONTEXT_H */
 diff --git a/sysdeps/unix/sysv/linux/loongarch/getcontext.S b/sysdeps/unix/sysv/linux/loongarch/getcontext.S
 new file mode 100644
-index 0000000000..3a64857a42
+index 0000000000..e502ee4b45
 --- /dev/null
 +++ b/sysdeps/unix/sysv/linux/loongarch/getcontext.S
-@@ -0,0 +1,74 @@
+@@ -0,0 +1,73 @@
 +/* Save current context.
 +   Copyright (C) 2021 Free Software Foundation, Inc.
 +   This file is part of the GNU C Library.
@@ -460,54 +460,53 @@ index 0000000000..3a64857a42
 +
 +/* int getcontext (ucontext_t *ucp) */
 +
-+	.text
++    .text
 +LEAF (__getcontext)
-+	SAVE_INT_REG (ra,   1, a0)
-+	SAVE_INT_REG (sp,   3, a0)
-+	SAVE_INT_REG (zero, 4, a0) /* return 0 by overwriting a0.  */
-+	SAVE_INT_REG (x,   21, a0)
-+	SAVE_INT_REG (fp,  22, a0)
-+	SAVE_INT_REG (s0,  23, a0)
-+	SAVE_INT_REG (s1,  24, a0)
-+	SAVE_INT_REG (s2,  25, a0)
-+	SAVE_INT_REG (s3,  26, a0)
-+	SAVE_INT_REG (s4,  27, a0)
-+	SAVE_INT_REG (s5,  28, a0)
-+	SAVE_INT_REG (s6,  29, a0)
-+	SAVE_INT_REG (s7,  30, a0)
-+	SAVE_INT_REG (s8,  31, a0)
-+	st.d		ra, a0, MCONTEXT_PC
++    SAVE_INT_REG (ra,   1, a0)
++    SAVE_INT_REG (sp,   3, a0)
++    SAVE_INT_REG (zero, 4, a0) /* return 0 by overwriting a0.  */
++    SAVE_INT_REG (x,   21, a0)
++    SAVE_INT_REG (fp,  22, a0)
++    SAVE_INT_REG (s0,  23, a0)
++    SAVE_INT_REG (s1,  24, a0)
++    SAVE_INT_REG (s2,  25, a0)
++    SAVE_INT_REG (s3,  26, a0)
++    SAVE_INT_REG (s4,  27, a0)
++    SAVE_INT_REG (s5,  28, a0)
++    SAVE_INT_REG (s6,  29, a0)
++    SAVE_INT_REG (s7,  30, a0)
++    SAVE_INT_REG (s8,  31, a0)
++    st.d    ra, a0, MCONTEXT_PC
 +
 +#ifndef __loongarch_soft_float
-+	movfcsr2gr	a1, $r0
++    movfcsr2gr a1, $r0
 +
-+	SAVE_FP_REG (fs0,  24, a0)
-+	SAVE_FP_REG (fs1,  25, a0)
-+	SAVE_FP_REG (fs2,  26, a0)
-+	SAVE_FP_REG (fs3,  27, a0)
-+	SAVE_FP_REG (fs4,  28, a0)
-+	SAVE_FP_REG (fs5,  29, a0)
-+	SAVE_FP_REG (fs6,  30, a0)
-+	SAVE_FP_REG (fs7,  31, a0)
++    SAVE_FP_REG (fs0,  24, a0)
++    SAVE_FP_REG (fs1,  25, a0)
++    SAVE_FP_REG (fs2,  26, a0)
++    SAVE_FP_REG (fs3,  27, a0)
++    SAVE_FP_REG (fs4,  28, a0)
++    SAVE_FP_REG (fs5,  29, a0)
++    SAVE_FP_REG (fs6,  30, a0)
++    SAVE_FP_REG (fs7,  31, a0)
 +
-+	st.w		a1, a0, MCONTEXT_FCSR
++    st.w    a1, a0, MCONTEXT_FCSR
 +#endif /* __loongarch_soft_float */
 +
 +/* rt_sigprocmask (SIG_BLOCK, NULL, &ucp->uc_sigmask, _NSIG8) */
-+	li.d		a3, _NSIG8
-+	li.d		a2, UCONTEXT_SIGMASK
-+	add.d		a2, a2, a0
-+	ori		a1, zero,0
-+	li.d		a0, SIG_BLOCK
++    li.d    a3, _NSIG8
++    li.d    a2, UCONTEXT_SIGMASK
++    add.d   a2, a2, a0
++    ori     a1, zero,0
++    li.d    a0, SIG_BLOCK
 +
-+	li.d		a7, SYS_ify (rt_sigprocmask)
-+	syscall		0
-+	blt		a0, zero, 99f
++    li.d    a7, SYS_ify (rt_sigprocmask)
++    syscall 0
++    blt a0, zero, 99f
 +
-+	jirl		$r0, $r1, 0
++    jirl    $r0, $r1, 0
 +
-+99:
-+	b		__syscall_error
++99: b       __syscall_error
 +
 +PSEUDO_END (__getcontext)
 +
@@ -665,10 +664,10 @@ index 0000000000..9000fc3184
 +#define REGISTER_DUMP register_dump (fd, ctx)
 diff --git a/sysdeps/unix/sysv/linux/loongarch/setcontext.S b/sysdeps/unix/sysv/linux/loongarch/setcontext.S
 new file mode 100644
-index 0000000000..0070829261
+index 0000000000..6efa8aec2b
 --- /dev/null
 +++ b/sysdeps/unix/sysv/linux/loongarch/setcontext.S
-@@ -0,0 +1,115 @@
+@@ -0,0 +1,112 @@
 +/* Set current context.
 +   Copyright (C) 2021 Free Software Foundation, Inc.
 +   This file is part of the GNU C Library.
@@ -698,90 +697,87 @@ index 0000000000..0070829261
 +  switches only.  Therefore, it does not have to restore anything
 +  other than the PRESERVED state.  */
 +
-+	.text
++    .text
 +LEAF (__setcontext)
 +
-+	addi.d		sp, sp, -16
-+	st.d		a0, sp, 0	/* Save ucp to stack */
-+
++    addi.d  sp, sp, -16
++    st.d    a0, sp, 0   /* Save ucp to stack */
 +/* rt_sigprocmask (SIG_SETMASK, &ucp->uc_sigmask, NULL, _NSIG8) */
-+	li.d		a3, _NSIG8
-+	li.d		a2, 0
-+	li.d		a1, UCONTEXT_SIGMASK
-+	add.d		a1, a1, a0
-+	li.d		a0, SIG_SETMASK
++    li.d    a3, _NSIG8
++    li.d    a2, 0
++    li.d    a1, UCONTEXT_SIGMASK
++    add.d   a1, a1, a0
++    li.d    a0, SIG_SETMASK
 +
-+	li.d		a7, SYS_ify (rt_sigprocmask)
-+	syscall		0
++    li.d    a7, SYS_ify (rt_sigprocmask)
++    syscall 0
 +
-+	blt		a0, $r0, 99f
++    blt a0, $r0, 99f
 +
-+	ld.d		t0, sp, 0	/* Load ucp to t0 */
-+	cfi_def_cfa (12, 0)
++    ld.d    t0, sp, 0      /* Load ucp to t0 */
++    cfi_def_cfa (12, 0)
 +
 +#ifndef __loongarch_soft_float
-+	ld.w		t1, t0, MCONTEXT_FCSR
++    ld.w    t1, t0, MCONTEXT_FCSR
 +
-+	RESTORE_FP_REG(fs0,  24, t0)
-+	RESTORE_FP_REG(fs1,  25, t0)
-+	RESTORE_FP_REG(fs2,  26, t0)
-+	RESTORE_FP_REG(fs3,  27, t0)
-+	RESTORE_FP_REG(fs4,  28, t0)
-+	RESTORE_FP_REG(fs5,  29, t0)
-+	RESTORE_FP_REG(fs6,  30, t0)
-+	RESTORE_FP_REG(fs7,  31, t0)
++    RESTORE_FP_REG(fs0,  24, t0)
++    RESTORE_FP_REG(fs1,  25, t0)
++    RESTORE_FP_REG(fs2,  26, t0)
++    RESTORE_FP_REG(fs3,  27, t0)
++    RESTORE_FP_REG(fs4,  28, t0)
++    RESTORE_FP_REG(fs5,  29, t0)
++    RESTORE_FP_REG(fs6,  30, t0)
++    RESTORE_FP_REG(fs7,  31, t0)
 +
-+	movgr2fcsr	$r0, t1
++    movgr2fcsr  $r0, t1
 +#endif /* __loongarch_soft_float */
 +
-+/* Note the contents of argument registers will be random
-+   unless makecontext() has been called.  */
-+	RESTORE_INT_REG(ra,   1, t0)
-+	RESTORE_INT_REG(sp,   3, t0)
-+	RESTORE_INT_REG(a0,   4, t0)
-+	RESTORE_INT_REG(a1,   5, t0)
-+	RESTORE_INT_REG(a2,   6, t0)
-+	RESTORE_INT_REG(a3,   7, t0)
-+	RESTORE_INT_REG(a4,   8, t0)
-+	RESTORE_INT_REG(a5,   9, t0)
-+	RESTORE_INT_REG(a6,  10, t0)
-+	RESTORE_INT_REG(a7,  11, t0)
-+	RESTORE_INT_REG(x,   21, t0)
-+	RESTORE_INT_REG(fp,  22, t0)
-+	RESTORE_INT_REG(s0,  23, t0)
-+	RESTORE_INT_REG(s1,  24, t0)
-+	RESTORE_INT_REG(s2,  25, t0)
-+	RESTORE_INT_REG(s3,  26, t0)
-+	RESTORE_INT_REG(s4,  27, t0)
-+	RESTORE_INT_REG(s5,  28, t0)
-+	RESTORE_INT_REG(s6,  29, t0)
-+	RESTORE_INT_REG(s7,  30, t0)
-+	RESTORE_INT_REG(s8,  31, t0)
-+
-+	ld.d		t1, t0, MCONTEXT_PC
-+	jirl		$r0,t1,0
++    /* Note the contents of argument registers will be random
++       unless makecontext() has been called.  */
++    RESTORE_INT_REG(ra,   1, t0)
++    RESTORE_INT_REG(sp,   3, t0)
++    RESTORE_INT_REG(a0,   4, t0)
++    RESTORE_INT_REG(a1,   5, t0)
++    RESTORE_INT_REG(a2,   6, t0)
++    RESTORE_INT_REG(a3,   7, t0)
++    RESTORE_INT_REG(a4,   8, t0)
++    RESTORE_INT_REG(a5,   9, t0)
++    RESTORE_INT_REG(a6,  10, t0)
++    RESTORE_INT_REG(a7,  11, t0)
++    RESTORE_INT_REG(x,  21, t0)
++    RESTORE_INT_REG(fp,  22, t0)
++    RESTORE_INT_REG(s0,  23, t0)
++    RESTORE_INT_REG(s1,  24, t0)
++    RESTORE_INT_REG(s2,  25, t0)
++    RESTORE_INT_REG(s3,  26, t0)
++    RESTORE_INT_REG(s4,  27, t0)
++    RESTORE_INT_REG(s5,  28, t0)
++    RESTORE_INT_REG(s6,  29, t0)
++    RESTORE_INT_REG(s7,  30, t0)
++    RESTORE_INT_REG(s8,  31, t0)
++    ld.d    t1, t0, MCONTEXT_PC
++    jirl    $r0,t1,0
 +
 +99:
-+	addi.d		sp, sp, 16
-+	b		__syscall_error
++    addi.d  sp, sp, 16
++    b       __syscall_error
 +
 +PSEUDO_END (__setcontext)
 +weak_alias (__setcontext, setcontext)
 +
 +LEAF (__start_context)
 +
-+	/* Terminate call stack by noting ra == 0.  Happily, s0 == 0 here.  */
-+	cfi_register (1, 23)
++    /* Terminate call stack by noting ra == 0.  Happily, s0 == 0 here.  */
++    cfi_register (1, 23)
 +
-+	/* Call the function passed to makecontext.  */
-+	jirl		$r1,s1,0
++    /* Call the function passed to makecontext.  */
++    jirl    $r1,s1,0
 +
-+	/* Invoke subsequent context if present, else exit(0).  */
-+	ori		a0, s2, 0
-+	beqz		s2, 1f
-+	bl		__setcontext
-+1:
-+	b		exit
++    /* Invoke subsequent context if present, else exit(0).  */
++    ori     a0, s2, 0
++    beqz    s2, 1f
++    bl      __setcontext
++1:  b       exit
 +
 +PSEUDO_END (__start_context)
 diff --git a/sysdeps/unix/sysv/linux/loongarch/sigcontextinfo.h b/sysdeps/unix/sysv/linux/loongarch/sigcontextinfo.h
@@ -823,10 +819,10 @@ index 0000000000..c593dc0c52
 +#endif
 diff --git a/sysdeps/unix/sysv/linux/loongarch/swapcontext.S b/sysdeps/unix/sysv/linux/loongarch/swapcontext.S
 new file mode 100644
-index 0000000000..1f6e3d815a
+index 0000000000..3fc7cef9af
 --- /dev/null
 +++ b/sysdeps/unix/sysv/linux/loongarch/swapcontext.S
-@@ -0,0 +1,123 @@
+@@ -0,0 +1,122 @@
 +/* Save and set current context.
 +   Copyright (C) 2021 Free Software Foundation, Inc.
 +   This file is part of the GNU C Library.
@@ -850,102 +846,101 @@ index 0000000000..1f6e3d815a
 +/* int swapcontext (ucontext_t *oucp, const ucontext_t *ucp) */
 +
 +LEAF (__swapcontext)
-+	ori		a2, sp, 0		/* Save sp to a2 */
-+	addi.d		sp, sp, -16
-+	st.d		a1, sp, 0
-+	ori		t0, a1, 0
++    ori     a2, sp, 0			/* Save sp to a2 */
++    addi.d  sp, sp, -16
++    st.d    a1, sp, 0
++    ori     t0, a1, 0
 +
-+	SAVE_INT_REG (ra,   1, a0)
-+	SAVE_INT_REG (a2,   3, a0)		/* Store sp */
-+	SAVE_INT_REG (zero, 4, a0)		/* return 0 by overwriting a0 */
-+	SAVE_INT_REG (x,   21, a0)
-+	SAVE_INT_REG (fp,  22, a0)
-+	SAVE_INT_REG (s0,  23, a0)
-+	SAVE_INT_REG (s1,  24, a0)
-+	SAVE_INT_REG (s2,  25, a0)
-+	SAVE_INT_REG (s3,  26, a0)
-+	SAVE_INT_REG (s4,  27, a0)
-+	SAVE_INT_REG (s5,  28, a0)
-+	SAVE_INT_REG (s6,  29, a0)
-+	SAVE_INT_REG (s7,  30, a0)
-+	SAVE_INT_REG (s8,  31, a0)
-+
-+	st.d		ra, a0, MCONTEXT_PC
++    SAVE_INT_REG (ra,   1, a0)
++    SAVE_INT_REG (a2,   3, a0)		/* Store sp */
++    SAVE_INT_REG (zero, 4, a0)		/* return 0 by overwriting a0 */
++    SAVE_INT_REG (x,	21, a0)
++    SAVE_INT_REG (fp,  22, a0)
++    SAVE_INT_REG (s0,  23, a0)
++    SAVE_INT_REG (s1,  24, a0)
++    SAVE_INT_REG (s2,  25, a0)
++    SAVE_INT_REG (s3,  26, a0)
++    SAVE_INT_REG (s4,  27, a0)
++    SAVE_INT_REG (s5,  28, a0)
++    SAVE_INT_REG (s6,  29, a0)
++    SAVE_INT_REG (s7,  30, a0)
++    SAVE_INT_REG (s8,  31, a0)
++    st.d	 ra, a0, MCONTEXT_PC
 +#ifndef __loongarch_soft_float
-+	movfcsr2gr	a1, $r0
++    movfcsr2gr  a1, $r0
 +
-+	SAVE_FP_REG (fs0,  24, a0)
-+	SAVE_FP_REG (fs1,  25, a0)
-+	SAVE_FP_REG (fs2,  26, a0)
-+	SAVE_FP_REG (fs3,  27, a0)
-+	SAVE_FP_REG (fs4,  28, a0)
-+	SAVE_FP_REG (fs5,  29, a0)
-+	SAVE_FP_REG (fs6,  30, a0)
-+	SAVE_FP_REG (fs7,  31, a0)
++    SAVE_FP_REG (fs0,  24, a0)
++    SAVE_FP_REG (fs1,  25, a0)
++    SAVE_FP_REG (fs2,  26, a0)
++    SAVE_FP_REG (fs3,  27, a0)
++    SAVE_FP_REG (fs4,  28, a0)
++    SAVE_FP_REG (fs5,  29, a0)
++    SAVE_FP_REG (fs6,  30, a0)
++    SAVE_FP_REG (fs7,  31, a0)
 +
-+	st.w		a1, a0, MCONTEXT_FCSR
++    st.w    a1, a0, MCONTEXT_FCSR
 +#endif /* __loongarch_soft_float */
 +
 +/* rt_sigprocmask (SIG_SETMASK, &ucp->uc_sigmask, &oucp->uc_sigmask, _NSIG8) */
-+	li.d		a3, _NSIG8
-+	li.d		a2, UCONTEXT_SIGMASK
-+	add.d		a2, a2, a0
-+	li.d		a1, UCONTEXT_SIGMASK
-+	add.d		a1, a1, t0
-+	li.d		a0, SIG_SETMASK
++    li.d    a3, _NSIG8
++    li.d    a2, UCONTEXT_SIGMASK
++    add.d   a2, a2, a0
++    li.d    a1, UCONTEXT_SIGMASK
++    add.d   a1, a1, t0
++    li.d    a0, SIG_SETMASK
 +
-+	li.d		a7, SYS_ify (rt_sigprocmask)
-+	syscall		0
++    li.d    a7, SYS_ify (rt_sigprocmask)
++    syscall 0
 +
-+	blt		a0, zero, 99f
++    blt     a0, zero, 99f
 +
 +#ifndef __loongarch_soft_float
-+	ld.d		t0, sp, 0		/* Load a1 to t0 */
-+	ld.w		t1, t0, MCONTEXT_FCSR
++    ld.d    t0, sp, 0       /* Load a1 to t0 */
++    ld.w    t1, t0, MCONTEXT_FCSR
 +
-+	RESTORE_FP_REG (fs0,  24, t0)
-+	RESTORE_FP_REG (fs1,  25, t0)
-+	RESTORE_FP_REG (fs2,  26, t0)
-+	RESTORE_FP_REG (fs3,  27, t0)
-+	RESTORE_FP_REG (fs4,  28, t0)
-+	RESTORE_FP_REG (fs5,  29, t0)
-+	RESTORE_FP_REG (fs6,  30, t0)
-+	RESTORE_FP_REG (fs7,  31, t0)
++    RESTORE_FP_REG (fs0,  24, t0)
++    RESTORE_FP_REG (fs1,  25, t0)
++    RESTORE_FP_REG (fs2,  26, t0)
++    RESTORE_FP_REG (fs3,  27, t0)
++    RESTORE_FP_REG (fs4,  28, t0)
++    RESTORE_FP_REG (fs5,  29, t0)
++    RESTORE_FP_REG (fs6,  30, t0)
++    RESTORE_FP_REG (fs7,  31, t0)
 +
-+	movgr2fcsr	$r0, t1
++    movgr2fcsr  $r0, t1
 +#endif /* __loongarch_soft_float */
 +
-+/* Note the contents of argument registers will be random
-+   unless makecontext() has been called.  */
-+	RESTORE_INT_REG (ra,   1, t0)
-+	RESTORE_INT_REG (sp,   3, t0)
-+	RESTORE_INT_REG (a0,   4, t0)
-+	RESTORE_INT_REG (a1,   5, t0)
-+	RESTORE_INT_REG (a2,   6, t0)
-+	RESTORE_INT_REG (a3,   7, t0)
-+	RESTORE_INT_REG (a4,   8, t0)
-+	RESTORE_INT_REG (a5,   9, t0)
-+	RESTORE_INT_REG (a6,  10, t0)
-+	RESTORE_INT_REG (a7,  11, t0)
-+	RESTORE_INT_REG (x,   21, t0)
-+	RESTORE_INT_REG (fp,  22, t0)
-+	RESTORE_INT_REG (s0,  23, t0)
-+	RESTORE_INT_REG (s1,  24, t0)
-+	RESTORE_INT_REG (s2,  25, t0)
-+	RESTORE_INT_REG (s3,  26, t0)
-+	RESTORE_INT_REG (s4,  27, t0)
-+	RESTORE_INT_REG (s5,  28, t0)
-+	RESTORE_INT_REG (s6,  29, t0)
-+	RESTORE_INT_REG (s7,  30, t0)
-+	RESTORE_INT_REG (s8,  31, t0)
++    /* Note the contents of argument registers will be random
++       unless makecontext() has been called.  */
++    RESTORE_INT_REG (ra,   1, t0)
++    RESTORE_INT_REG (sp,   3, t0)
++    RESTORE_INT_REG (a0,   4, t0)
++    RESTORE_INT_REG (a1,   5, t0)
++    RESTORE_INT_REG (a2,   6, t0)
++    RESTORE_INT_REG (a3,   7, t0)
++    RESTORE_INT_REG (a4,   8, t0)
++    RESTORE_INT_REG (a5,   9, t0)
++    RESTORE_INT_REG (a6,  10, t0)
++    RESTORE_INT_REG (a7,  11, t0)
++    RESTORE_INT_REG (x,   21, t0)
++    RESTORE_INT_REG (fp,  22, t0)
++    RESTORE_INT_REG (s0,  23, t0)
++    RESTORE_INT_REG (s1,  24, t0)
++    RESTORE_INT_REG (s2,  25, t0)
++    RESTORE_INT_REG (s3,  26, t0)
++    RESTORE_INT_REG (s4,  27, t0)
++    RESTORE_INT_REG (s5,  28, t0)
++    RESTORE_INT_REG (s6,  29, t0)
++    RESTORE_INT_REG (s7,  30, t0)
++    RESTORE_INT_REG (s8,  31, t0)
++    ld.d    t1, t0, MCONTEXT_PC
 +
-+	ld.d		t1, t0, MCONTEXT_PC
-+	jirl		$r0, t1, 0
++    jirl    $r0, t1, 0
 +
 +
 +99:
-+	addi.d		sp, sp, 16
-+	b		__syscall_error
++    addi.d  sp, sp, 16
++    b       __syscall_error
 +
 +PSEUDO_END (__swapcontext)
 +
@@ -1091,10 +1086,10 @@ index 0000000000..72c3376148
 +#endif /* sys/procfs.h */
 diff --git a/sysdeps/unix/sysv/linux/loongarch/sys/ucontext.h b/sysdeps/unix/sysv/linux/loongarch/sys/ucontext.h
 new file mode 100644
-index 0000000000..6eb8ac21e4
+index 0000000000..8358fd370a
 --- /dev/null
 +++ b/sysdeps/unix/sysv/linux/loongarch/sys/ucontext.h
-@@ -0,0 +1,80 @@
+@@ -0,0 +1,82 @@
 +/* Copyright (C) 2021 Free Software Foundation, Inc.
 +
 +   This file is part of the GNU C Library.
@@ -1160,8 +1155,10 @@ index 0000000000..6eb8ac21e4
 +  unsigned int __fcsr;
 +  unsigned int __vcsr;
 +  unsigned long long __fcc;
-+  unsigned long long __sc_scr[4];
++  unsigned long long __scr[4];
 +  union __loongarch_mc_fp_state __fpregs[32] __attribute__ ((__aligned__ (32)));
++
++  unsigned char __reserved[4096] __attribute__ ((__aligned__ (16)));
 +} mcontext_t;
 +
 +/* Userlevel context.  */
@@ -1170,8 +1167,8 @@ index 0000000000..6eb8ac21e4
 +  unsigned long int __uc_flags;
 +  struct ucontext_t *uc_link;
 +  stack_t uc_stack;
-+  sigset_t uc_sigmask;
 +  mcontext_t uc_mcontext;
++  sigset_t uc_sigmask;
 +} ucontext_t;
 +
 +#endif /* sys/ucontext.h */
@@ -1300,5 +1297,5 @@ index 0000000000..d7f612fea2
 +
 +UCONTEXT_SIZE			sizeof (ucontext_t)
 -- 
-2.33.0
+2.34.0
 

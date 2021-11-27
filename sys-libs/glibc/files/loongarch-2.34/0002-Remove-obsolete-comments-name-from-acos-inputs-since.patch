@@ -1,7 +1,7 @@
 From 4165dd2e9562a586865f3032a91958cec40c4692 Mon Sep 17 00:00:00 2001
 From: Paul Zimmermann <Paul.Zimmermann@inria.fr>
 Date: Mon, 26 Jul 2021 14:43:27 +0200
-Subject: [PATCH 02/24] Remove obsolete comments/name from acos-inputs, since
+Subject: [PATCH 02/46] Remove obsolete comments/name from acos-inputs, since
  slow path was removed.
 
 ---
@@ -23,5 +23,5 @@ index c90dba57ca..540f88dd09 100644
  0x1.e31933dfcae5ep-6
  0x1.560a94c69898dp-28
 -- 
-2.33.0
+2.34.0
 

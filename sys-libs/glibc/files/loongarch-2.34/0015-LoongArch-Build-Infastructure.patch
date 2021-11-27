@@ -1,7 +1,7 @@
-From e2860c369a37682711166df92860fb6694a9e1eb Mon Sep 17 00:00:00 2001
+From 7c08a1b1c1703b7675b0d44b398467416b481cce Mon Sep 17 00:00:00 2001
 From: caiyinyu <caiyinyu@loongson.cn>
 Date: Tue, 27 Jul 2021 16:02:40 +0800
-Subject: [PATCH 15/24] LoongArch: Build Infastructure
+Subject: [PATCH 15/46] LoongArch: Build Infastructure
 
         * scripts/config.guess: Modified
         * scripts/config.sub: Likewise
@@ -637,5 +637,5 @@ index 0000000000..0e6345b836
 @@ -0,0 +1 @@
 +DEFAULT		GLIBC_2.27
 -- 
-2.33.0
+2.34.0
 

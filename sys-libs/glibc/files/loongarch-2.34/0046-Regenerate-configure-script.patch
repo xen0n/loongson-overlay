@@ -1,14 +1,14 @@
-From dad1826b537d9e448e9e36beb5b80fb3e53ef3e7 Mon Sep 17 00:00:00 2001
+From 3b1c8297ff7bc1177a65ae270fdf9dae8da3b8e2 Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <git@xen0n.name>
 Date: Sun, 8 Aug 2021 00:16:58 +0800
-Subject: [PATCH 21/24] Regenerate configure script
+Subject: [PATCH 46/46] Regenerate configure script
 
 ---
  sysdeps/unix/sysv/linux/loongarch/configure | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/sysdeps/unix/sysv/linux/loongarch/configure b/sysdeps/unix/sysv/linux/loongarch/configure
-index a9761a176c..0668936415 100644
+index a402323a4d..b3d1bae335 100644
 --- a/sysdeps/unix/sysv/linux/loongarch/configure
 +++ b/sysdeps/unix/sysv/linux/loongarch/configure
 @@ -1,7 +1,7 @@
@@ -21,5 +21,5 @@ index a9761a176c..0668936415 100644
  libc_cv_loongarch_int_abi=no
  
 -- 
-2.33.0
+2.34.0
 

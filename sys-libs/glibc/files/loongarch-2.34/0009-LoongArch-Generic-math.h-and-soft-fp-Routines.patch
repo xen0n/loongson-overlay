@@ -1,7 +1,7 @@
-From 00d94ef6a0c9163292b9dd85e43abc833aedc630 Mon Sep 17 00:00:00 2001
+From 4e62fa934f679f1f15ea65107e25a6faabf46e49 Mon Sep 17 00:00:00 2001
 From: caiyinyu <caiyinyu@loongson.cn>
 Date: Tue, 27 Jul 2021 15:43:50 +0800
-Subject: [PATCH 09/24] LoongArch: Generic <math.h> and soft-fp Routines
+Subject: [PATCH 09/46] LoongArch: Generic <math.h> and soft-fp Routines
 
 This patch contains the miscellaneous math routines and headers we have
 implemented for LoongArch.  This includes things from <math.h> that aren't
@@ -391,5 +391,5 @@ index 0000000000..90956c35f7
 @@ -0,0 +1 @@
 +#define TININESS_AFTER_ROUNDING 1
 -- 
-2.33.0
+2.34.0
 

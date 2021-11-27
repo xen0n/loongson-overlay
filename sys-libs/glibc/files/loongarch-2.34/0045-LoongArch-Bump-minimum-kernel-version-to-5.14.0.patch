@@ -1,7 +1,7 @@
-From 104332b632dcb1cb30a85bee9344fc7fa3e14a18 Mon Sep 17 00:00:00 2001
+From 64cb5a7c6390a0f823e6c42afd9d81f75027042f Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <git@xen0n.name>
 Date: Sun, 8 Aug 2021 00:13:23 +0800
-Subject: [PATCH 20/24] LoongArch: Bump minimum kernel version to 5.14.0
+Subject: [PATCH 45/46] LoongArch: Bump minimum kernel version to 5.14.0
 
 There is no LoongArch support in any earlier upstream kernels, so first
 bump to 5.14.0 where the earliest open-source LoongArch appeared on top
@@ -12,7 +12,7 @@ non-open-source vendor kernels, so the change should be harmless.
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/sysdeps/unix/sysv/linux/loongarch/configure.ac b/sysdeps/unix/sysv/linux/loongarch/configure.ac
-index fef4f4d2ae..5709a0ed43 100644
+index 230fb5d976..17732d9623 100644
 --- a/sysdeps/unix/sysv/linux/loongarch/configure.ac
 +++ b/sysdeps/unix/sysv/linux/loongarch/configure.ac
 @@ -2,7 +2,7 @@ sinclude(./aclocal.m4)dnl Autoconf lossage
@@ -25,5 +25,5 @@ index fef4f4d2ae..5709a0ed43 100644
  libc_cv_loongarch_int_abi=no
  AC_EGREP_CPP(4 4 4, [__SIZEOF_INT__ __SIZEOF_LONG__ __SIZEOF_POINTER__
 -- 
-2.33.0
+2.34.0
 

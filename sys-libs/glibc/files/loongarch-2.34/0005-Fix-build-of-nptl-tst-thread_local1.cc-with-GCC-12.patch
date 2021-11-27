@@ -1,7 +1,7 @@
 From 2ee9b24f47db8d0a8d0ccadb999335a1d4cfc364 Mon Sep 17 00:00:00 2001
 From: Joseph Myers <joseph@codesourcery.com>
 Date: Mon, 2 Aug 2021 16:33:44 +0000
-Subject: [PATCH 05/24] Fix build of nptl/tst-thread_local1.cc with GCC 12
+Subject: [PATCH 05/46] Fix build of nptl/tst-thread_local1.cc with GCC 12
 
 The test nptl/tst-thread_local1.cc fails to build with GCC mainline
 because of changes to what libstdc++ headers implicitly include what
@@ -32,5 +32,5 @@ index 9608afa4b7..338aafea05 100644
  #include <string>
  #include <thread>
 -- 
-2.33.0
+2.34.0
 
