@@ -17,7 +17,10 @@ IUSE="nls static"
 
 BDEPEND="nls? ( sys-devel/gettext )"
 
-PATCHES=( "${FILESDIR}/ppc-musl.patch" )
+PATCHES=(
+	"${FILESDIR}/ppc-musl.patch"
+	"${FILESDIR}/stack-direction-add-loongarch.patch"
+)
 
 src_configure() {
 	use static && append-ldflags -static
