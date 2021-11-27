@@ -30,7 +30,10 @@ DEPEND="${RDEPEND}"
 BDEPEND="app-arch/xz-utils
 	nls? ( sys-devel/gettext )"
 
-PATCHES=( "${FILESDIR}/ppc-musl.patch" )
+PATCHES=(
+	"${FILESDIR}/ppc-musl.patch"
+	"${FILESDIR}/stack-direction-add-loongarch.patch"
+)
 
 src_configure() {
 	local -a myeconfargs=(
