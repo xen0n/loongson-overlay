@@ -29,7 +29,10 @@ BDEPEND="
 	nls? ( sys-devel/gettext )
 "
 
-PATCHES=( "${FILESDIR}/ppc-musl.patch" )
+PATCHES=(
+	"${FILESDIR}/ppc-musl.patch"
+	"${FILESDIR}/stack-direction-add-loongarch.patch"
+)
 
 DOCS=( AUTHORS ChangeLog NEWS README THANKS TODO )
 
