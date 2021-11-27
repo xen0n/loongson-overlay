@@ -1,21 +1,21 @@
 # Copyright 2019 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-# LoongArch baseline/lp64 no-multilib profile
+# LoongArch baseline/lp64d no-multilib profile
 
-CFLAGS="-O2 -pipe -march=loongarch64 -mabi=lp64"
+CFLAGS="-O2 -pipe -march=loongarch64 -mabi=lp64d"
 CXXFLAGS="${CFLAGS}"
 FFLAGS="${CFLAGS}"
 FCFLAGS="${CFLAGS}"
 
 # We have only one ABI
-MULTILIB_ABIS="lp64"
-DEFAULT_ABI="lp64"
-ABI="lp64"
+MULTILIB_ABIS="lp64d"
+DEFAULT_ABI="lp64d"
+ABI="lp64d"
 
 # Temporarily workaround multilib.eclass having no support for LoongArch
 #LIBDIR_default="lib64"
 CONF_LIBDIR="lib64"
-CFLAGS_default="-mabi=lp64"
+CFLAGS_default="-mabi=lp64d"
 LDFLAGS_default="-m elf64loongarch"
 CHOST_default="loongarch64-unknown-linux-gnu"
