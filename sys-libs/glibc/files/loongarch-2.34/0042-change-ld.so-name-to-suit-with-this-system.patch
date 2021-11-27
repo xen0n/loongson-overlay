@@ -42,8 +42,8 @@ index 79699c6751..f51e5c0c03 100644
 -	machine=loongarch/lp64
  
 -        with_fp_cond="!defined __loongarch_soft_float"
-+    grlen=`$CC $CFLAGS $CPPFLAGS -E -dM -xc /dev/null | sed -n 's/^#define __loongarch_grlen \(.*\)/\1/p'`
-+    float_abi=`$CC $CFLAGS $CPPFLAGS -E -dM -xc /dev/null | sed -n 's/^#define __loongarch_\(soft\|single\|double\)_float.*/\1/p'`
++    grlen=64
++    float_abi=double
 +
 +    with_fp_cond="!defined __loongarch_soft_float"
 +
