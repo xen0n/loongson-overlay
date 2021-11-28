@@ -1,0 +1,53 @@
+From 5a7b729dc20c222f0cce42b0ce162479c52ca1a2 Mon Sep 17 00:00:00 2001
+From: caiyinyu <caiyinyu@loongson.cn>
+Date: Sat, 27 Nov 2021 10:28:37 +0800
+Subject: [PATCH 39/42] replace _ABILP64 with __loongarch_lp64
+
+---
+ sysdeps/loongarch/Makefile                   | 2 +-
+ sysdeps/loongarch/dl-machine.h               | 4 +---
+ sysdeps/unix/sysv/linux/loongarch/ldconfig.h | 2 +-
+ 3 files changed, 3 insertions(+), 5 deletions(-)
+
+diff --git a/sysdeps/loongarch/Makefile b/sysdeps/loongarch/Makefile
+index 8202ee234f..41c3449670 100644
+--- a/sysdeps/loongarch/Makefile
++++ b/sysdeps/loongarch/Makefile
+@@ -12,4 +12,4 @@ ifeq (,$(filter $(default-abi),$(abi-variants)))
+ $(error Unknown ABI $(default-abi), must be one of $(abi-variants))
+ endif
+ 
+-abi-lp64-condition    := defined _ABILP64
++abi-lp64-condition    := defined __loongarch_lp64
+diff --git a/sysdeps/loongarch/dl-machine.h b/sysdeps/loongarch/dl-machine.h
+index 5f2656e574..823a9f9f27 100644
+--- a/sysdeps/loongarch/dl-machine.h
++++ b/sysdeps/loongarch/dl-machine.h
+@@ -65,10 +65,8 @@ elf_machine_matches_host (const ElfW (Ehdr) * ehdr)
+   if (ehdr->e_machine != EM_LOONGARCH)
+     return 0;
+ 
+-#ifdef _ABILP64
++#ifdef __loongarch_lp64
+   if ((ehdr->e_flags & EF_LARCH_ABI) != EF_LARCH_ABI_LP64)
+-#elif defined _ABILP32
+-  if ((ehdr->e_flags & EF_LARCH_ABI) != EF_LARCH_ABI_LP32)
+ #else
+ #error "Unknown ABI"
+ #endif
+diff --git a/sysdeps/unix/sysv/linux/loongarch/ldconfig.h b/sysdeps/unix/sysv/linux/loongarch/ldconfig.h
+index f034440272..e0a31c4b4c 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/ldconfig.h
++++ b/sysdeps/unix/sysv/linux/loongarch/ldconfig.h
+@@ -18,7 +18,7 @@
+ 
+ #include <sysdeps/generic/ldconfig.h>
+ 
+-#if _LOONGARCH_SIM == _ABILP64
++#ifdef __loongarch_lp64
+ #define SYSDEP_KNOWN_INTERPRETER_NAMES \
+   { "/lib64/ld-linux-loongarch-lp64d.so.1", FLAG_ELF_LIBC6 }, \
+   { "/lib64/ld-linux-loongarch-lp64s.so.1", FLAG_ELF_LIBC6 },
+-- 
+2.34.0
+
