@@ -18,6 +18,7 @@ case ${PV} in
 9999*)
 	# live git tree
 	EGIT_REPO_URI="https://sourceware.org/git/binutils-gdb.git"
+	EGIT_COMMIT=560b3fe208255ae909b4b1c88ba9c28b09043307  # to avoid source-level incompatibilities introduced later
 	inherit git-r3
 	SRC_URI=""
 	;;
