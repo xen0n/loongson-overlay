@@ -1,7 +1,7 @@
 From efadf4f4b02ebce35872c17f49c809edf99a4fa3 Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <git@xen0n.name>
 Date: Sun, 8 Aug 2021 12:13:16 +0800
-Subject: [PATCH 92/97] opcodes: LoongArch: add "ret" instruction to reduce
+Subject: [PATCH 10/15] opcodes: LoongArch: add "ret" instruction to reduce
  typing
 
 2021-10-25  WANG Xuerui <git@xen0n.name>

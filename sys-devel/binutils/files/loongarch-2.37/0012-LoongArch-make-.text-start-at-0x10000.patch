@@ -1,7 +1,7 @@
 From be15c1793fc8c08fd7105b8a9758bb50aa7546b1 Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <git@xen0n.name>
 Date: Mon, 9 Aug 2021 21:53:46 +0800
-Subject: [PATCH 94/97] LoongArch: make .text start at 0x10000
+Subject: [PATCH 12/15] LoongArch: make .text start at 0x10000
 
 The previous value obviously is coming from MIPS; no reason is given as
 to why this is absolutely needed.  Just change to get closer to RISC-V

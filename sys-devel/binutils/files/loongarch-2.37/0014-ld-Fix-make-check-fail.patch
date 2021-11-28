@@ -1,7 +1,7 @@
 From 26ab27827997d84a572621b3e349a66916d21469 Mon Sep 17 00:00:00 2001
 From: liuzhensong <liuzhensong@loongson.cn>
 Date: Fri, 19 Nov 2021 10:35:10 +0800
-Subject: [PATCH 96/97] ld: Fix make check fail.
+Subject: [PATCH 14/15] ld: Fix make check fail.
 
   ld/testsuite/ld-elf/eh5.d
   ld/testsuite/ld-elf/pr21884.d

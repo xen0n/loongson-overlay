@@ -52,7 +52,6 @@ gas/testsuite/
 ---
  gas/Makefile.am                             |   17 +-
  gas/Makefile.in                             |   28 +-
- gas/NEWS                                    |    2 +
  gas/config/loongarch-lex-wrapper.c          |   20 +
  gas/config/loongarch-lex.h                  |   34 +
  gas/config/loongarch-lex.l                  |   61 +
@@ -89,7 +88,7 @@ gas/testsuite/
  gas/testsuite/gas/loongarch/syscall.d       |   11 +
  gas/testsuite/gas/loongarch/syscall.s       |    2 +
  gas/testsuite/lib/gas-defs.exp              |    4 +
- 39 files changed, 4152 insertions(+), 5 deletions(-)
+ 38 files changed, 4150 insertions(+), 5 deletions(-)
  create mode 100644 gas/config/loongarch-lex-wrapper.c
  create mode 100644 gas/config/loongarch-lex.h
  create mode 100644 gas/config/loongarch-lex.l
@@ -260,18 +259,6 @@ index f3d66b8e8b6..ff11adb0f70 100644
 +config/loongarch-lex-wrapper.@OBJEXT@: config/loongarch-lex.c config/loongarch-parse.h
  
  # The mips instruction table specification lexical analyzer and parser.
- 
-diff --git a/gas/NEWS b/gas/NEWS
-index de4c61b320d..09fade54087 100644
---- a/gas/NEWS
-+++ b/gas/NEWS
-@@ -1,5 +1,7 @@
- -*- text -*-
- 
-+* Add support for the LoongArch instruction set.
-+
- * Add a command-line option, -muse-unaligned-vector-move, for x86 target
-   to encode aligned vector move as unaligned vector move.
  
 diff --git a/gas/config/loongarch-lex-wrapper.c b/gas/config/loongarch-lex-wrapper.c
 new file mode 100644

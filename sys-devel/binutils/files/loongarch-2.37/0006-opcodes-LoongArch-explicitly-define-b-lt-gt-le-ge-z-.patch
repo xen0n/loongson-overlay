@@ -1,7 +1,7 @@
 From 50f2b03fc7677c2d502da9d84423d27ab27428dc Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <git@xen0n.name>
 Date: Mon, 25 Oct 2021 10:15:19 +0800
-Subject: [PATCH 88/97] opcodes: LoongArch: explicitly define b{lt/gt/le/ge}z
+Subject: [PATCH 06/15] opcodes: LoongArch: explicitly define b{lt/gt/le/ge}z
  as syntactic sugars
 
 2021-10-25  WANG Xuerui <git@xen0n.name>

@@ -1,7 +1,7 @@
 From 42413dcfaeabca87a116ae2ee0418afd1ffcc4cb Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <git@xen0n.name>
 Date: Fri, 13 Aug 2021 14:46:24 +0800
-Subject: [PATCH 93/97] opcodes: LoongArch: make beq/bne's operand order "rd,
+Subject: [PATCH 11/15] opcodes: LoongArch: make beq/bne's operand order "rd,
  rj" to be consistent with all others
 
 This has no functional impact, but keeps the instruction format nice and

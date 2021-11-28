@@ -1,7 +1,7 @@
 From a98d9faf75e3c876235a927c3544ff9267ba2e89 Mon Sep 17 00:00:00 2001
 From: liuzhensong <liuzhensong@loongson.cn>
 Date: Tue, 16 Nov 2021 19:15:29 +0800
-Subject: [PATCH 95/97] gas: Fix warning in ubsan.
+Subject: [PATCH 13/15] gas: Fix warning in ubsan.
 
    opcodes/loongarch-coder.c
 ---

@@ -1,7 +1,7 @@
 From 7e035ee539e7d36a69146afdaa6cf3521f6286ad Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <git@xen0n.name>
 Date: Mon, 25 Oct 2021 10:25:28 +0800
-Subject: [PATCH 90/97] opcodes: LoongArch: sort loongarch_jmp_opcodes entries
+Subject: [PATCH 08/15] opcodes: LoongArch: sort loongarch_jmp_opcodes entries
  by opcodes
 
 2021-10-25  WANG Xuerui <git@xen0n.name>

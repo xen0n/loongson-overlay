@@ -1,7 +1,7 @@
 From 7910cfc7409d9fdff7400605395bf55d591c995c Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <git@xen0n.name>
 Date: Mon, 25 Oct 2021 10:29:03 +0800
-Subject: [PATCH 91/97] opcodes: LoongArch: make all non-native jumps desugar
+Subject: [PATCH 09/15] opcodes: LoongArch: make all non-native jumps desugar
  to canonical b{gt/le}[u] forms
 
 2021-10-25  WANG Xuerui <git@xen0n.name>

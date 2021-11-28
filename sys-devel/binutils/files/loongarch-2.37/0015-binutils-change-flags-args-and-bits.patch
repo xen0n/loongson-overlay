@@ -1,7 +1,7 @@
 From 2bd52ac4f8d041a5ca02da1a23d32f03bfeafae9 Mon Sep 17 00:00:00 2001
 From: liuzhensong <liuzhensong@loongson.cn>
 Date: Fri, 26 Nov 2021 10:35:38 +0800
-Subject: [PATCH 97/97] binutils: change flags args and bits
+Subject: [PATCH 15/15] binutils: change flags args and bits
 
   bfd/elfnn-loongarch.c
   gas/config/tc-loongarch.c

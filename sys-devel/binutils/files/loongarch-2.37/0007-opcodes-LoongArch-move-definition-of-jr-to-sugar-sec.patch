@@ -1,7 +1,7 @@
 From 3c88d5b39b8e9651f8dfd2f87680b3af7e1c7d38 Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <git@xen0n.name>
 Date: Mon, 25 Oct 2021 10:21:13 +0800
-Subject: [PATCH 89/97] opcodes: LoongArch: move definition of jr to sugar
+Subject: [PATCH 07/15] opcodes: LoongArch: move definition of jr to sugar
  section
 
 2021-10-25  WANG Xuerui <git@xen0n.name>
