@@ -1,0 +1,38 @@
+From c82ebeb7e6e060dacbaef02933b5f06c10f574f6 Mon Sep 17 00:00:00 2001
+From: Alan Modra <amodra@gmail.com>
+Date: Fri, 29 Oct 2021 13:13:17 +1030
+Subject: [PATCH 33/97] obcopy vs. files with silly section alignment
+
+We already ignore stupid segment alignment when rewriting headers,
+ignore section alignment too.
+
+	* elf.c (rewrite_elf_program_header): Ignore section alignment
+	power greater than 62.
+---
+ bfd/elf.c | 9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
+
+diff --git a/bfd/elf.c b/bfd/elf.c
+index cd8280e5551..4df144b04f0 100644
+--- a/bfd/elf.c
++++ b/bfd/elf.c
+@@ -6953,9 +6953,14 @@ rewrite_elf_program_header (bfd *ibfd, bfd *obfd, bfd_vma maxpagesize)
+    && !(SEGMENT_AFTER_SEGMENT (seg1, seg2, p_paddr)			\
+ 	|| SEGMENT_AFTER_SEGMENT (seg2, seg1, p_paddr)))
+ 
+-  /* Initialise the segment mark field.  */
++  /* Initialise the segment mark field, and discard stupid alignment.  */
+   for (section = ibfd->sections; section != NULL; section = section->next)
+-    section->segment_mark = false;
++    {
++      asection *o = section->output_section;
++      if (o != NULL && o->alignment_power >= (sizeof (bfd_vma) * 8) - 1)
++	o->alignment_power = 0;
++      section->segment_mark = false;
++    }
+ 
+   /* The Solaris linker creates program headers in which all the
+      p_paddr fields are zero.  When we try to objcopy or strip such a
+-- 
+2.34.0
+

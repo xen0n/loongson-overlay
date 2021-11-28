@@ -1,7 +1,7 @@
 From 560b3fe208255ae909b4b1c88ba9c28b09043307 Mon Sep 17 00:00:00 2001
 From: liuzhensong <liuzhensong@loongson.cn>
 Date: Fri, 22 Oct 2021 16:42:07 +0800
-Subject: [PATCH 5/5] LoongArch ld support
+Subject: [PATCH 05/97] LoongArch ld support
 
 2021-10-22  Chenghua Xu  <xuchenghua@loongson.cn>
 	    Zhensong Liu  <liuzhensong@loongson.cn>
@@ -1428,5 +1428,5 @@ index fb637943909..896f8722782 100644
  
  #pass
 -- 
-2.33.1
+2.34.0
 

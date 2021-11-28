@@ -1,0 +1,168 @@
+From b3a9fe6f51fd3922ce7978b6ba5ce0cbdf33885e Mon Sep 17 00:00:00 2001
+From: "H.J. Lu" <hjl.tools@gmail.com>
+Date: Sat, 23 Oct 2021 07:37:33 -0700
+Subject: [PATCH 18/97] x86: Also handle stores for -muse-unaligned-vector-move
+
+	* config/tc-i386.c (encode_with_unaligned_vector_move): Also
+	handle stores.
+	* testsuite/gas/i386/unaligned-vector-move.s: Add stores.
+	* testsuite/gas/i386/unaligned-vector-move.d: Updated.
+	* testsuite/gas/i386/x86-64-unaligned-vector-move.d: Likewise.
+---
+ gas/config/tc-i386.c                          |  8 +++---
+ .../gas/i386/unaligned-vector-move.d          | 27 ++++++++++++++++---
+ .../gas/i386/unaligned-vector-move.s          | 27 ++++++++++++++++---
+ .../gas/i386/x86-64-unaligned-vector-move.d   | 27 ++++++++++++++++---
+ 4 files changed, 74 insertions(+), 15 deletions(-)
+
+diff --git a/gas/config/tc-i386.c b/gas/config/tc-i386.c
+index ef30a6bc0e9..320ea7e5185 100644
+--- a/gas/config/tc-i386.c
++++ b/gas/config/tc-i386.c
+@@ -4083,13 +4083,15 @@ encode_with_unaligned_vector_move (void)
+ {
+   switch (i.tm.base_opcode)
+     {
+-    case 0x28:
++    case 0x28:	/* Load instructions.  */
++    case 0x29:	/* Store instructions.  */
+       /* movaps/movapd/vmovaps/vmovapd.  */
+       if (i.tm.opcode_modifier.opcodespace == SPACE_0F
+ 	  && i.tm.opcode_modifier.opcodeprefix <= PREFIX_0X66)
+-	i.tm.base_opcode = 0x10;
++	i.tm.base_opcode = 0x10 | (i.tm.base_opcode & 1);
+       break;
+-    case 0x6f:
++    case 0x6f:	/* Load instructions.  */
++    case 0x7f:	/* Store instructions.  */
+       /* movdqa/vmovdqa/vmovdqa64/vmovdqa32. */
+       if (i.tm.opcode_modifier.opcodespace == SPACE_0F
+ 	  && i.tm.opcode_modifier.opcodeprefix == PREFIX_0X66)
+diff --git a/gas/testsuite/gas/i386/unaligned-vector-move.d b/gas/testsuite/gas/i386/unaligned-vector-move.d
+index d5df2aed58e..9840ee8bec7 100644
+--- a/gas/testsuite/gas/i386/unaligned-vector-move.d
++++ b/gas/testsuite/gas/i386/unaligned-vector-move.d
+@@ -9,14 +9,33 @@ Disassembly of section .text:
+ 
+ 0+ <_start>:
+  +[a-f0-9]+:	0f 10 d1             	movups %xmm1,%xmm2
++ +[a-f0-9]+:	0f 10 10             	movups \(%eax\),%xmm2
++ +[a-f0-9]+:	0f 11 08             	movups %xmm1,\(%eax\)
+  +[a-f0-9]+:	66 0f 10 d1          	movupd %xmm1,%xmm2
++ +[a-f0-9]+:	66 0f 10 10          	movupd \(%eax\),%xmm2
++ +[a-f0-9]+:	66 0f 11 08          	movupd %xmm1,\(%eax\)
+  +[a-f0-9]+:	f3 0f 6f d1          	movdqu %xmm1,%xmm2
++ +[a-f0-9]+:	f3 0f 6f 10          	movdqu \(%eax\),%xmm2
++ +[a-f0-9]+:	f3 0f 7f 08          	movdqu %xmm1,\(%eax\)
+  +[a-f0-9]+:	c5 f8 10 d1          	vmovups %xmm1,%xmm2
++ +[a-f0-9]+:	c5 f8 10 10          	vmovups \(%eax\),%xmm2
++ +[a-f0-9]+:	c5 f8 11 08          	vmovups %xmm1,\(%eax\)
+  +[a-f0-9]+:	c5 f9 10 d1          	vmovupd %xmm1,%xmm2
++ +[a-f0-9]+:	c5 f9 10 10          	vmovupd \(%eax\),%xmm2
++ +[a-f0-9]+:	c5 f9 11 08          	vmovupd %xmm1,\(%eax\)
+  +[a-f0-9]+:	c5 fa 6f d1          	vmovdqu %xmm1,%xmm2
+- +[a-f0-9]+:	c5 f8 10 d1          	vmovups %xmm1,%xmm2
+- +[a-f0-9]+:	62 f1 fd 09 10 d1    	vmovupd %xmm1,%xmm2\{%k1\}
++ +[a-f0-9]+:	c5 fa 6f 10          	vmovdqu \(%eax\),%xmm2
++ +[a-f0-9]+:	c5 fa 7f 08          	vmovdqu %xmm1,\(%eax\)
+  +[a-f0-9]+:	62 f1 7c 09 10 d1    	vmovups %xmm1,%xmm2\{%k1\}
+- +[a-f0-9]+:	62 f1 7e 09 6f d1    	vmovdqu32 %xmm1,%xmm2\{%k1\}
+- +[a-f0-9]+:	62 f1 fe 09 6f d1    	vmovdqu64 %xmm1,%xmm2\{%k1\}
++ +[a-f0-9]+:	62 f1 7c 09 10 10    	vmovups \(%eax\),%xmm2\{%k1\}
++ +[a-f0-9]+:	62 f1 7c 09 11 08    	vmovups %xmm1,\(%eax\)\{%k1\}
++ +[a-f0-9]+:	62 f1 fd 09 10 d1    	vmovupd %xmm1,%xmm2\{%k1\}
++ +[a-f0-9]+:	62 f1 fd 09 10 10    	vmovupd \(%eax\),%xmm2\{%k1\}
++ +[a-f0-9]+:	62 f1 fd 09 11 08    	vmovupd %xmm1,\(%eax\)\{%k1\}
++ +[a-f0-9]+:	62 f1 7e 08 6f d1    	vmovdqu32 %xmm1,%xmm2
++ +[a-f0-9]+:	62 f1 7e 08 6f 10    	vmovdqu32 \(%eax\),%xmm2
++ +[a-f0-9]+:	62 f1 7e 08 7f 08    	vmovdqu32 %xmm1,\(%eax\)
++ +[a-f0-9]+:	62 f1 fe 08 6f d1    	vmovdqu64 %xmm1,%xmm2
++ +[a-f0-9]+:	62 f1 fe 08 6f 10    	vmovdqu64 \(%eax\),%xmm2
++ +[a-f0-9]+:	62 f1 fe 08 7f 08    	vmovdqu64 %xmm1,\(%eax\)
+ #pass
+diff --git a/gas/testsuite/gas/i386/unaligned-vector-move.s b/gas/testsuite/gas/i386/unaligned-vector-move.s
+index b88ae232a38..6966e5d4d50 100644
+--- a/gas/testsuite/gas/i386/unaligned-vector-move.s
++++ b/gas/testsuite/gas/i386/unaligned-vector-move.s
+@@ -3,13 +3,32 @@
+ 	.text
+ _start:
+ 	movaps %xmm1, %xmm2
++	movaps (%eax), %xmm2
++	movaps %xmm1, (%eax)
+ 	movapd %xmm1, %xmm2
++	movapd (%eax), %xmm2
++	movapd %xmm1, (%eax)
+ 	movdqa %xmm1, %xmm2
++	movdqa (%eax), %xmm2
++	movdqa %xmm1, (%eax)
+ 	vmovaps %xmm1, %xmm2
++	vmovaps (%eax), %xmm2
++	vmovaps %xmm1, (%eax)
+ 	vmovapd %xmm1, %xmm2
++	vmovapd (%eax), %xmm2
++	vmovapd %xmm1, (%eax)
+ 	vmovdqa %xmm1, %xmm2
+-	vmovaps %xmm1, %xmm2
+-	vmovapd %xmm1, %xmm2{%k1}
++	vmovdqa (%eax), %xmm2
++	vmovdqa %xmm1, (%eax)
+ 	vmovaps %xmm1, %xmm2{%k1}
+-	vmovdqa32 %xmm1, %xmm2{%k1}
+-	vmovdqa64 %xmm1, %xmm2{%k1}
++	vmovaps (%eax), %xmm2{%k1}
++	vmovaps %xmm1, (%eax){%k1}
++	vmovapd %xmm1, %xmm2{%k1}
++	vmovapd (%eax), %xmm2{%k1}
++	vmovapd %xmm1, (%eax){%k1}
++	vmovdqa32 %xmm1, %xmm2
++	vmovdqa32 (%eax), %xmm2
++	vmovdqa32 %xmm1, (%eax)
++	vmovdqa64 %xmm1, %xmm2
++	vmovdqa64 (%eax), %xmm2
++	vmovdqa64 %xmm1, (%eax)
+diff --git a/gas/testsuite/gas/i386/x86-64-unaligned-vector-move.d b/gas/testsuite/gas/i386/x86-64-unaligned-vector-move.d
+index cbcd7719bf0..32a6f85f671 100644
+--- a/gas/testsuite/gas/i386/x86-64-unaligned-vector-move.d
++++ b/gas/testsuite/gas/i386/x86-64-unaligned-vector-move.d
+@@ -10,14 +10,33 @@ Disassembly of section .text:
+ 
+ 0+ <_start>:
+  +[a-f0-9]+:	0f 10 d1             	movups %xmm1,%xmm2
++ +[a-f0-9]+:	67 0f 10 10          	movups \(%eax\),%xmm2
++ +[a-f0-9]+:	67 0f 11 08          	movups %xmm1,\(%eax\)
+  +[a-f0-9]+:	66 0f 10 d1          	movupd %xmm1,%xmm2
++ +[a-f0-9]+:	67 66 0f 10 10       	movupd \(%eax\),%xmm2
++ +[a-f0-9]+:	67 66 0f 11 08       	movupd %xmm1,\(%eax\)
+  +[a-f0-9]+:	f3 0f 6f d1          	movdqu %xmm1,%xmm2
++ +[a-f0-9]+:	67 f3 0f 6f 10       	movdqu \(%eax\),%xmm2
++ +[a-f0-9]+:	67 f3 0f 7f 08       	movdqu %xmm1,\(%eax\)
+  +[a-f0-9]+:	c5 f8 10 d1          	vmovups %xmm1,%xmm2
++ +[a-f0-9]+:	67 c5 f8 10 10       	vmovups \(%eax\),%xmm2
++ +[a-f0-9]+:	67 c5 f8 11 08       	vmovups %xmm1,\(%eax\)
+  +[a-f0-9]+:	c5 f9 10 d1          	vmovupd %xmm1,%xmm2
++ +[a-f0-9]+:	67 c5 f9 10 10       	vmovupd \(%eax\),%xmm2
++ +[a-f0-9]+:	67 c5 f9 11 08       	vmovupd %xmm1,\(%eax\)
+  +[a-f0-9]+:	c5 fa 6f d1          	vmovdqu %xmm1,%xmm2
+- +[a-f0-9]+:	c5 f8 10 d1          	vmovups %xmm1,%xmm2
+- +[a-f0-9]+:	62 f1 fd 09 10 d1    	vmovupd %xmm1,%xmm2\{%k1\}
++ +[a-f0-9]+:	67 c5 fa 6f 10       	vmovdqu \(%eax\),%xmm2
++ +[a-f0-9]+:	67 c5 fa 7f 08       	vmovdqu %xmm1,\(%eax\)
+  +[a-f0-9]+:	62 f1 7c 09 10 d1    	vmovups %xmm1,%xmm2\{%k1\}
+- +[a-f0-9]+:	62 f1 7e 09 6f d1    	vmovdqu32 %xmm1,%xmm2\{%k1\}
+- +[a-f0-9]+:	62 f1 fe 09 6f d1    	vmovdqu64 %xmm1,%xmm2\{%k1\}
++ +[a-f0-9]+:	67 62 f1 7c 09 10 10 	vmovups \(%eax\),%xmm2\{%k1\}
++ +[a-f0-9]+:	67 62 f1 7c 09 11 08 	vmovups %xmm1,\(%eax\)\{%k1\}
++ +[a-f0-9]+:	62 f1 fd 09 10 d1    	vmovupd %xmm1,%xmm2\{%k1\}
++ +[a-f0-9]+:	67 62 f1 fd 09 10 10 	vmovupd \(%eax\),%xmm2\{%k1\}
++ +[a-f0-9]+:	67 62 f1 fd 09 11 08 	vmovupd %xmm1,\(%eax\)\{%k1\}
++ +[a-f0-9]+:	62 f1 7e 08 6f d1    	vmovdqu32 %xmm1,%xmm2
++ +[a-f0-9]+:	67 62 f1 7e 08 6f 10 	vmovdqu32 \(%eax\),%xmm2
++ +[a-f0-9]+:	67 62 f1 7e 08 7f 08 	vmovdqu32 %xmm1,\(%eax\)
++ +[a-f0-9]+:	62 f1 fe 08 6f d1    	vmovdqu64 %xmm1,%xmm2
++ +[a-f0-9]+:	67 62 f1 fe 08 6f 10 	vmovdqu64 \(%eax\),%xmm2
++ +[a-f0-9]+:	67 62 f1 fe 08 7f 08 	vmovdqu64 %xmm1,\(%eax\)
+ #pass
+-- 
+2.34.0
+

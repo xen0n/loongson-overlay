@@ -1,0 +1,295 @@
+From 42eec46f230cb05873fdc7561057a6ae63d17ce4 Mon Sep 17 00:00:00 2001
+From: Alan Modra <amodra@gmail.com>
+Date: Thu, 28 Oct 2021 12:47:26 +1030
+Subject: [PATCH 28/97] bfd: remove use of INLINE
+
+No need to use anything fancy, plain inline works just as well.
+
+	* bfd-in.h (INLINE): Don't define.
+	* bfd-in2.h: Regenerate.
+	* aoutx.h: Replace use of INLINE with inline.
+	* elf-eh-frame.c: Likewise.
+	* elf32-score7.c: Likewise.
+	* elfxx-mips.c: Likewise.
+	* ihex.c: Likewise.
+	* mach-o.c: Likewise.
+	* mmo.c: Likewise.
+---
+ bfd/aoutx.h        |  2 +-
+ bfd/bfd-in.h       |  8 --------
+ bfd/bfd-in2.h      |  8 --------
+ bfd/elf-eh-frame.c |  4 ++--
+ bfd/elf32-score7.c |  2 +-
+ bfd/elfxx-mips.c   |  4 ++--
+ bfd/ihex.c         |  2 +-
+ bfd/mach-o.c       |  4 ++--
+ bfd/mmo.c          | 26 +++++++++++++-------------
+ 9 files changed, 22 insertions(+), 38 deletions(-)
+
+diff --git a/bfd/aoutx.h b/bfd/aoutx.h
+index 61d8e0c8716..d7bb928d0ca 100644
+--- a/bfd/aoutx.h
++++ b/bfd/aoutx.h
+@@ -3964,7 +3964,7 @@ aout_link_reloc_link_order (struct aout_final_link_info *flaginfo,
+ 
+ /* Get the section corresponding to a reloc index.  */
+ 
+-static INLINE asection *
++static inline asection *
+ aout_reloc_index_to_section (bfd *abfd, int indx)
+ {
+   switch (indx & N_TYPE)
+diff --git a/bfd/bfd-in.h b/bfd/bfd-in.h
+index 286afc607a3..41417055c0e 100644
+--- a/bfd/bfd-in.h
++++ b/bfd/bfd-in.h
+@@ -84,14 +84,6 @@ typedef BFD_HOST_U_64_BIT bfd_uint64_t;
+ #define BFD64
+ #endif
+ 
+-#ifndef INLINE
+-#if __GNUC__ >= 2
+-#define INLINE __inline__
+-#else
+-#define INLINE
+-#endif
+-#endif
+-
+ /* Declaring a type wide enough to hold a host long and a host pointer.  */
+ #define BFD_HOSTPTR_T @BFD_HOSTPTR_T@
+ typedef BFD_HOSTPTR_T bfd_hostptr_t;
+diff --git a/bfd/bfd-in2.h b/bfd/bfd-in2.h
+index 669f250d0e5..9bdbe04ef88 100644
+--- a/bfd/bfd-in2.h
++++ b/bfd/bfd-in2.h
+@@ -91,14 +91,6 @@ typedef BFD_HOST_U_64_BIT bfd_uint64_t;
+ #define BFD64
+ #endif
+ 
+-#ifndef INLINE
+-#if __GNUC__ >= 2
+-#define INLINE __inline__
+-#else
+-#define INLINE
+-#endif
+-#endif
+-
+ /* Declaring a type wide enough to hold a host long and a host pointer.  */
+ #define BFD_HOSTPTR_T @BFD_HOSTPTR_T@
+ typedef BFD_HOSTPTR_T bfd_hostptr_t;
+diff --git a/bfd/elf-eh-frame.c b/bfd/elf-eh-frame.c
+index b5ec81436c5..24c6e2c4739 100644
+--- a/bfd/elf-eh-frame.c
++++ b/bfd/elf-eh-frame.c
+@@ -282,7 +282,7 @@ cie_compute_hash (struct cie *c)
+ /* Return the number of extra bytes that we'll be inserting into
+    ENTRY's augmentation string.  */
+ 
+-static INLINE unsigned int
++static inline unsigned int
+ extra_augmentation_string_bytes (struct eh_cie_fde *entry)
+ {
+   unsigned int size = 0;
+@@ -298,7 +298,7 @@ extra_augmentation_string_bytes (struct eh_cie_fde *entry)
+ 
+ /* Likewise ENTRY's augmentation data.  */
+ 
+-static INLINE unsigned int
++static inline unsigned int
+ extra_augmentation_data_bytes (struct eh_cie_fde *entry)
+ {
+   unsigned int size = 0;
+diff --git a/bfd/elf32-score7.c b/bfd/elf32-score7.c
+index 43cf5cb70cd..50d607de156 100644
+--- a/bfd/elf32-score7.c
++++ b/bfd/elf32-score7.c
+@@ -878,7 +878,7 @@ static const struct score_reloc_map elf32_score_reloc_map[] =
+   {BFD_RELOC_SCORE_DUMMY_HI16,	 R_SCORE_DUMMY_HI16},
+ };
+ 
+-static INLINE hashval_t
++static inline hashval_t
+ score_elf_hash_bfd_vma (bfd_vma addr)
+ {
+ #ifdef BFD64
+diff --git a/bfd/elfxx-mips.c b/bfd/elfxx-mips.c
+index e4827fd17de..4aaa3ea1fc3 100644
+--- a/bfd/elfxx-mips.c
++++ b/bfd/elfxx-mips.c
+@@ -3075,7 +3075,7 @@ gptab_compare (const void *p1, const void *p2)
+ /* Use all 64 bits of a bfd_vma for the computation of a 32-bit
+    hash number.  */
+ 
+-static INLINE hashval_t
++static inline hashval_t
+ mips_elf_hash_bfd_vma (bfd_vma addr)
+ {
+ #ifdef BFD64
+@@ -7024,7 +7024,7 @@ _bfd_elf_mips_mach (flagword flags)
+ 
+ /* Return printable name for ABI.  */
+ 
+-static INLINE char *
++static inline char *
+ elf_mips_abi_name (bfd *abfd)
+ {
+   flagword flags;
+diff --git a/bfd/ihex.c b/bfd/ihex.c
+index 93a703a1756..1e8563e6110 100644
+--- a/bfd/ihex.c
++++ b/bfd/ihex.c
+@@ -189,7 +189,7 @@ ihex_mkobject (bfd *abfd)
+ /* Read a byte from a BFD.  Set *ERRORPTR if an error occurred.
+    Return EOF on error or end of file.  */
+ 
+-static INLINE int
++static inline int
+ ihex_get_byte (bfd *abfd, bool *errorptr)
+ {
+   bfd_byte c;
+diff --git a/bfd/mach-o.c b/bfd/mach-o.c
+index a26a68fa440..31a109b17a8 100644
+--- a/bfd/mach-o.c
++++ b/bfd/mach-o.c
+@@ -66,7 +66,7 @@ bfd_mach_o_valid (bfd *abfd)
+   return true;
+ }
+ 
+-static INLINE bool
++static inline bool
+ mach_o_wide_p (bfd_mach_o_header *header)
+ {
+   switch (header->version)
+@@ -81,7 +81,7 @@ mach_o_wide_p (bfd_mach_o_header *header)
+     }
+ }
+ 
+-static INLINE bool
++static inline bool
+ bfd_mach_o_wide_p (bfd *abfd)
+ {
+   return mach_o_wide_p (&bfd_mach_o_get_data (abfd)->header);
+diff --git a/bfd/mmo.c b/bfd/mmo.c
+index 40aff315914..cb018a1c275 100644
+--- a/bfd/mmo.c
++++ b/bfd/mmo.c
+@@ -382,7 +382,7 @@ static bool mmo_scan (bfd *);
+ static asection *mmo_decide_section (bfd *, bfd_vma);
+ static asection *mmo_get_generic_spec_data_section (bfd *, int);
+ static asection *mmo_get_spec_section (bfd *, int);
+-static INLINE bfd_byte *mmo_get_loc (asection *, bfd_vma, int);
++static inline bfd_byte *mmo_get_loc (asection *, bfd_vma, int);
+ static void mmo_xore_64 (asection *, bfd_vma vma, bfd_vma value);
+ static void mmo_xore_32 (asection *, bfd_vma vma, unsigned int);
+ static void mmo_xore_16 (asection *, bfd_vma vma, unsigned int);
+@@ -741,7 +741,7 @@ mmo_decide_section (bfd *abfd, bfd_vma vma)
+ 
+ /* Xor in a 64-bit value VALUE at VMA.  */
+ 
+-static INLINE void
++static inline void
+ mmo_xore_64 (asection *sec, bfd_vma vma, bfd_vma value)
+ {
+   bfd_byte *loc = mmo_get_loc (sec, vma, 8);
+@@ -753,7 +753,7 @@ mmo_xore_64 (asection *sec, bfd_vma vma, bfd_vma value)
+ 
+ /* Xor in a 32-bit value VALUE at VMA.  */
+ 
+-static INLINE void
++static inline void
+ mmo_xore_32 (asection *sec, bfd_vma vma, unsigned int value)
+ {
+   bfd_byte *loc = mmo_get_loc (sec, vma, 4);
+@@ -765,7 +765,7 @@ mmo_xore_32 (asection *sec, bfd_vma vma, unsigned int value)
+ 
+ /* Xor in a 16-bit value VALUE at VMA.  */
+ 
+-static INLINE void
++static inline void
+ mmo_xore_16 (asection *sec, bfd_vma vma, unsigned int value)
+ {
+   bfd_byte *loc = mmo_get_loc (sec, vma, 2);
+@@ -777,7 +777,7 @@ mmo_xore_16 (asection *sec, bfd_vma vma, unsigned int value)
+ 
+ /* Write a 32-bit word to output file, no lop_quote generated.  */
+ 
+-static INLINE void
++static inline void
+ mmo_write_tetra_raw (bfd *abfd, unsigned int value)
+ {
+   bfd_byte buf[4];
+@@ -790,7 +790,7 @@ mmo_write_tetra_raw (bfd *abfd, unsigned int value)
+ 
+ /* Write a 32-bit word to output file; lop_quote if necessary.  */
+ 
+-static INLINE void
++static inline void
+ mmo_write_tetra (bfd *abfd, unsigned int value)
+ {
+   if (((value >> 24) & 0xff) == LOP)
+@@ -801,7 +801,7 @@ mmo_write_tetra (bfd *abfd, unsigned int value)
+ 
+ /* Write a 64-bit word to output file, perhaps with lop_quoting.  */
+ 
+-static INLINE void
++static inline void
+ mmo_write_octa (bfd *abfd, bfd_vma value)
+ {
+   mmo_write_tetra (abfd, (unsigned int) (value >> 32));
+@@ -810,7 +810,7 @@ mmo_write_octa (bfd *abfd, bfd_vma value)
+ 
+ /* Write a 64-bit word to output file, without lop_quoting.  */
+ 
+-static INLINE void
++static inline void
+ mmo_write_octa_raw (bfd *abfd, bfd_vma value)
+ {
+   mmo_write_tetra_raw (abfd, (unsigned int) (value >> 32));
+@@ -820,7 +820,7 @@ mmo_write_octa_raw (bfd *abfd, bfd_vma value)
+ /* Write quoted contents.  Intended to be called multiple times in
+    sequence, followed by a call to mmo_flush_chunk.  */
+ 
+-static INLINE bool
++static inline bool
+ mmo_write_chunk (bfd *abfd, const bfd_byte *loc, unsigned int len)
+ {
+   bool retval = true;
+@@ -872,7 +872,7 @@ mmo_write_chunk (bfd *abfd, const bfd_byte *loc, unsigned int len)
+ /* Flush remaining bytes, from a previous mmo_write_chunk, zero-padded to
+    4 bytes.  */
+ 
+-static INLINE bool
++static inline bool
+ mmo_flush_chunk (bfd *abfd)
+ {
+   if (abfd->tdata.mmo_data->byte_no != 0)
+@@ -889,7 +889,7 @@ mmo_flush_chunk (bfd *abfd)
+ 
+ /* Same, but from a list.  */
+ 
+-static INLINE bool
++static inline bool
+ mmo_write_chunk_list (bfd *abfd, mmo_data_list_type *datap)
+ {
+   for (; datap != NULL; datap = datap->next)
+@@ -970,7 +970,7 @@ mmo_write_loc_chunk (bfd *abfd, bfd_vma vma, const bfd_byte *loc,
+ 
+ /* Same, but from a list.  */
+ 
+-static INLINE bool
++static inline bool
+ mmo_write_loc_chunk_list (bfd *abfd, mmo_data_list_type *datap)
+ {
+   /* Get an address different than the address of the first chunk.  */
+@@ -1472,7 +1472,7 @@ SUBSECTION
+    If there's new contents, allocate to the next multiple of
+    MMO_SEC_CONTENTS_CHUNK_SIZE.  */
+ 
+-static INLINE bfd_byte *
++static inline bfd_byte *
+ mmo_get_loc (asection *sec, bfd_vma vma, int size)
+ {
+   bfd_size_type allocated_size;
+-- 
+2.34.0
+

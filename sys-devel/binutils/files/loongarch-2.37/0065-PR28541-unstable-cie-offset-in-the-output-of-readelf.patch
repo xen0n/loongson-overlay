@@ -1,0 +1,56 @@
+From ca8775833bb6af8eb4333f41e4f8672df0ead874 Mon Sep 17 00:00:00 2001
+From: Alan Modra <amodra@gmail.com>
+Date: Fri, 5 Nov 2021 21:26:16 +1030
+Subject: [PATCH 65/97] PR28541, unstable cie offset in the output of readelf
+
+Calculating "0 - pointer" can indeed result in seeming randomness as
+the pointer address varies.
+
+	PR 28541
+	* dwarf.c (display_debug_frames): Don't print cie offset when
+	invalid, print "invalid" instead.  Remove now redundant warning.
+---
+ binutils/dwarf.c | 17 +++++++++++------
+ 1 file changed, 11 insertions(+), 6 deletions(-)
+
+diff --git a/binutils/dwarf.c b/binutils/dwarf.c
+index 9fed11383a8..d80235fb206 100644
+--- a/binutils/dwarf.c
++++ b/binutils/dwarf.c
+@@ -8777,9 +8777,6 @@ display_debug_frames (struct dwarf_section *section,
+ 
+ 	  if (!cie)
+ 	    {
+-	      warn ("Invalid CIE pointer 0x%s in FDE at %#08lx\n",
+-		    dwarf_vmatoa_1 (NULL, cie_id, offset_size),
+-		    (unsigned long) (saved_start - section_start));
+ 	      fc->ncols = 0;
+ 	      fc->col_type = (short int *) xmalloc (sizeof (short int));
+ 	      fc->col_offset = (int *) xmalloc (sizeof (int));
+@@ -8862,12 +8859,20 @@ display_debug_frames (struct dwarf_section *section,
+ 	      start += augmentation_data_len;
+ 	    }
+ 
+-	  printf ("\n%08lx %s %s FDE cie=%08lx pc=",
++	  printf ("\n%08lx %s %s FDE ",
+ 		  (unsigned long)(saved_start - section_start),
+ 		  dwarf_vmatoa_1 (NULL, length, fc->ptr_size),
+-		  dwarf_vmatoa_1 (NULL, cie_id, offset_size),
+-		  (unsigned long)(cie->chunk_start - section_start));
++		  dwarf_vmatoa_1 (NULL, cie_id, offset_size));
+ 
++	  if (cie->chunk_start)
++	    printf ("cie=%08lx",
++		    (unsigned long) (cie->chunk_start - section_start));
++	  else
++	    /* Ideally translate "invalid " to 8 chars, trailing space
++	       is optional.  */
++	    printf (_("cie=invalid "));
++
++	  printf (" pc=");
+ 	  if (fc->segment_size)
+ 	    printf ("%04lx:", segment_selector);
+ 
+-- 
+2.34.0
+

@@ -1,0 +1,242 @@
+From 8c2999954bd3aa5853f553eb6a050dd38e6d9029 Mon Sep 17 00:00:00 2001
+From: Tejas Belagod <Tejas.Belagod@arm.com>
+Date: Thu, 28 Oct 2021 15:44:42 +0100
+Subject: [PATCH 30/97] arm: add unwinder encoding support for PACBTI
+
+This patch adds support for encoding the Return Address Authentication pseudo
+register - '.save {ra_auth_code}' as defined by the DWARF ABI - in the
+exception tables where the opcode is defined by the EHABI
+
+gas/Changelog:
+
+	* config/tc-arm.c (arm_reg_type): Add new type REG_TYPE_PSEUDO.
+	(reg_expected_msgs): Add message for pseudo reg type.
+	(reg_list_els): Add new reg list type REGLIST_PSEUDO.
+	(parse_reg_list): Handle new REGLIST_PSEUDO type.
+	(s_arm_unwind_save_pseudo): Encode pseudo reg list save in exception
+	tables.
+	(s_arm_unwind_save): Handle new REG_TYPE_PSEUDO.
+	(reg_names): Add ra_auth_code pseudo register.
+	* testsuite/gas/arm/unwind-pacbti-m.s: New test.
+	* testsuite/gas/arm/unwind-pacbti-m.d: New test.
+	* testsuite/gas/arm/unwind-pacbti-m-readelf.d: New test.
+---
+ gas/config/tc-arm.c       | 62 +++++++++++++++++++++++++++++++++++----
+ unwind-pacbti-m-readelf.d | 16 ++++++++++
+ unwind-pacbti-m.d         | 23 +++++++++++++++
+ unwind-pacbti-m.s         | 20 +++++++++++++
+ 4 files changed, 116 insertions(+), 5 deletions(-)
+ create mode 100644 unwind-pacbti-m-readelf.d
+ create mode 100644 unwind-pacbti-m.d
+ create mode 100644 unwind-pacbti-m.s
+
+diff --git a/gas/config/tc-arm.c b/gas/config/tc-arm.c
+index f77165513d9..302a18f4a1e 100644
+--- a/gas/config/tc-arm.c
++++ b/gas/config/tc-arm.c
+@@ -688,7 +688,8 @@ enum arm_reg_type
+   REG_TYPE_MMXWCG,
+   REG_TYPE_XSCALE,
+   REG_TYPE_RNB,
+-  REG_TYPE_ZR
++  REG_TYPE_ZR,
++  REG_TYPE_PSEUDO
+ };
+ 
+ /* Structure for a hash table entry for a register.
+@@ -733,6 +734,7 @@ const char * const reg_expected_msgs[] =
+   [REG_TYPE_MQ]	    = N_("MVE vector register expected"),
+   [REG_TYPE_RNB]    = "",
+   [REG_TYPE_ZR]     = N_("ZR register expected"),
++  [REG_TYPE_PSEUDO] = N_("Pseudo register expected"),
+ };
+ 
+ /* Some well known registers that we refer to directly elsewhere.  */
+@@ -1893,6 +1895,7 @@ parse_scalar (char **ccp, int elsize, struct neon_type_el *type, enum
+ enum reg_list_els
+ {
+   REGLIST_RN,
++  REGLIST_PSEUDO,
+   REGLIST_CLRM,
+   REGLIST_VFP_S,
+   REGLIST_VFP_S_VPR,
+@@ -1910,7 +1913,8 @@ parse_reg_list (char ** strp, enum reg_list_els etype)
+   long range = 0;
+   int another_range;
+ 
+-  gas_assert (etype == REGLIST_RN || etype == REGLIST_CLRM);
++  gas_assert (etype == REGLIST_RN || etype == REGLIST_CLRM
++	      || etype == REGLIST_PSEUDO);
+ 
+   /* We come back here if we get ranges concatenated by '+' or '|'.  */
+   do
+@@ -1930,8 +1934,14 @@ parse_reg_list (char ** strp, enum reg_list_els etype)
+ 	      int reg;
+ 	      const char apsr_str[] = "apsr";
+ 	      int apsr_str_len = strlen (apsr_str);
++	      enum arm_reg_type rt;
+ 
+-	      reg = arm_reg_parse (&str, REG_TYPE_RN);
++	      if (etype == REGLIST_RN || etype == REGLIST_CLRM)
++		rt = REG_TYPE_RN;
++	      else
++		rt = REG_TYPE_PSEUDO;
++
++	      reg = arm_reg_parse (&str, rt);
+ 	      if (etype == REGLIST_CLRM)
+ 		{
+ 		  if (reg == REG_SP || reg == REG_PC)
+@@ -1950,6 +1960,14 @@ parse_reg_list (char ** strp, enum reg_list_els etype)
+ 		      return FAIL;
+ 		    }
+ 		}
++	      else if (etype == REGLIST_PSEUDO)
++		{
++		  if (reg == FAIL)
++		    {
++		      first_error (_(reg_expected_msgs[REG_TYPE_PSEUDO]));
++		      return FAIL;
++		    }
++		}
+ 	      else /* etype == REGLIST_RN.  */
+ 		{
+ 		  if (reg == FAIL)
+@@ -4258,6 +4276,32 @@ s_arm_unwind_personality (int ignored ATTRIBUTE_UNUSED)
+   demand_empty_rest_of_line ();
+ }
+ 
++/* Parse a directive saving pseudo registers.  */
++
++static void
++s_arm_unwind_save_pseudo (void)
++{
++  valueT op;
++  long range;
++
++  range = parse_reg_list (&input_line_pointer, REGLIST_PSEUDO);
++  if (range == FAIL)
++    {
++      as_bad (_("expected pseudo register list"));
++      ignore_rest_of_line ();
++      return;
++    }
++
++  demand_empty_rest_of_line ();
++
++  if (range & (1 << 9))
++    {
++      /* Opcode for restoring RA_AUTH_CODE.  */
++      op = 0xb4;
++      add_unwind_opcode (op, 1);
++    }
++}
++
+ 
+ /* Parse a directive saving core registers.  */
+ 
+@@ -4725,6 +4769,10 @@ s_arm_unwind_save (int arch_v6)
+       s_arm_unwind_save_core ();
+       return;
+ 
++    case REG_TYPE_PSEUDO:
++      s_arm_unwind_save_pseudo ();
++      return;
++
+     case REG_TYPE_VFD:
+       if (arch_v6)
+ 	s_arm_unwind_save_vfp_armv6 ();
+@@ -23915,8 +23963,12 @@ static const struct reg_entry reg_names[] =
+   /* XScale accumulator registers.  */
+   REGNUM(acc,0,XSCALE), REGNUM(ACC,0,XSCALE),
+ 
+-  /* Alias 'ra_auth_code' to r12 for pacbti.  */
+-  REGDEF(ra_auth_code,12,RN),
++  /* DWARF ABI defines RA_AUTH_CODE to 143. It also reserves 134-142 for future
++     expansion.  RA_AUTH_CODE here is given the value 143 % 134 to make it easy
++     for tc_arm_regname_to_dw2regnum to translate to DWARF reg number using
++     134 + reg_number should the range 134 to 142 be used for more pseudo regs
++     in the future.  This also helps fit RA_AUTH_CODE into a bitmask.  */
++  REGDEF(ra_auth_code,9,PSEUDO),
+ };
+ #undef REGDEF
+ #undef REGNUM
+diff --git a/unwind-pacbti-m-readelf.d b/unwind-pacbti-m-readelf.d
+new file mode 100644
+index 00000000000..ba1d76dd18f
+--- /dev/null
++++ b/unwind-pacbti-m-readelf.d
+@@ -0,0 +1,16 @@
++#readelf: -u
++#source: unwind-pacbti-m.s
++#name: Unwind table information for Armv8.1-M.Mainline PACBTI extension
++# This test is only valid on ELF based ports.
++#notarget: *-*-pe *-*-wince
++# VxWorks needs a special variant of this file.
++#skip: *-*-vxworks*
++
++Unwind section '.ARM.exidx' at offset 0x40 contains 1 entry:
++
++0x0 <foo>: 0x80b4a8b0
++  Compact model index: 0
++  0xb4      pop {ra_auth_code}
++  0xa8      pop {r4, r14}
++  0xb0      finish
++
+diff --git a/unwind-pacbti-m.d b/unwind-pacbti-m.d
+new file mode 100644
+index 00000000000..584b12037b3
+--- /dev/null
++++ b/unwind-pacbti-m.d
+@@ -0,0 +1,23 @@
++#objdump: -sr
++#name: Unwind information for Armv8.1-M.Mainline PACBTI extension
++# This test is only valid on ELF based ports.
++#notarget: *-*-pe *-*-wince
++# VxWorks needs a special variant of this file.
++#skip: *-*-vxworks*
++
++.*:     file format.*
++
++RELOCATION RECORDS FOR \[.ARM.exidx\]:
++OFFSET   TYPE              VALUE 
++00000000 R_ARM_PREL31      .text
++00000000 R_ARM_NONE        __aeabi_unwind_cpp_pr0
++
++
++Contents of section .text:
++ 0000 10b54df8 04cd5df8 04cb10bd  .*
++Contents of section .ARM.exidx:
++ 0000 00000000 b0a8b480  .*
++Contents of section .ARM.attributes:
++ 0000 41290000 00616561 62690001 1f000000  .*
++ 0010 05382e31 2d4d2e4d 41494e00 0615074d  .*
++ 0020 09033202 34024a01 4c01               .*
+diff --git a/unwind-pacbti-m.s b/unwind-pacbti-m.s
+new file mode 100644
+index 00000000000..5a6ea2eec2b
+--- /dev/null
++++ b/unwind-pacbti-m.s
+@@ -0,0 +1,20 @@
++
++	.arch armv8.1-m.main
++	.arch_extension pacbti
++	.eabi_attribute 50, 2
++	.eabi_attribute 52, 2
++	.eabi_attribute 74, 1
++	.eabi_attribute 76, 1
++	.text
++	.syntax unified
++	.thumb
++	.thumb_func
++foo:
++	.fnstart
++	push	{r4, lr}
++	.save {r4, lr}
++	push	{r12}
++	.save {ra_auth_code}
++	pop	{r12}
++	pop	{r4, pc}
++	.fnend
+-- 
+2.34.0
+

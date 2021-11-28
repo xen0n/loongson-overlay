@@ -1,0 +1,84 @@
+From dac784d0e4cb7255646ea298b39a5443055a4bb2 Mon Sep 17 00:00:00 2001
+From: Tom Tromey <tromey@adacore.com>
+Date: Wed, 3 Nov 2021 07:33:24 -0600
+Subject: [PATCH 55/97] Use section name in warnings in display_debug_loc
+
+While looking at an apparently malformed executable with
+"readelf --debug-dump=loc", I got this warning:
+
+    readelf: ./main: Warning: There is a hole [0x89 - 0x95] in .debug_loc section.
+
+However, the executable only has a .debug_loclists section.
+
+This patch fixes the warning messages in display_debug_loc to use the
+name of the section that is being processed.
+
+binutils/ChangeLog
+2021-11-03  Tom Tromey  <tromey@adacore.com>
+
+	* dwarf.c (display_debug_loc): Use section name in warnings.
+---
+ binutils/ChangeLog |  4 ++++
+ binutils/dwarf.c   | 20 ++++++++++++--------
+ 2 files changed, 16 insertions(+), 8 deletions(-)
+
+diff --git a/binutils/ChangeLog b/binutils/ChangeLog
+index efde928b3f0..3935b30a8dc 100644
+--- a/binutils/ChangeLog
++++ b/binutils/ChangeLog
+@@ -1,3 +1,7 @@
++2021-11-03  Tom Tromey  <tromey@adacore.com>
++
++	* dwarf.c (display_debug_loc): Use section name in warnings.
++
+ 2021-10-25  Nick Alcock  <nick.alcock@oracle.com>
+ 
+ 	* objdump.c (usage): --ctf now has an optional argument.
+diff --git a/binutils/dwarf.c b/binutils/dwarf.c
+index a118c5b794e..9fed11383a8 100644
+--- a/binutils/dwarf.c
++++ b/binutils/dwarf.c
+@@ -7022,28 +7022,32 @@ display_debug_loc (struct dwarf_section *section, void *file)
+ 	  else
+ 	    {
+ 	      if (start < next)
+-		warn (_("There is a hole [0x%lx - 0x%lx] in .debug_loc section.\n"),
++		warn (_("There is a hole [0x%lx - 0x%lx] in %s section.\n"),
+ 		      (unsigned long) (start - section_begin),
+-		      (unsigned long) offset);
++		      (unsigned long) offset,
++		      section->name);
+ 	      else if (start > next)
+-		warn (_("There is an overlap [0x%lx - 0x%lx] in .debug_loc section.\n"),
++		warn (_("There is an overlap [0x%lx - 0x%lx] in %s section.\n"),
+ 		      (unsigned long) (start - section_begin),
+-		      (unsigned long) offset);
++		      (unsigned long) offset,
++		      section->name);
+ 	    }
+ 	  start = next;
+ 	  vstart = vnext;
+ 
+ 	  if (offset >= bytes)
+ 	    {
+-	      warn (_("Offset 0x%lx is bigger than .debug_loc section size.\n"),
+-		    (unsigned long) offset);
++	      warn (_("Offset 0x%lx is bigger than %s section size.\n"),
++		    (unsigned long) offset,
++		    section->name);
+ 	      continue;
+ 	    }
+ 
+ 	  if (vnext && voffset >= bytes)
+ 	    {
+-	      warn (_("View Offset 0x%lx is bigger than .debug_loc section size.\n"),
+-		    (unsigned long) voffset);
++	      warn (_("View Offset 0x%lx is bigger than %s section size.\n"),
++		    (unsigned long) voffset,
++		    section->name);
+ 	      continue;
+ 	    }
+ 
+-- 
+2.34.0
+

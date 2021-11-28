@@ -1,0 +1,148 @@
+From eb5323fdf88aff59afca0a545877c4d777ff2726 Mon Sep 17 00:00:00 2001
+From: Nick Alcock <nick.alcock@oracle.com>
+Date: Mon, 25 Oct 2021 11:17:02 +0100
+Subject: [PATCH 17/97] libctf, ld: handle nonrepresentable types better
+
+ctf_type_visit (used, among other things, by the type dumping code) was
+aborting when it saw a nonrepresentable type anywhere: even a single
+structure member with a nonrepresentable type caused an abort with
+ECTF_NONREPRESENTABLE.  This is not useful behaviour, given that the
+abort comes from a type-resolution we are only doing in order to
+determine whether the type is a structure or union.  We know
+nonrepresentable types can't be either, so handle that case and
+pass the nonrepresentable type down.
+
+(The added test verifies that the dumper now handles this case and
+prints nonrepresentable structure members as it already does
+nonrepresentable top-level types, rather than skipping the whole
+structure -- or, without the previous commit, skipping the whole types
+section.)
+
+ld/ChangeLog
+2021-10-25  Nick Alcock  <nick.alcock@oracle.com>
+
+	* testsuite/ld-ctf/nonrepresentable-member.*: New test.
+
+libctf/ChangeLog
+2021-10-25  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-types.c (ctf_type_rvisit): Handle nonrepresentable types.
+---
+ ld/ChangeLog                                  |  4 +++
+ ld/testsuite/ld-ctf/nonrepresentable-member.c |  7 ++++++
+ ld/testsuite/ld-ctf/nonrepresentable-member.d | 25 +++++++++++++++++++
+ libctf/ChangeLog                              |  4 +++
+ libctf/ctf-types.c                            | 19 +++++++++-----
+ 5 files changed, 53 insertions(+), 6 deletions(-)
+ create mode 100644 ld/testsuite/ld-ctf/nonrepresentable-member.c
+ create mode 100644 ld/testsuite/ld-ctf/nonrepresentable-member.d
+
+diff --git a/ld/ChangeLog b/ld/ChangeLog
+index 470e446ad5f..c613b398046 100644
+--- a/ld/ChangeLog
++++ b/ld/ChangeLog
+@@ -1,3 +1,7 @@
++2021-10-25  Nick Alcock  <nick.alcock@oracle.com>
++
++	* testsuite/ld-ctf/nonrepresentable-member.*: New test.
++
+ 2021-10-25  Nick Alcock  <nick.alcock@oracle.com>
+ 
+ 	* testsuite/ld-ctf/array.d: Change --ctf=.ctf to --ctf.
+diff --git a/ld/testsuite/ld-ctf/nonrepresentable-member.c b/ld/testsuite/ld-ctf/nonrepresentable-member.c
+new file mode 100644
+index 00000000000..b3657af01e1
+--- /dev/null
++++ b/ld/testsuite/ld-ctf/nonrepresentable-member.c
+@@ -0,0 +1,7 @@
++struct blah
++{
++  int boring;
++  int __attribute__((vector_size(8))) foo;
++  const int __attribute__((vector_size(8))) bar;
++  int this_is_printed;
++} wibble __attribute__((__used__));
+diff --git a/ld/testsuite/ld-ctf/nonrepresentable-member.d b/ld/testsuite/ld-ctf/nonrepresentable-member.d
+new file mode 100644
+index 00000000000..6c76253a8c1
+--- /dev/null
++++ b/ld/testsuite/ld-ctf/nonrepresentable-member.d
+@@ -0,0 +1,25 @@
++#as:
++#source: nonrepresentable-member.c
++#objdump: --ctf
++#ld: -shared
++#name: Nonrepresentable members
++
++.*: +file format .*
++
++Contents of CTF section .ctf:
++
++  Header:
++    Magic number: 0xdff2
++    Version: 4 \(CTF_VERSION_3\)
++#...
++  Types:
++#...
++    0x[0-9a-f]*: \(kind 6\) struct blah .*
++        *\[0x0\] boring: ID 0x[0-9a-f]*: \(kind 1\) int .*
++        *\[0x[0-9a-f]*\] foo: .* \(.*represent.*\)
++        *\[0x[0-9a-f]*\] bar: .* \(.*represent.*\)
++        *\[0x[0-9a-f]*\] this_is_printed: ID 0x[0-9a-f]*: \(kind 1\) int .*
++#...
++
++  Strings:
++#...
+diff --git a/libctf/ChangeLog b/libctf/ChangeLog
+index 879e128126a..245987fdf42 100644
+--- a/libctf/ChangeLog
++++ b/libctf/ChangeLog
+@@ -1,3 +1,7 @@
++2021-10-25  Nick Alcock  <nick.alcock@oracle.com>
++
++	* ctf-types.c (ctf_type_rvisit): Handle nonrepresentable types.
++
+ 2021-10-25  Nick Alcock  <nick.alcock@oracle.com>
+ 
+ 	* ctf-dump.c (ctf_dump_type): Do not abort on error.
+diff --git a/libctf/ctf-types.c b/libctf/ctf-types.c
+index 243de9348d3..55834856da9 100644
+--- a/libctf/ctf-types.c
++++ b/libctf/ctf-types.c
+@@ -1641,20 +1641,27 @@ ctf_type_rvisit (ctf_dict_t *fp, ctf_id_t type, ctf_visit_f *func,
+   unsigned char *vlen;
+   ssize_t size, increment, vbytes;
+   uint32_t kind, n, i = 0;
++  int nonrepresentable = 0;
+   int rc;
+ 
+-  if ((type = ctf_type_resolve (fp, type)) == CTF_ERR)
+-    return -1;			/* errno is set for us.  */
++  if ((type = ctf_type_resolve (fp, type)) == CTF_ERR) {
++    if (ctf_errno (fp) != ECTF_NONREPRESENTABLE)
++      return -1;		/* errno is set for us.  */
++    else
++      nonrepresentable = 1;
++  }
+ 
+-  if ((tp = ctf_lookup_by_id (&fp, type)) == NULL)
+-    return -1;			/* errno is set for us.  */
++  if (!nonrepresentable)
++    if ((tp = ctf_lookup_by_id (&fp, type)) == NULL)
++      return -1;		/* errno is set for us.  */
+ 
+   if ((rc = func (name, otype, offset, depth, arg)) != 0)
+     return rc;
+ 
+-  kind = LCTF_INFO_KIND (fp, tp->ctt_info);
++  if (!nonrepresentable)
++    kind = LCTF_INFO_KIND (fp, tp->ctt_info);
+ 
+-  if (kind != CTF_K_STRUCT && kind != CTF_K_UNION)
++  if (nonrepresentable || (kind != CTF_K_STRUCT && kind != CTF_K_UNION))
+     return 0;
+ 
+   ctf_get_ctt_size (fp, tp, &size, &increment);
+-- 
+2.34.0
+

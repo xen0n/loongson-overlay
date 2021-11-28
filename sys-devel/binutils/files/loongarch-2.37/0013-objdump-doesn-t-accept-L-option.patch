@@ -1,0 +1,28 @@
+From 5513527b59e95a53802b5960821aa3c98a280ac8 Mon Sep 17 00:00:00 2001
+From: Alan Modra <amodra@gmail.com>
+Date: Mon, 25 Oct 2021 16:11:42 +1030
+Subject: [PATCH 13/97] objdump doesn't accept -L option
+
+A followup to commit ca0e11aa4b.
+
+	* objdump.c (main): Add 'L' to short options and sort them.
+---
+ binutils/objdump.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/binutils/objdump.c b/binutils/objdump.c
+index fdffb8d5263..6dd3d8722d8 100644
+--- a/binutils/objdump.c
++++ b/binutils/objdump.c
+@@ -5224,7 +5224,7 @@ main (int argc, char **argv)
+   set_default_bfd_target ();
+ 
+   while ((c = getopt_long (argc, argv,
+-			   "pP:ib:m:M:VvCdDlfFaHhrRtTxsSI:j:wE:zgeGW::",
++			   "CDE:FGHI:LM:P:RSTVW::ab:defghij:lm:prstvwxz",
+ 			   long_options, (int *) 0))
+ 	 != EOF)
+     {
+-- 
+2.34.0
+

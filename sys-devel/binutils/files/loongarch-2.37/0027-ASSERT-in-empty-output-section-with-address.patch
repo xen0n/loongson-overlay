@@ -1,0 +1,122 @@
+From 1cba418d26929e0fa0f9c43b2323093b1c7fa9de Mon Sep 17 00:00:00 2001
+From: Alan Modra <amodra@gmail.com>
+Date: Thu, 28 Oct 2021 09:03:00 +1030
+Subject: [PATCH 27/97] ASSERT in empty output section with address
+
+	* ldlang.c (lang_do_assignments_1): Correct "dot" inside ignored
+	sections.
+	* testsuite/ld-scripts/empty-address-4.d,
+	* testsuite/ld-scripts/empty-address-4.s,
+	* testsuite/ld-scripts/empty-address-4.t: New test.
+	* testsuite/ld-scripts/empty-address.exp: Run it.
+---
+ ld/ldlang.c                               | 18 ++++++++++--------
+ ld/testsuite/ld-scripts/empty-address-4.d |  6 ++++++
+ ld/testsuite/ld-scripts/empty-address-4.s |  4 ++++
+ ld/testsuite/ld-scripts/empty-address-4.t | 11 +++++++++++
+ ld/testsuite/ld-scripts/empty-address.exp |  1 +
+ 5 files changed, 32 insertions(+), 8 deletions(-)
+ create mode 100644 ld/testsuite/ld-scripts/empty-address-4.d
+ create mode 100644 ld/testsuite/ld-scripts/empty-address-4.s
+ create mode 100644 ld/testsuite/ld-scripts/empty-address-4.t
+
+diff --git a/ld/ldlang.c b/ld/ldlang.c
+index bc3f8b76d35..acd90fa8f42 100644
+--- a/ld/ldlang.c
++++ b/ld/ldlang.c
+@@ -6481,32 +6481,34 @@ lang_do_assignments_1 (lang_statement_union_type *s,
+ 	    os = &(s->output_section_statement);
+ 	    os->after_end = *found_end;
+ 	    init_opb (os->bfd_section);
+-	    if (os->bfd_section != NULL && !os->ignored)
++	    newdot = dot;
++	    if (os->bfd_section != NULL)
+ 	      {
+-		if ((os->bfd_section->flags & SEC_ALLOC) != 0)
++		if (!os->ignored && (os->bfd_section->flags & SEC_ALLOC) != 0)
+ 		  {
+ 		    current_section = os;
+ 		    prefer_next_section = false;
+ 		  }
+-		dot = os->bfd_section->vma;
++		newdot = os->bfd_section->vma;
+ 	      }
+ 	    newdot = lang_do_assignments_1 (os->children.head,
+-					    os, os->fill, dot, found_end);
++					    os, os->fill, newdot, found_end);
+ 	    if (!os->ignored)
+ 	      {
+ 		if (os->bfd_section != NULL)
+ 		  {
++		    newdot = os->bfd_section->vma;
++
+ 		    /* .tbss sections effectively have zero size.  */
+ 		    if (!IS_TBSS (os->bfd_section)
+ 			|| bfd_link_relocatable (&link_info))
+-		      dot += TO_ADDR (os->bfd_section->size);
++		      newdot += TO_ADDR (os->bfd_section->size);
+ 
+ 		    if (os->update_dot_tree != NULL)
+ 		      exp_fold_tree (os->update_dot_tree,
+-				     bfd_abs_section_ptr, &dot);
++				     bfd_abs_section_ptr, &newdot);
+ 		  }
+-		else
+-		  dot = newdot;
++		dot = newdot;
+ 	      }
+ 	  }
+ 	  break;
+diff --git a/ld/testsuite/ld-scripts/empty-address-4.d b/ld/testsuite/ld-scripts/empty-address-4.d
+new file mode 100644
+index 00000000000..26b058bc0ae
+--- /dev/null
++++ b/ld/testsuite/ld-scripts/empty-address-4.d
+@@ -0,0 +1,6 @@
++#ld: -T empty-address-4.t
++#nm: -n
++
++#...
++0+0 [AT] _start
++#pass
+diff --git a/ld/testsuite/ld-scripts/empty-address-4.s b/ld/testsuite/ld-scripts/empty-address-4.s
+new file mode 100644
+index 00000000000..602a02f331f
+--- /dev/null
++++ b/ld/testsuite/ld-scripts/empty-address-4.s
+@@ -0,0 +1,4 @@
++	.text
++	.global _start
++_start:
++	.dc.a 0, 0
+diff --git a/ld/testsuite/ld-scripts/empty-address-4.t b/ld/testsuite/ld-scripts/empty-address-4.t
+new file mode 100644
+index 00000000000..f25bbfea8ac
+--- /dev/null
++++ b/ld/testsuite/ld-scripts/empty-address-4.t
+@@ -0,0 +1,11 @@
++SECTIONS
++{
++  .text 0: { *(.text .pr) }
++  .data 0x200:
++  {
++    *(.data)
++    ASSERT (. < 0x400, oops);
++  }
++  .bss : { *(.bss) }
++  /DISCARD/ : { *(.*) }
++}
+diff --git a/ld/testsuite/ld-scripts/empty-address.exp b/ld/testsuite/ld-scripts/empty-address.exp
+index 1f62372d3d7..060c72d034a 100644
+--- a/ld/testsuite/ld-scripts/empty-address.exp
++++ b/ld/testsuite/ld-scripts/empty-address.exp
+@@ -32,5 +32,6 @@ run_dump_test empty-address-2b
+ run_dump_test empty-address-3a
+ run_dump_test empty-address-3b
+ run_dump_test empty-address-3c
++run_dump_test empty-address-4
+ 
+ set LDFLAGS $old_LDFLAGS
+-- 
+2.34.0
+

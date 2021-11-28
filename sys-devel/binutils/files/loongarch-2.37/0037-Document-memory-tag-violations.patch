@@ -1,0 +1,27 @@
+From 91b7c7e522802371f07cf614e5e5b24c1911a6d8 Mon Sep 17 00:00:00 2001
+From: Enze Li <lienze2010@hotmail.com>
+Date: Fri, 22 Oct 2021 14:30:30 +0000
+Subject: [PATCH 37/97] Document "memory-tag-violations".
+
+* gdb/doc/gdb.texinfo: (Data): Document	'-memory-tag-violations'.
+ (Command Options): Update the example.
+---
+ ChangeLog | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/ChangeLog b/ChangeLog
+index 247deffb4c2..1aeef12e2d6 100644
+--- a/ChangeLog
++++ b/ChangeLog
+@@ -1,3 +1,8 @@
++2021-10-29  Eli Zaretskii  <eliz@gnu.org>
++
++	* gdb/doc/gdb.texinfo (Command Options): (Data): Document
++	'-memory-tag-violations'.  Update the example.
++
+ 2021-09-28  Andrew Burgess  <andrew.burgess@embecosm.com>
+ 
+ 	* src-release.sh (GDB_SUPPPORT_DIRS): Add libbacktrace.
+-- 
+2.34.0
+

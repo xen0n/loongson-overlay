@@ -1,0 +1,93 @@
+From c45c3dba8cc80a41c4e0839df43c435c7aa0996d Mon Sep 17 00:00:00 2001
+From: Alan Modra <amodra@gmail.com>
+Date: Fri, 29 Oct 2021 15:09:52 +1030
+Subject: [PATCH 34/97] ELF core file size checks
+
+Catch fuzzed segments where p_offset + p_filesz wraps, and limit error
+output.
+
+	* elfcore.h (elf_core_file_p): Rewrite segment checks using
+	bfd_get_file_size.  Set read_only on file size errors.
+	* elfcode.h (elf_swap_shdr_in): Don't repeat error message.
+---
+ bfd/elfcode.h |  5 +++--
+ bfd/elfcore.h | 39 ++++++++++++++++-----------------------
+ 2 files changed, 19 insertions(+), 25 deletions(-)
+
+diff --git a/bfd/elfcode.h b/bfd/elfcode.h
+index 7eb27c2e16d..ee88fce487d 100644
+--- a/bfd/elfcode.h
++++ b/bfd/elfcode.h
+@@ -325,9 +325,10 @@ elf_swap_shdr_in (bfd *abfd,
+ 	  && ((ufile_ptr) dst->sh_offset > filesize
+ 	      || dst->sh_size > filesize - dst->sh_offset))
+ 	{
++	  if (!abfd->read_only)
++	    _bfd_error_handler (_("warning: %pB has a section "
++				  "extending past end of file"), abfd);
+ 	  abfd->read_only = 1;
+-	  _bfd_error_handler (_("warning: %pB has a section "
+-				"extending past end of file"), abfd);
+ 	}
+     }
+   dst->sh_link = H_GET_32 (abfd, src->sh_link);
+diff --git a/bfd/elfcore.h b/bfd/elfcore.h
+index c0cdceba42a..832818f6cd1 100644
+--- a/bfd/elfcore.h
++++ b/bfd/elfcore.h
+@@ -92,6 +92,7 @@ elf_core_file_p (bfd *abfd)
+   unsigned int phindex;
+   const struct elf_backend_data *ebd;
+   bfd_size_type amt;
++  ufile_ptr filesize;
+ 
+   /* Read in the ELF header in external format.  */
+   if (bfd_bread (&x_ehdr, sizeof (x_ehdr), abfd) != sizeof (x_ehdr))
+@@ -286,29 +287,21 @@ elf_core_file_p (bfd *abfd)
+       goto fail;
+ 
+   /* Check for core truncation.  */
+-  {
+-    bfd_size_type high = 0;
+-    struct stat statbuf;
+-    for (phindex = 0; phindex < i_ehdrp->e_phnum; ++phindex)
+-      {
+-	Elf_Internal_Phdr *p = i_phdrp + phindex;
+-	if (p->p_filesz)
+-	  {
+-	    bfd_size_type current = p->p_offset + p->p_filesz;
+-	    if (high < current)
+-	      high = current;
+-	  }
+-      }
+-    if (bfd_stat (abfd, &statbuf) == 0)
+-      {
+-	if ((bfd_size_type) statbuf.st_size < high)
+-	  {
+-	    _bfd_error_handler
+-	      /* xgettext:c-format */
+-	      (_("warning: %pB is truncated: expected core file "
+-		 "size >= %" PRIu64 ", found: %" PRIu64),
+-	       abfd, (uint64_t) high, (uint64_t) statbuf.st_size);
+-	  }
++  filesize = bfd_get_file_size (abfd);
++  if (filesize != 0)
++    {
++      for (phindex = 0; phindex < i_ehdrp->e_phnum; ++phindex)
++	{
++	  Elf_Internal_Phdr *p = i_phdrp + phindex;
++	  if (p->p_filesz
++	      && (p->p_offset >= filesize
++		  || p->p_filesz > filesize - p->p_offset))
++	    {
++	      _bfd_error_handler (_("warning: %pB has a segment "
++				    "extending past end of file"), abfd);
++	      abfd->read_only = 1;
++	      break;
++	    }
+       }
+   }
+ 
+-- 
+2.34.0
+

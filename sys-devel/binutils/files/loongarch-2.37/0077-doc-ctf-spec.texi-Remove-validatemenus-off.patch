@@ -1,0 +1,52 @@
+From 469ca94170aa4f14cc3b3dc9e7d8c02bb17f8c91 Mon Sep 17 00:00:00 2001
+From: "H.J. Lu" <hjl.tools@gmail.com>
+Date: Tue, 9 Nov 2021 05:35:42 -0800
+Subject: [PATCH 77/97] doc/ctf-spec.texi: Remove "@validatemenus off"
+
+Remove @validatemenus from ctf-spec.texi, which has been removed from
+texinfo by
+
+commit a16dd1a9ece08568a1980b9a65a3a9090717997f
+Author: Gavin Smith <gavinsmith0123@gmail.com>
+Date:   Mon Oct 12 16:32:37 2020 +0100
+
+    * doc/texinfo.texi
+    (Writing a Menu, Customization Variables for @-Commands)
+    (Command List),
+    * doc/refcard/txirefcard.tex
+    Remove @validatemenus.
+    * tp/Texinfo/XS/Makefile.am (command_ids.h): Use gawk instead
+    of awk.  Avoid discouraged "$p" usage, using "$(p)" instead.
+    * tp/Texinfo/XS/configure.ac: Check for gawk.
+
+commit 128acab3889b51809dc3bd3c6c74b61d13f7f5f4
+Author: Gavin Smith <gavinsmith0123@gmail.com>
+Date:   Thu Jan 3 14:51:53 2019 +0000
+
+    Update refcard.
+
+    * doc/refcard/txirefcard.tex: @setfilename is no longer
+    mandatory.  Do not mention @validatemenus or explicitly giving
+    @node pointers, as these are not very important features.
+
+	PR libctf/28567
+	* doc/ctf-spec.texi: Remove "@validatemenus off".
+---
+ libctf/doc/ctf-spec.texi | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/libctf/doc/ctf-spec.texi b/libctf/doc/ctf-spec.texi
+index 78c7aed7642..07d860ddc92 100644
+--- a/libctf/doc/ctf-spec.texi
++++ b/libctf/doc/ctf-spec.texi
+@@ -2,7 +2,6 @@
+ @setfilename ctf-spec.info
+ @settitle The CTF File Format
+ @ifnottex
+-@validatemenus off
+ @xrefautomaticsectiontitle on
+ @end ifnottex
+ @synindex fn cp
+-- 
+2.34.0
+

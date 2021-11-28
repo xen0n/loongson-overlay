@@ -1,7 +1,7 @@
 From 4462d7c440247bfcdc464412332bbec13b8aab12 Mon Sep 17 00:00:00 2001
 From: liuzhensong <liuzhensong@loongson.cn>
 Date: Fri, 22 Oct 2021 16:42:06 +0800
-Subject: [PATCH 4/5] LoongArch gas support
+Subject: [PATCH 04/97] LoongArch gas support
 
 2021-10-22  Chenghua Xu  <xuchenghua@loongson.cn>
             Zhensong Liu  <liuzhensong@loongson.cn>
@@ -260,6 +260,18 @@ index f3d66b8e8b6..ff11adb0f70 100644
 +config/loongarch-lex-wrapper.@OBJEXT@: config/loongarch-lex.c config/loongarch-parse.h
  
  # The mips instruction table specification lexical analyzer and parser.
+ 
+diff --git a/gas/NEWS b/gas/NEWS
+index de4c61b320d..09fade54087 100644
+--- a/gas/NEWS
++++ b/gas/NEWS
+@@ -1,5 +1,7 @@
+ -*- text -*-
+ 
++* Add support for the LoongArch instruction set.
++
+ * Add a command-line option, -muse-unaligned-vector-move, for x86 target
+   to encode aligned vector move as unaligned vector move.
  
 diff --git a/gas/config/loongarch-lex-wrapper.c b/gas/config/loongarch-lex-wrapper.c
 new file mode 100644
@@ -4673,5 +4685,5 @@ index f9ee6f4ac72..6074c2ee282 100644
      #
      # prune_warnings -- delete various system verbosities from TEXT.
 -- 
-2.33.1
+2.34.0
 

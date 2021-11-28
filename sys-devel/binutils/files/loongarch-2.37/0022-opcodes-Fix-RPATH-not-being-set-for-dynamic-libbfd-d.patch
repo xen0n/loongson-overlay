@@ -1,0 +1,174 @@
+From 2b677209fe127b44c1920779a6fca2598c66c1d3 Mon Sep 17 00:00:00 2001
+From: "Maciej W. Rozycki" <macro@embecosm.com>
+Date: Wed, 27 Oct 2021 12:21:14 +0100
+Subject: [PATCH 22/97] opcodes: Fix RPATH not being set for dynamic libbfd
+ dependency
+
+If built as a shared library, libopcodes has a load-time dependency on
+libbfd, which is recorded in the dynamic section, however without a
+corresponding RPATH entry for the directory to find libbfd in.  This
+causes loading to fail whenever libbfd is only pulled by libopcodes
+indirectly and libbfd has been installed in a directory that is not in
+the dynamic loader's search path.
+
+It does not happen with the programs included with binutils or GDB,
+because they all also pull libbfd when using libopcodes, but it can
+happen with external software, e.g.:
+
+$ gdbserver --help
+gdbserver: error while loading shared libraries: libbfd-[...].so: cannot open shared object file: No such file or directory
+$
+
+(not our `gdbserver').
+
+Indirect dynamic dependencies are handled by libtool automatically by
+adding RPATH entries as required, however our setup for libopcodes
+prevents this from happening by linking in libbfd with an explicit file
+reference sneaked through to the linker directly behind libtool's back
+via the `-Wl' linker command-line option rather than via `-l' combined
+with a suitable library search path specified via `-L', as it would be
+usually the case, or just referring to the relevant .la file in a fully
+libtool-enabled configuration such as ours.
+
+According to an observation in the discussion back in 2007[1][2][3] that
+has led to the current arrangement it is to prevent libtool from picking
+up the wrong version of libbfd.  It does not appear to be needed though,
+not at least with our current libtool incarnation, as directly referring
+`libbfd.la' does exactly what it should, as previously suggested[4], and
+with no link-time reference to the installation directory other than to
+set RPATH.  Uninstalled version of libopcodes has libbfd's build-time
+location prepended to RPATH too, as also expected.
+
+Use a direct reference to `libbfd.la' then, making the load error quoted
+above go away.  Alternatively `-L' and `-l' could be used to the same
+effect, but it seems an unnecessary complication and just another way to
+circumvent rather than making use of libtool.
+
+References:
+
+[1] "compile failure due to undefined symbol",
+    <https://sourceware.org/ml/binutils/2007-08/msg00476.html>
+
+[2] same, <https://sourceware.org/ml/binutils/2007-09/msg00000.html>
+
+[3] same, <https://sourceware.org/ml/binutils/2007-10/msg00019.html>
+
+[4] same, <https://sourceware.org/ml/binutils/2007-10/msg00034.html>
+
+	opcodes/
+	* Makefile.am: Remove obsolete comment.
+	* configure.ac: Refer `libbfd.la' to link shared BFD library
+	except for Cygwin.
+	* Makefile.in: Regenerate.
+	* configure: Regenerate.
+---
+ opcodes/ChangeLog    |  8 ++++++++
+ opcodes/Makefile.am  |  6 ------
+ opcodes/Makefile.in  |  6 ------
+ opcodes/configure    | 13 +------------
+ opcodes/configure.ac | 13 +------------
+ 5 files changed, 10 insertions(+), 36 deletions(-)
+
+diff --git a/opcodes/ChangeLog b/opcodes/ChangeLog
+index 531e6cb5021..f0e4b72c353 100644
+--- a/opcodes/ChangeLog
++++ b/opcodes/ChangeLog
+@@ -1,3 +1,11 @@
++2021-10-27  Maciej W. Rozycki  <macro@embecosm.com>
++
++	* Makefile.am: Remove obsolete comment.
++	* configure.ac: Refer `libbfd.la' to link shared BFD library
++	except for Cygwin.
++	* Makefile.in: Regenerate.
++	* configure: Regenerate.
++
+ 2021-09-27  Nick Alcock  <nick.alcock@oracle.com>
+ 
+ 	* configure: Regenerate.
+diff --git a/opcodes/Makefile.am b/opcodes/Makefile.am
+index c45fc295665..e07e360d842 100644
+--- a/opcodes/Makefile.am
++++ b/opcodes/Makefile.am
+@@ -321,12 +321,6 @@ endif
+ endif
+ 
+ libopcodes_la_SOURCES =  dis-buf.c disassemble.c dis-init.c
+-# It's desirable to list ../bfd/libbfd.la in DEPENDENCIES and LIBADD.
+-# Unfortunately this causes libtool to add -L$(libdir), referring to the
+-# planned install directory of libbfd.  This can cause us to pick up an
+-# old version of libbfd, or to pick up libbfd for the wrong architecture
+-# if host != build. So for building with shared libraries we use a
+-# hardcoded path to libbfd.so instead of relying on the entries in libbfd.la.
+ libopcodes_la_DEPENDENCIES = $(OFILES) @SHARED_DEPENDENCIES@
+ libopcodes_la_LIBADD = $(OFILES) @SHARED_LIBADD@
+ libopcodes_la_LDFLAGS += -release `cat ../bfd/libtool-soversion` @SHARED_LDFLAGS@
+diff --git a/opcodes/Makefile.in b/opcodes/Makefile.in
+index 8ba01c9f8f9..942737106ab 100644
+--- a/opcodes/Makefile.in
++++ b/opcodes/Makefile.in
+@@ -699,12 +699,6 @@ OFILES = @BFD_MACHINES@
+ CONFIG_STATUS_DEPENDENCIES = $(BFDDIR)/development.sh
+ AM_CPPFLAGS = -I. -I$(srcdir) -I../bfd -I$(INCDIR) -I$(BFDDIR) @HDEFINES@ @INCINTL@
+ libopcodes_la_SOURCES = dis-buf.c disassemble.c dis-init.c
+-# It's desirable to list ../bfd/libbfd.la in DEPENDENCIES and LIBADD.
+-# Unfortunately this causes libtool to add -L$(libdir), referring to the
+-# planned install directory of libbfd.  This can cause us to pick up an
+-# old version of libbfd, or to pick up libbfd for the wrong architecture
+-# if host != build. So for building with shared libraries we use a
+-# hardcoded path to libbfd.so instead of relying on the entries in libbfd.la.
+ libopcodes_la_DEPENDENCIES = $(OFILES) @SHARED_DEPENDENCIES@
+ libopcodes_la_LIBADD = $(OFILES) @SHARED_LIBADD@
+ # Allow dependency tracking to work on all the source files.
+diff --git a/opcodes/configure b/opcodes/configure
+index 22a9cf926ca..acfbdd6ec6f 100755
+--- a/opcodes/configure
++++ b/opcodes/configure
+@@ -12133,19 +12133,8 @@ if test "$enable_shared" = "yes"; then
+       SHARED_LDFLAGS="-no-undefined"
+       SHARED_LIBADD="-L`pwd`/../bfd -lbfd -L`pwd`/../libiberty -liberty $SHARED_LIBADD"
+       ;;
+-   *-*-darwin*)
+-     SHARED_LIBADD="-Wl,`pwd`/../bfd/.libs/libbfd.dylib ${SHARED_LIBADD}"
+-     SHARED_DEPENDENCIES="../bfd/libbfd.la"
+-     ;;
+     *)
+-      case "$host_vendor" in
+-        hp)
+-          SHARED_LIBADD="-Wl,`pwd`/../bfd/.libs/libbfd.sl ${SHARED_LIBADD}"
+-	  ;;
+-	*)
+-          SHARED_LIBADD="-Wl,`pwd`/../bfd/.libs/libbfd.so ${SHARED_LIBADD}"
+-	  ;;
+-      esac
++      SHARED_LIBADD="../bfd/libbfd.la ${SHARED_LIBADD}"
+       SHARED_DEPENDENCIES="../bfd/libbfd.la"
+       ;;
+   esac
+diff --git a/opcodes/configure.ac b/opcodes/configure.ac
+index 4853b9e32d7..757ce10fbe2 100644
+--- a/opcodes/configure.ac
++++ b/opcodes/configure.ac
+@@ -193,19 +193,8 @@ if test "$enable_shared" = "yes"; then
+       SHARED_LDFLAGS="-no-undefined"
+       SHARED_LIBADD="-L`pwd`/../bfd -lbfd -L`pwd`/../libiberty -liberty $SHARED_LIBADD"
+       ;;
+-   *-*-darwin*)
+-     SHARED_LIBADD="-Wl,`pwd`/../bfd/.libs/libbfd.dylib ${SHARED_LIBADD}"
+-     SHARED_DEPENDENCIES="../bfd/libbfd.la"
+-     ;;
+     *)
+-      case "$host_vendor" in
+-        hp)
+-          SHARED_LIBADD="-Wl,`pwd`/../bfd/.libs/libbfd.sl ${SHARED_LIBADD}"
+-	  ;;
+-	*)
+-          SHARED_LIBADD="-Wl,`pwd`/../bfd/.libs/libbfd.so ${SHARED_LIBADD}"
+-	  ;;
+-      esac
++      SHARED_LIBADD="../bfd/libbfd.la ${SHARED_LIBADD}"
+       SHARED_DEPENDENCIES="../bfd/libbfd.la"
+       ;;
+   esac
+-- 
+2.34.0
+

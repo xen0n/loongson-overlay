@@ -1,0 +1,94 @@
+From 14f458590a51e9922c03bbb16f7e733db8015f98 Mon Sep 17 00:00:00 2001
+From: Przemyslaw Wirkus <przemyslaw.wirkus@arm.com>
+Date: Wed, 10 Nov 2021 14:09:05 +0000
+Subject: [PATCH 86/97] arm: enable Cortex-A710 CPU
+
+This patch is adding support for Cortex-A710 CPU in Arm.
+
+bfd/
+
+	* cpu-arm.c (processors): Add cortex-a710.
+
+gas/
+
+	* NEWS: Update docs.
+	* config/tc-arm.c (arm_cpus): Add cortex-a710 to -mcpu.
+	* doc/c-arm.texi: Update docs.
+	* testsuite/gas/arm/cpu-cortex-a710.d: New test.
+---
+ bfd/cpu-arm.c                           | 1 +
+ gas/NEWS                                | 2 ++
+ gas/config/tc-arm.c                     | 5 +++++
+ gas/doc/c-arm.texi                      | 1 +
+ gas/testsuite/gas/arm/cpu-cortex-a710.d | 6 ++++++
+ 5 files changed, 15 insertions(+)
+ create mode 100644 gas/testsuite/gas/arm/cpu-cortex-a710.d
+
+diff --git a/bfd/cpu-arm.c b/bfd/cpu-arm.c
+index c8706253df1..7c91bb01b87 100644
+--- a/bfd/cpu-arm.c
++++ b/bfd/cpu-arm.c
+@@ -193,6 +193,7 @@ processors[] =
+   { bfd_mach_arm_XScale,  "xscale"	    },
+   { bfd_mach_arm_8,	  "xgene1"	    },
+   { bfd_mach_arm_8,	  "xgene2"	    },
++  { bfd_mach_arm_9,	  "cortex-a710"	    },
+   { bfd_mach_arm_ep9312,  "ep9312"	    },
+   { bfd_mach_arm_iWMMXt,  "iwmmxt"	    },
+   { bfd_mach_arm_iWMMXt2, "iwmmxt2"	    },
+diff --git a/gas/NEWS b/gas/NEWS
+index 779ea5daf7f..a61aeb61474 100644
+--- a/gas/NEWS
++++ b/gas/NEWS
+@@ -9,6 +9,8 @@
+ 
+ * Add support for Cortex-A510, Cortex-A710, Cortex-X2 for AArch64.
+ 
++* Add support for Cortex-A710 for Arm.
++
+ * Outputs of .ds.x directive and .tfloat directive with hex input from
+   x86 assembler have been reduced from 12 bytes to 10 bytes to match the
+   output of .tfloat directive.
+diff --git a/gas/config/tc-arm.c b/gas/config/tc-arm.c
+index d4c590a8342..fad1775bcea 100644
+--- a/gas/config/tc-arm.c
++++ b/gas/config/tc-arm.c
+@@ -31640,6 +31640,11 @@ static const struct arm_cpu_option_table arm_cpus[] =
+   ARM_CPU_OPT ("cortex-a78c",   "Cortex-A78C",	   ARM_ARCH_V8_2A,
+ 	       ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST | ARM_EXT2_SB),
+ 	       FPU_ARCH_DOTPROD_NEON_VFP_ARMV8),
++  ARM_CPU_OPT ("cortex-a710",   "Cortex-A710",	   ARM_ARCH_V9A,
++	       ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST
++				    | ARM_EXT2_BF16
++				    | ARM_EXT2_I8MM),
++	       FPU_ARCH_DOTPROD_NEON_VFP_ARMV8),
+   ARM_CPU_OPT ("ares",    "Ares",	       ARM_ARCH_V8_2A,
+ 	       ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
+ 	       FPU_ARCH_CRYPTO_NEON_VFP_ARMV8_DOTPROD),
+diff --git a/gas/doc/c-arm.texi b/gas/doc/c-arm.texi
+index 4baa46d3083..4b5656ee06e 100644
+--- a/gas/doc/c-arm.texi
++++ b/gas/doc/c-arm.texi
+@@ -134,6 +134,7 @@ recognized:
+ @code{cortex-a78},
+ @code{cortex-a78ae},
+ @code{cortex-a78c},
++@code{cortex-a710},
+ @code{ares},
+ @code{cortex-r4},
+ @code{cortex-r4f},
+diff --git a/gas/testsuite/gas/arm/cpu-cortex-a710.d b/gas/testsuite/gas/arm/cpu-cortex-a710.d
+new file mode 100644
+index 00000000000..ba88dbb24b8
+--- /dev/null
++++ b/gas/testsuite/gas/arm/cpu-cortex-a710.d
+@@ -0,0 +1,6 @@
++# name: Assemble and dump for cortex-a710 CPU
++# source: nop-asm.s
++# as: -mcpu=cortex-a710
++# objdump: -d -mcortex-a710
++
++#...
+-- 
+2.34.0
+

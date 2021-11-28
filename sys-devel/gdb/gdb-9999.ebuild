@@ -86,15 +86,6 @@ BDEPEND="
 
 PATCHES=(
 	"${FILESDIR}"/${PN}-8.3.1-verbose-build.patch
-
-	"${FILESDIR}"/loongarch-12/0001-gdb-LoongArch-GDB-Port.patch
-	"${FILESDIR}"/loongarch-12/0002-gdbserver-LoongArch-GDBServer-Port.patch
-	"${FILESDIR}"/loongarch-12/0003-bfd-LoongArch-BFD-Port.patch
-	"${FILESDIR}"/loongarch-12/0004-ld-LoongArch-LD-Port.patch
-	"${FILESDIR}"/loongarch-12/0005-opcodes-LoongArch-Opcodes-Port.patch
-	"${FILESDIR}"/loongarch-12/0006-opcodes-LoongArch-make-all-non-native-jumps-desugar-.patch
-	"${FILESDIR}"/loongarch-12/0007-opcodes-LoongArch-add-ret-instruction-to-reduce-typi.patch
-	"${FILESDIR}"/loongarch-12/0008-opcodes-LoongArch-make-beq-bne-s-operand-order-rd-rj.patch
 )
 
 pkg_setup() {
@@ -103,6 +94,10 @@ pkg_setup() {
 
 src_prepare() {
 	default
+
+	einfo "Applying LoongArch support patches"
+	eapply "${FILESDIR}"/loongarch-12
+	einfo "Done."
 
 	strip-linguas -u bfd/po opcodes/po
 	export CC_FOR_BUILD=$(tc-getBUILD_CC)

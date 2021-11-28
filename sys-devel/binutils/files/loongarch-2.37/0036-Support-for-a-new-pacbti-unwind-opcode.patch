@@ -1,0 +1,33 @@
+From 09854a8870e63bd0d976d4d0dd7bd6b9b91348b1 Mon Sep 17 00:00:00 2001
+From: Tejas Belagod <tejas.belagod@arm.com>
+Date: Tue, 5 Oct 2021 08:43:12 +0000
+Subject: [PATCH 36/97] Support for a new pacbti unwind opcode.
+
+This patch adds readelf support for decoding the exception table
+opcode for restoring the RA_AUTH_CODE pseudo register defined by the
+EHABI
+(https://github.com/ARM-software/abi-aa/releases/download/2021Q1/ehabi32.pdf
+Section 10.3).
+
+	* readelf.c (decode_arm_unwind_bytecode): Add support to decode
+	restoring RA_AUTH_CODE pseudo register.
+---
+ binutils/readelf.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/binutils/readelf.c b/binutils/readelf.c
+index 682eacdef14..1fa7ef45708 100644
+--- a/binutils/readelf.c
++++ b/binutils/readelf.c
+@@ -9419,6 +9419,8 @@ decode_arm_unwind_bytecode (Filedata *                 filedata,
+ 	    printf ("-D%d", first + last);
+ 	  printf ("}");
+ 	}
++      else if (op == 0xb4)
++	printf (_("     pop {ra_auth_code}"));
+       else if ((op & 0xf8) == 0xb8 || (op & 0xf8) == 0xd0)
+ 	{
+ 	  unsigned int count = op & 0x07;
+-- 
+2.34.0
+

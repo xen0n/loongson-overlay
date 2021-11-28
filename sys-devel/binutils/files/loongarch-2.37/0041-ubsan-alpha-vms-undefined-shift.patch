@@ -1,0 +1,26 @@
+From 9216910ed82b2b64ced4b2031730f6a659c2034c Mon Sep 17 00:00:00 2001
+From: Alan Modra <amodra@gmail.com>
+Date: Sat, 30 Oct 2021 18:54:53 +1030
+Subject: [PATCH 41/97] ubsan: alpha-vms: undefined shift
+
+	* vms-alpha.c (evax_bfd_print_image): Shift left 1u.
+---
+ bfd/vms-alpha.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/bfd/vms-alpha.c b/bfd/vms-alpha.c
+index 10758d56e00..aed2e26d503 100644
+--- a/bfd/vms-alpha.c
++++ b/bfd/vms-alpha.c
+@@ -7845,7 +7845,7 @@ evax_bfd_print_image (bfd *abfd, FILE *file)
+ 	}
+       mask = bfd_getl32 (eihvn.subsystem_mask);
+       for (j = 0; j < 32; j++)
+-	if (mask & (1 << j))
++	if (mask & (1u << j))
+ 	  {
+ 	    struct vms_eihvn_subversion ver;
+ 	    if (bfd_bread (&ver, sizeof (ver), abfd) != sizeof (ver))
+-- 
+2.34.0
+

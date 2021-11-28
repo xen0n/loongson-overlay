@@ -1,7 +1,7 @@
 From e9a0721f8274daeffaedbc3cabc12c52d43a38a7 Mon Sep 17 00:00:00 2001
 From: liuzhensong <liuzhensong@loongson.cn>
 Date: Fri, 22 Oct 2021 16:42:05 +0800
-Subject: [PATCH 3/5] LoongArch binutils support
+Subject: [PATCH 03/97] LoongArch binutils support
 
 2021-10-22  Chenghua Xu  <xuchenghua@loongson.cn>
 	    Zhensong Liu  <liuzhensong@loongson.cn>
@@ -104,5 +104,5 @@ index 0b797f9e9b4..6e8a114481d 100644
  # Make sure the target CPU shows up in the list.
  lappend cpus_expected ${target_cpu}
 -- 
-2.33.1
+2.34.0
 

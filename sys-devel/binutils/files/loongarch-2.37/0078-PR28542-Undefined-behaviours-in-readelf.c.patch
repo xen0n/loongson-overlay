@@ -1,0 +1,47 @@
+From b9af637988e82ddfe71bde5ddcb5d9b3a4673acd Mon Sep 17 00:00:00 2001
+From: Alan Modra <amodra@gmail.com>
+Date: Tue, 9 Nov 2021 09:02:03 +1030
+Subject: [PATCH 78/97] PR28542, Undefined behaviours in readelf.c
+
+	PR 28542
+	* readelf.c (dump_relocations): Check that section headers have
+	been read before attempting to access section name.
+	(print_dynamic_symbol): Likewise.
+	(process_mips_specific): Delete dead code.
+---
+ binutils/readelf.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/binutils/readelf.c b/binutils/readelf.c
+index 50129f4ab4f..c71d542f051 100644
+--- a/binutils/readelf.c
++++ b/binutils/readelf.c
+@@ -1934,7 +1934,8 @@ dump_relocations (Filedata *          filedata,
+ 
+ 		  if (ELF_ST_TYPE (psym->st_info) == STT_SECTION)
+ 		    {
+-		      if (psym->st_shndx < filedata->file_header.e_shnum)
++		      if (psym->st_shndx < filedata->file_header.e_shnum
++			  && filedata->section_headers != NULL)
+ 			sec_name = section_name_print (filedata,
+ 						       filedata->section_headers
+ 						       + psym->st_shndx);
+@@ -12861,6 +12862,7 @@ print_dynamic_symbol (Filedata *filedata, unsigned long si,
+ 
+   if (ELF_ST_TYPE (psym->st_info) == STT_SECTION
+       && psym->st_shndx < filedata->file_header.e_shnum
++      && filedata->section_headers != NULL
+       && psym->st_name == 0)
+     {
+       is_valid
+@@ -18262,7 +18264,6 @@ process_mips_specific (Filedata * filedata)
+       Elf_External_Options * eopt;
+       size_t offset;
+       int cnt;
+-      sect = filedata->section_headers;
+ 
+       /* Find the section header so that we get the size.  */
+       sect = find_section_by_type (filedata, SHT_MIPS_OPTIONS);
+-- 
+2.34.0
+

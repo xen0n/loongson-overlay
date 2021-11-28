@@ -1,0 +1,30 @@
+From b030ae091e65aba97e511fa9c9bb80c77cdeabad Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Cl=C3=A9ment=20Chigot?= <clement.chigot@atos.net>
+Date: Thu, 11 Mar 2021 11:08:17 +0100
+Subject: [PATCH 84/97] ld: set correct flags for AIX shared tests
+
+Previous flags were aimed to be run with XLC.
+Nowadays, only GCC is being tested with GNU toolchain. Moreover,
+recent XLC versions might also accept "-shared".
+
+	* testsuite/ld-shared/shared.exp: Adjust shared flags.
+---
+ ld/testsuite/ld-shared/shared.exp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/ld/testsuite/ld-shared/shared.exp b/ld/testsuite/ld-shared/shared.exp
+index 655a56da99c..40f417eb690 100644
+--- a/ld/testsuite/ld-shared/shared.exp
++++ b/ld/testsuite/ld-shared/shared.exp
+@@ -135,7 +135,7 @@ proc shared_test { progname testname main sh1 sh2 dat args } {
+     # On AIX, we need to use an export file.
+     set shared -shared
+     if { [istarget rs6000*-*-aix*] || [istarget powerpc*-*-aix*] } {
+-	set shared "-bM:SRE -bE:$tmpdir/xcoff.exp"
++	append shared " -Wl,-bE:$tmpdir/xcoff.exp"
+     }
+     if { [is_elf_format] && [check_shared_lib_support] } {
+ 	append shared " -Wl,-z,notext"
+-- 
+2.34.0
+

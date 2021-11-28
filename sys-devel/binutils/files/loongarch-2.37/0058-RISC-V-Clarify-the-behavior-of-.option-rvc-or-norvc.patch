@@ -1,0 +1,233 @@
+From edc77c591add0a9c7740a9ed9f7e40358bf65dbf Mon Sep 17 00:00:00 2001
+From: Nelson Chu <nelson.chu@sifive.com>
+Date: Thu, 4 Nov 2021 14:31:48 +0800
+Subject: [PATCH 58/97] RISC-V: Clarify the behavior of .option rvc or norvc.
+
+Add/Remove the rvc extension to/from the riscv_subsets once the
+.option rvc/norvc is set.  So that we don't need to always check
+the riscv_opts.rvc in the riscv_subset_supports, just call the
+riscv_lookup_subset to search the subset list is enough.
+
+Besides, we will need to dump the instructions according to the
+elf architecture attributes.  That means the dis-assembler needs
+to parse the architecture string from the elf attribute before
+dumping any instructions, and also needs to recognized the
+INSN_CLASS* classes from riscv_opcodes.  Therefore, I suppose
+some functions will need to be moved from gas/config/tc-riscv.c
+to bfd/elfxx-riscv.c, including riscv_multi_subset_supports and
+riscv_subset_supports.  This is one of the reasons why we need
+this patch.
+
+This patch passes the gcc/binutils regressions of rv32emc-elf,
+rv32i-elf, rv64gc-elf and rv64gc-linux toolchains.
+
+bfd/
+	* elfxx-riscv.c (riscv_remove_subset): Remove the extension
+	from the subset list.
+	(riscv_update_subset): Add/Remove an extension to/from the
+	subset list.  This is used for the .option rvc or norvc.
+	* elfxx-riscv.h: Added the extern bool riscv_update_subset.
+gas/
+	* config/tc-riscv.c (riscv_set_options): Removed the unused
+	rve flag.
+	(riscv_opts): Likewise.
+	(riscv_set_rve): Removed.
+	(riscv_subset_supports): Removed the riscv_opts.rvc check.
+	(riscv_set_arch): Don't need to call riscv_set_rve.
+	(reg_lookup_internal): Call riscv_subset_supports to check
+	whether the rve is supported.
+	(s_riscv_option): Add/Remove the rvc extension to/from the
+	subset list once the .option rvc/norvc is set.
+---
+ bfd/elfxx-riscv.c     | 65 +++++++++++++++++++++++++++++++++++++++++++
+ bfd/elfxx-riscv.h     |  3 ++
+ gas/config/tc-riscv.c | 39 ++++++++++++--------------
+ 3 files changed, 86 insertions(+), 21 deletions(-)
+
+diff --git a/bfd/elfxx-riscv.c b/bfd/elfxx-riscv.c
+index cdb4fa0996a..65bb1cab756 100644
+--- a/bfd/elfxx-riscv.c
++++ b/bfd/elfxx-riscv.c
+@@ -2030,3 +2030,68 @@ riscv_arch_str (unsigned xlen, const riscv_subset_list_t *subset)
+ 
+   return attr_str;
+ }
++
++/* Remove the SUBSET from the subset list.  */
++
++static void
++riscv_remove_subset (riscv_subset_list_t *subset_list,
++		     const char *subset)
++{
++  riscv_subset_t *current = subset_list->head;
++  riscv_subset_t *pre = NULL;
++  for (; current != NULL; pre = current, current = current->next)
++    {
++      if (strcmp (current->name, subset) == 0)
++	{
++	  if (pre == NULL)
++	    subset_list->head = current->next;
++	  else
++	    pre->next = current->next;
++	  if (current->next == NULL)
++	    subset_list->tail = pre;
++	  free ((void *) current->name);
++	  free (current);
++	  break;
++	}
++    }
++}
++
++/* Add/Remove an extension to/from the subset list.  This is used for
++   the .option rvc or norvc.  */
++
++bool
++riscv_update_subset (riscv_parse_subset_t *rps,
++		     const char *subset,
++		     bool removed)
++{
++  if (strlen (subset) == 0
++      || (strlen (subset) == 1
++	  && riscv_ext_order[(*subset - 'a')] == 0)
++      || (strlen (subset) > 1
++	  && rps->check_unknown_prefixed_ext
++	  && !riscv_recognized_prefixed_ext (subset)))
++    {
++      rps->error_handler
++	(_("riscv_update_subset: unknown ISA extension `%s'"), subset);
++      return false;
++    }
++
++  if (removed)
++    {
++      if (strcmp (subset, "i") == 0)
++	{
++	  rps->error_handler
++	    (_("riscv_update_subset: cannot remove extension i from "
++	       "the subset list"));
++	  return false;
++	}
++      riscv_remove_subset (rps->subset_list, subset);
++    }
++  else
++    riscv_parse_add_subset (rps, subset,
++			    RISCV_UNKNOWN_VERSION,
++			    RISCV_UNKNOWN_VERSION, true);
++
++  riscv_parse_add_implicit_subsets (rps);
++  return riscv_parse_check_conflicts (rps);
++}
+diff --git a/bfd/elfxx-riscv.h b/bfd/elfxx-riscv.h
+index 3af8fd99d9a..17620fd2c95 100644
+--- a/bfd/elfxx-riscv.h
++++ b/bfd/elfxx-riscv.h
+@@ -92,6 +92,9 @@ riscv_estimate_digit (unsigned);
+ extern int
+ riscv_compare_subsets (const char *, const char *);
+ 
++extern bool
++riscv_update_subset (riscv_parse_subset_t *, const char *, bool);
++
+ extern void
+ bfd_elf32_riscv_set_data_segment_info (struct bfd_link_info *, int *);
+ extern void
+diff --git a/gas/config/tc-riscv.c b/gas/config/tc-riscv.c
+index eb626f8e1d5..90d960a5031 100644
+--- a/gas/config/tc-riscv.c
++++ b/gas/config/tc-riscv.c
+@@ -203,7 +203,6 @@ struct riscv_set_options
+ {
+   int pic; /* Generate position-independent code.  */
+   int rvc; /* Generate RVC code.  */
+-  int rve; /* Generate RVE code.  */
+   int relax; /* Emit relocs the linker is allowed to relax.  */
+   int arch_attr; /* Emit architecture and privileged elf attributes.  */
+   int csr_check; /* Enable the CSR checking.  */
+@@ -213,7 +212,6 @@ static struct riscv_set_options riscv_opts =
+ {
+   0, /* pic */
+   0, /* rvc */
+-  0, /* rve */
+   1, /* relax */
+   DEFAULT_RISCV_ATTR, /* arch_attr */
+   0, /* csr_check */
+@@ -231,14 +229,6 @@ riscv_set_rvc (bool rvc_value)
+   riscv_opts.rvc = rvc_value;
+ }
+ 
+-/* Enable or disable the rve flags for riscv_opts.  */
+-
+-static void
+-riscv_set_rve (bool rve_value)
+-{
+-  riscv_opts.rve = rve_value;
+-}
+-
+ /* This linked list records all enabled extensions, which are parsed from
+    the architecture string.  The architecture string can be set by the
+    -march option, the elf architecture attributes, and the --with-arch
+@@ -252,10 +242,6 @@ static bool
+ riscv_subset_supports (const char *feature)
+ {
+   struct riscv_subset_t *subset;
+-
+-  if (riscv_opts.rvc && (strcasecmp (feature, "c") == 0))
+-    return true;
+-
+   return riscv_lookup_subset (&riscv_subsets, feature, &subset);
+ }
+ 
+@@ -329,13 +315,9 @@ riscv_set_arch (const char *s)
+   riscv_release_subset_list (&riscv_subsets);
+   riscv_parse_subset (&rps, s);
+ 
+-  /* To support .option rvc and rve.  */
+   riscv_set_rvc (false);
+   if (riscv_subset_supports ("c"))
+     riscv_set_rvc (true);
+-  riscv_set_rve (false);
+-  if (riscv_subset_supports ("e"))
+-    riscv_set_rve (true);
+ }
+ 
+ /* Indicate -mabi option is explictly set.  */
+@@ -1013,7 +995,9 @@ reg_lookup_internal (const char *s, enum reg_class class)
+   if (r == NULL || DECODE_REG_CLASS (r) != class)
+     return -1;
+ 
+-  if (riscv_opts.rve && class == RCLASS_GPR && DECODE_REG_NUM (r) > 15)
++  if (riscv_subset_supports ("e")
++      && class == RCLASS_GPR
++      && DECODE_REG_NUM (r) > 15)
+     return -1;
+ 
+   return DECODE_REG_NUM (r);
+@@ -3380,10 +3364,23 @@ s_riscv_option (int x ATTRIBUTE_UNUSED)
+   ch = *input_line_pointer;
+   *input_line_pointer = '\0';
+ 
++  riscv_parse_subset_t rps;
++  rps.subset_list = &riscv_subsets;
++  rps.error_handler = as_bad;
++  rps.xlen = &xlen;
++  rps.isa_spec = default_isa_spec;
++  rps.check_unknown_prefixed_ext = true;
++
+   if (strcmp (name, "rvc") == 0)
+-    riscv_set_rvc (true);
++    {
++      riscv_update_subset (&rps, "c", false);
++      riscv_set_rvc (true);
++    }
+   else if (strcmp (name, "norvc") == 0)
+-    riscv_set_rvc (false);
++    {
++      riscv_update_subset (&rps, "c", true);
++      riscv_set_rvc (false);
++    }
+   else if (strcmp (name, "pic") == 0)
+     riscv_opts.pic = true;
+   else if (strcmp (name, "nopic") == 0)
+-- 
+2.34.0
+

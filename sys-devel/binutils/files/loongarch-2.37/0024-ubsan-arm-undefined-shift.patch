@@ -1,0 +1,28 @@
+From 459cde81fb571252cad74dd7333d5dc9694cf077 Mon Sep 17 00:00:00 2001
+From: Alan Modra <amodra@gmail.com>
+Date: Tue, 26 Oct 2021 19:39:12 +1030
+Subject: [PATCH 24/97] ubsan: arm: undefined shift
+
+left shift of 2 by 31 places cannot be represented in type 'int'
+
+	* arm-dis.c (print_insn_thumb16): Avoid undefined behaviour.
+---
+ opcodes/arm-dis.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/opcodes/arm-dis.c b/opcodes/arm-dis.c
+index 78efb815147..5252d36b1be 100644
+--- a/opcodes/arm-dis.c
++++ b/opcodes/arm-dis.c
+@@ -10714,7 +10714,7 @@ print_insn_thumb16 (bfd_vma pc, struct disassemble_info *info, long given)
+ 			if (!bitend)
+ 			  abort ();
+ 			reg = given >> bitstart;
+-			reg &= (2 << (bitend - bitstart)) - 1;
++			reg &= ((bfd_vma) 2 << (bitend - bitstart)) - 1;
+ 
+ 			switch (*c)
+ 			  {
+-- 
+2.34.0
+

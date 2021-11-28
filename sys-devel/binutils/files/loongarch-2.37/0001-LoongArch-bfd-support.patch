@@ -1,7 +1,7 @@
 From e214f8db56f65531b0a5ec296c42339dcaa5af31 Mon Sep 17 00:00:00 2001
 From: liuzhensong <liuzhensong@loongson.cn>
 Date: Fri, 22 Oct 2021 16:42:03 +0800
-Subject: [PATCH 1/5] LoongArch bfd support
+Subject: [PATCH 01/97] LoongArch bfd support
 
 2021-10-22  Chenghua Xu  <xuchenghua@loongson.cn>
 	    Zhensong Liu  <liuzhensong@loongson.cn>
@@ -4962,5 +4962,5 @@ index 00000000000..b4d801ae9bd
 +
 +#endif /* _ELF_LOONGARCH_H */
 -- 
-2.33.1
+2.34.0
 

@@ -1,0 +1,501 @@
+From 3197e593d8a2a79a23dc9155d18d7aff6281da14 Mon Sep 17 00:00:00 2001
+From: Przemyslaw Wirkus <przemyslaw.wirkus@arm.com>
+Date: Mon, 1 Nov 2021 10:43:25 +0000
+Subject: [PATCH 45/97] arm: add armv9-a architecture to -march
+
+Update also include:
+	+ New value of Tag_CPU_arch EABI attribute (22) is added.
+	+ Updated missing Tag_CPU_arch EABI attributes.
+	+ Updated how we combine archs 'v4t_plus_v6_m' as this mechanism
+	  have to handle new Armv9 as well.
+
+Regression tested on `arm-none-eabi` cross Binutils and no issues.
+
+bfd/
+
+	* archures.c: Define bfd_mach_arm_9.
+	* bfd-in2.h (bfd_mach_arm_9): Define bfd_mach_arm_9.
+	* cpu-arm.c: Add 'armv9-a' option to -march.
+	* elf32-arm.c (using_thumb2_bl): Update assert check.
+	(arch_has_arm_nop): Add TAG_CPU_ARCH_V9.
+	(bfd_arm_get_mach_from_attributes): Add case for TAG_CPU_ARCH_V9.
+	Update assert.
+	(tag_cpu_arch_combine): Updated table.
+	(v9): New table..
+
+binutils/
+
+	* readelf.c (arm_attr_tag_CPU_arch): Update with
+
+elfcpp/
+
+	* arm.h: Update TAG_CPU_ARCH_ enums with correct values.
+
+gas/
+
+	* NEWS: Update docs.
+	* config/tc-arm.c (get_aeabi_cpu_arch_from_fset): Return Armv9-a
+	for -amarch=all.
+	(aeabi_set_public_attributes): Update assert.
+	* doc/c-arm.texi: Update docs.
+	* testsuite/gas/arm/armv9-a_arch.d: New test.
+	* testsuite/gas/arm/attr-march-all.d: Update test with v9.
+
+include/
+
+	* elf/arm.h Update TAG_CPU_ARCH_ defines with correct values.
+	* opcode/arm.h (ARM_EXT3_V9A): New macro.
+	(ARM_ARCH_NONE): Updated with arm_feature_set.core size.
+	(FPU_NONE): Updated.
+	(ARM_ANY): Updated.
+	(ARM_ARCH_UNKNOWN): New macro.
+	(ARM_FEATURE_LOW): Updated.
+	(ARM_FEATURE_CORE): Updated.
+	(ARM_FEATURE_CORE_LOW): Updated.
+	(ARM_FEATURE_CORE_HIGH): Updated.
+	(ARM_FEATURE_COPROC): Updated.
+	(ARM_FEATURE): Updated.
+	(ARM_FEATURE_ALL): New macro.
+
+opcodes/
+
+	* arm-dis.c (select_arm_features): Support bfd_mach_arm_9.
+	Also Update bfd_mach_arm_unknown to use new macro ARM_ARCH_UNKNOWN.
+---
+ bfd/archures.c                         |  1 +
+ bfd/bfd-in2.h                          |  1 +
+ bfd/cpu-arm.c                          |  1 +
+ bfd/elf32-arm.c                        | 54 +++++++++++++++++++++++---
+ binutils/readelf.c                     |  3 +-
+ elfcpp/arm.h                           | 10 ++++-
+ gas/NEWS                               |  2 +
+ gas/config/tc-arm.c                    | 23 +++++++++--
+ gas/doc/c-arm.texi                     |  1 +
+ gas/testsuite/gas/arm/armv9-a_arch.d   | 17 ++++++++
+ gas/testsuite/gas/arm/attr-march-all.d |  2 +-
+ include/elf/arm.h                      |  6 ++-
+ include/opcode/arm.h                   | 31 +++++++++------
+ opcodes/arm-dis.c                      |  5 +--
+ 14 files changed, 131 insertions(+), 26 deletions(-)
+ create mode 100644 gas/testsuite/gas/arm/armv9-a_arch.d
+
+diff --git a/bfd/archures.c b/bfd/archures.c
+index 6c9be913b5f..441283b51a6 100644
+--- a/bfd/archures.c
++++ b/bfd/archures.c
+@@ -337,6 +337,7 @@ DESCRIPTION
+ .#define bfd_mach_arm_8M_BASE   25
+ .#define bfd_mach_arm_8M_MAIN   26
+ .#define bfd_mach_arm_8_1M_MAIN 27
++.#define bfd_mach_arm_9         28
+ .  bfd_arch_nds32,     {* Andes NDS32.  *}
+ .#define bfd_mach_n1		1
+ .#define bfd_mach_n1h		2
+diff --git a/bfd/bfd-in2.h b/bfd/bfd-in2.h
+index 9bdbe04ef88..912d9a42674 100644
+--- a/bfd/bfd-in2.h
++++ b/bfd/bfd-in2.h
+@@ -1711,6 +1711,7 @@ enum bfd_architecture
+ #define bfd_mach_arm_8M_BASE   25
+ #define bfd_mach_arm_8M_MAIN   26
+ #define bfd_mach_arm_8_1M_MAIN 27
++#define bfd_mach_arm_9         28
+   bfd_arch_nds32,     /* Andes NDS32.  */
+ #define bfd_mach_n1            1
+ #define bfd_mach_n1h           2
+diff --git a/bfd/cpu-arm.c b/bfd/cpu-arm.c
+index 7a1ed46f5d4..c8706253df1 100644
+--- a/bfd/cpu-arm.c
++++ b/bfd/cpu-arm.c
+@@ -258,6 +258,7 @@ static const bfd_arch_info_type arch_info_struct[] =
+   N (bfd_mach_arm_8M_BASE,   "armv8-m.base",   false, & arch_info_struct[25]),
+   N (bfd_mach_arm_8M_MAIN,   "armv8-m.main",   false, & arch_info_struct[26]),
+   N (bfd_mach_arm_8_1M_MAIN, "armv8.1-m.main", false, & arch_info_struct[27]),
++  N (bfd_mach_arm_9,         "armv9-a",        false, & arch_info_struct[28]),
+   N (bfd_mach_arm_unknown,   "arm_any",        false, NULL)
+ };
+ 
+diff --git a/bfd/elf32-arm.c b/bfd/elf32-arm.c
+index 2cb8768868b..1655d52e284 100644
+--- a/bfd/elf32-arm.c
++++ b/bfd/elf32-arm.c
+@@ -3941,7 +3941,7 @@ using_thumb2_bl (struct elf32_arm_link_hash_table *globals)
+     bfd_elf_get_obj_attr_int (globals->obfd, OBJ_ATTR_PROC, Tag_CPU_arch);
+ 
+   /* Force return logic to be reviewed for each new architecture.  */
+-  BFD_ASSERT (arch <= TAG_CPU_ARCH_V8_1M_MAIN);
++  BFD_ASSERT (arch <= TAG_CPU_ARCH_V9);
+ 
+   /* Architecture was introduced after ARMv6T2 (eg. ARMv6-M).  */
+   return (arch == TAG_CPU_ARCH_V6T2
+@@ -4130,13 +4130,14 @@ arch_has_arm_nop (struct elf32_arm_link_hash_table *globals)
+ 					     Tag_CPU_arch);
+ 
+   /* Force return logic to be reviewed for each new architecture.  */
+-  BFD_ASSERT (arch <= TAG_CPU_ARCH_V8_1M_MAIN);
++  BFD_ASSERT (arch <= TAG_CPU_ARCH_V9);
+ 
+   return (arch == TAG_CPU_ARCH_V6T2
+ 	  || arch == TAG_CPU_ARCH_V6K
+ 	  || arch == TAG_CPU_ARCH_V7
+ 	  || arch == TAG_CPU_ARCH_V8
+-	  || arch == TAG_CPU_ARCH_V8R);
++	  || arch == TAG_CPU_ARCH_V8R
++	  || arch == TAG_CPU_ARCH_V9);
+ }
+ 
+ static bool
+@@ -13852,6 +13853,8 @@ bfd_arm_get_mach_from_attributes (bfd * abfd)
+ 	return bfd_mach_arm_8M_MAIN;
+     case TAG_CPU_ARCH_V8_1M_MAIN:
+ 	return bfd_mach_arm_8_1M_MAIN;
++    case TAG_CPU_ARCH_V9:
++	return bfd_mach_arm_9;
+ 
+     default:
+       /* Force entry to be added for any new known Tag_CPU_arch value.  */
+@@ -14202,7 +14205,14 @@ tag_cpu_arch_combine (bfd *ibfd, int oldtag, int *secondary_compat_out,
+       T(V8),		/* V6_M.  */
+       T(V8),		/* V6S_M.  */
+       T(V8),		/* V7E_M.  */
+-      T(V8)		/* V8.  */
++      T(V8),		/* V8.  */
++      T(V8),		/* V8-R.  */
++      T(V8),		/* V8-M.BASE.  */
++      T(V8),		/* V8-M.MAIN.  */
++      T(V8),		/* V8.1.  */
++      T(V8),		/* V8.2.  */
++      T(V8),		/* V8.3.  */
++      T(V8),		/* V8.1-M.MAIN.  */
+     };
+   const int v8r[] =
+     {
+@@ -14289,6 +14299,32 @@ tag_cpu_arch_combine (bfd *ibfd, int oldtag, int *secondary_compat_out,
+       -1,		/* Unused (20).  */
+       T(V8_1M_MAIN)	/* V8.1-M MAINLINE.  */
+     };
++  const int v9[] =
++    {
++      T(V9),		/* PRE_V4.  */
++      T(V9),		/* V4.  */
++      T(V9),		/* V4T.  */
++      T(V9),		/* V5T.  */
++      T(V9),		/* V5TE.  */
++      T(V9),		/* V5TEJ.  */
++      T(V9),		/* V6.  */
++      T(V9),		/* V6KZ.  */
++      T(V9),		/* V6T2.  */
++      T(V9),		/* V6K.  */
++      T(V9),		/* V7.  */
++      T(V9),		/* V6_M.  */
++      T(V9),		/* V6S_M.  */
++      T(V9),		/* V7E_M.  */
++      T(V9),		/* V8.  */
++      T(V9),		/* V8-R.  */
++      T(V9),		/* V8-M.BASE.  */
++      T(V9),		/* V8-M.MAIN.  */
++      T(V9),		/* V8.1.  */
++      T(V9),		/* V8.2.  */
++      T(V9),		/* V8.3.  */
++      T(V9),		/* V8.1-M.MAIN.  */
++      T(V9),		/* V9.  */
++     };
+   const int v4t_plus_v6_m[] =
+     {
+       -1,		/* PRE_V4.  */
+@@ -14313,6 +14349,7 @@ tag_cpu_arch_combine (bfd *ibfd, int oldtag, int *secondary_compat_out,
+       -1,		/* Unused (19).  */
+       -1,		/* Unused (20).  */
+       T(V8_1M_MAIN),	/* V8.1-M MAINLINE.  */
++      T(V9),		/* V9.  */
+       T(V4T_PLUS_V6_M)	/* V4T plus V6_M.  */
+     };
+   const int *comb[] =
+@@ -14331,6 +14368,7 @@ tag_cpu_arch_combine (bfd *ibfd, int oldtag, int *secondary_compat_out,
+       NULL,
+       NULL,
+       v8_1m_mainline,
++      v9,
+       /* Pseudo-architecture.  */
+       v4t_plus_v6_m
+     };
+@@ -14547,10 +14585,16 @@ elf32_arm_merge_eabi_attributes (bfd *ibfd, struct bfd_link_info *info)
+ 		"ARM v7",
+ 		"ARM v6-M",
+ 		"ARM v6S-M",
++		"ARM v7E-M",
+ 		"ARM v8",
+-		"",
++		"ARM v8-R",
+ 		"ARM v8-M.baseline",
+ 		"ARM v8-M.mainline",
++		"ARM v8.1-A",
++		"ARM v8.2-A",
++		"ARM v8.3-A",
++		"ARM v8.1-M.mainline",
++		"ARM v9",
+ 	    };
+ 
+ 	    /* Merge Tag_CPU_arch and Tag_also_compatible_with.  */
+diff --git a/binutils/readelf.c b/binutils/readelf.c
+index 1fa7ef45708..0fed82b63e3 100644
+--- a/binutils/readelf.c
++++ b/binutils/readelf.c
+@@ -16098,7 +16098,8 @@ typedef struct
+ static const char *const arm_attr_tag_CPU_arch[] =
+   {"Pre-v4", "v4", "v4T", "v5T", "v5TE", "v5TEJ", "v6", "v6KZ", "v6T2",
+    "v6K", "v7", "v6-M", "v6S-M", "v7E-M", "v8", "v8-R", "v8-M.baseline",
+-   "v8-M.mainline", "", "", "", "v8.1-M.mainline"};
++   "v8-M.mainline", "v8.1-A", "v8.2-A", "v8.3-A",
++   "v8.1-M.mainline", "v9"};
+ static const char *const arm_attr_tag_ARM_ISA_use[] = {"No", "Yes"};
+ static const char *const arm_attr_tag_THUMB_ISA_use[] =
+   {"No", "Thumb-1", "Thumb-2", "Yes"};
+diff --git a/elfcpp/arm.h b/elfcpp/arm.h
+index db549a8ee68..65374bb41ee 100644
+--- a/elfcpp/arm.h
++++ b/elfcpp/arm.h
+@@ -254,7 +254,15 @@ enum
+   TAG_CPU_ARCH_V6S_M,
+   TAG_CPU_ARCH_V7E_M,
+   TAG_CPU_ARCH_V8,
+-  MAX_TAG_CPU_ARCH = TAG_CPU_ARCH_V8,
++  TAG_CPU_ARCH_V8R,
++  TAG_CPU_ARCH_V8M_BASE,
++  TAG_CPU_ARCH_V8M_MAIN,
++  TAG_CPU_ARCH_8_1A,
++  TAG_CPU_ARCH_8_2A,
++  TAG_CPU_ARCH_8_3A,
++  TAG_CPU_ARCH_V8_1M_MAIN,
++  TAG_CPU_ARCH_V9,
++  MAX_TAG_CPU_ARCH = TAG_CPU_ARCH_V9,
+   // Pseudo-architecture to allow objects to be compatible with the subset of
+   // armv4t and armv6-m.  This value should never be stored in object files.
+   TAG_CPU_ARCH_V4T_PLUS_V6_M = (MAX_TAG_CPU_ARCH + 1)
+diff --git a/gas/NEWS b/gas/NEWS
+index 09fade54087..779ea5daf7f 100644
+--- a/gas/NEWS
++++ b/gas/NEWS
+@@ -15,6 +15,8 @@
+ 
+ * Add support for 'armv9-a' for -march in AArch64 GAS.
+ 
++* Add support for 'armv9-a' for -march in Arm GAS.
++
+ * Add support for Intel AVX512_FP16 instructions.
+ 
+ Changes in 2.37:
+diff --git a/gas/config/tc-arm.c b/gas/config/tc-arm.c
+index 9ad7009ddb6..d4c590a8342 100644
+--- a/gas/config/tc-arm.c
++++ b/gas/config/tc-arm.c
+@@ -31949,6 +31949,21 @@ static const struct arm_ext_table armv86a_ext_table[] =
+   { NULL, 0, ARM_ARCH_NONE, ARM_ARCH_NONE }
+ };
+ 
++static const struct arm_ext_table armv9a_ext_table[] =
++{
++  ARM_ADD ("simd", FPU_ARCH_DOTPROD_NEON_VFP_ARMV8),
++  ARM_ADD ("fp16", FPU_ARCH_NEON_VFP_ARMV8_4_FP16FML),
++  ARM_ADD ("bf16", ARM_FEATURE_CORE_HIGH (ARM_EXT2_BF16)),
++  ARM_ADD ("i8mm", ARM_FEATURE_CORE_HIGH (ARM_EXT2_I8MM)),
++  ARM_EXT ("crypto", FPU_ARCH_CRYPTO_NEON_VFP_ARMV8_4,
++	   ARM_FEATURE_COPROC (FPU_CRYPTO_ARMV8)),
++
++  /* Armv9-a does not allow an FP implementation without SIMD, so the user
++     should use the +simd option to turn on FP.  */
++  ARM_REMOVE ("fp", ALL_FP),
++  { NULL, 0, ARM_ARCH_NONE, ARM_ARCH_NONE }
++};
++
+ #define CDE_EXTENSIONS \
+   ARM_ADD ("cdecp0", ARM_FEATURE_CORE_HIGH (ARM_EXT2_CDE | ARM_EXT2_CDE0)), \
+   ARM_ADD ("cdecp1", ARM_FEATURE_CORE_HIGH (ARM_EXT2_CDE | ARM_EXT2_CDE1)), \
+@@ -32071,6 +32086,7 @@ static const struct arm_arch_option_table arm_archs[] =
+   ARM_ARCH_OPT2 ("armv8.4-a",	  ARM_ARCH_V8_4A,	FPU_ARCH_VFP, armv84a),
+   ARM_ARCH_OPT2 ("armv8.5-a",	  ARM_ARCH_V8_5A,	FPU_ARCH_VFP, armv85a),
+   ARM_ARCH_OPT2 ("armv8.6-a",	  ARM_ARCH_V8_6A,	FPU_ARCH_VFP, armv86a),
++  ARM_ARCH_OPT2 ("armv9-a",	  ARM_ARCH_V9A,	FPU_ARCH_VFP, armv9a),
+   ARM_ARCH_OPT ("xscale",	  ARM_ARCH_XSCALE,	FPU_ARCH_VFP),
+   ARM_ARCH_OPT ("iwmmxt",	  ARM_ARCH_IWMMXT,	FPU_ARCH_VFP),
+   ARM_ARCH_OPT ("iwmmxt2",	  ARM_ARCH_IWMMXT2,	FPU_ARCH_VFP),
+@@ -32854,6 +32870,7 @@ static const cpu_arch_ver_table cpu_arch_ver[] =
+     {TAG_CPU_ARCH_V8,	      ARM_ARCH_V8_5A},
+     {TAG_CPU_ARCH_V8_1M_MAIN, ARM_ARCH_V8_1M_MAIN},
+     {TAG_CPU_ARCH_V8,	    ARM_ARCH_V8_6A},
++    {TAG_CPU_ARCH_V9,	    ARM_ARCH_V9A},
+     {-1,		    ARM_ARCH_NONE}
+ };
+ 
+@@ -32937,9 +32954,9 @@ get_aeabi_cpu_arch_from_fset (const arm_feature_set *arch_ext_fset,
+   if (ARM_FEATURE_EQUAL (*arch_ext_fset, arm_arch_any))
+     {
+       /* Force revisiting of decision for each new architecture.  */
+-      gas_assert (MAX_TAG_CPU_ARCH <= TAG_CPU_ARCH_V8_1M_MAIN);
++      gas_assert (MAX_TAG_CPU_ARCH <= TAG_CPU_ARCH_V9);
+       *profile = 'A';
+-      return TAG_CPU_ARCH_V8;
++      return TAG_CPU_ARCH_V9;
+     }
+ 
+   ARM_CLEAR_FEATURE (arch_fset, *arch_ext_fset, *ext_fset);
+@@ -33215,7 +33232,7 @@ aeabi_set_public_attributes (void)
+      by the base architecture.
+ 
+      For new architectures we will have to check these tests.  */
+-  gas_assert (arch <= TAG_CPU_ARCH_V8_1M_MAIN);
++  gas_assert (arch <= TAG_CPU_ARCH_V9);
+   if (ARM_CPU_HAS_FEATURE (flags, arm_ext_v8)
+       || ARM_CPU_HAS_FEATURE (flags, arm_ext_v8m))
+     aeabi_set_attribute_int (Tag_DIV_use, 0);
+diff --git a/gas/doc/c-arm.texi b/gas/doc/c-arm.texi
+index d387debec43..4baa46d3083 100644
+--- a/gas/doc/c-arm.texi
++++ b/gas/doc/c-arm.texi
+@@ -264,6 +264,7 @@ names are recognized:
+ @code{armv8-m.main},
+ @code{armv8.1-m.main},
+ @code{armv8.6-a},
++@code{armv9-a},
+ @code{iwmmxt},
+ @code{iwmmxt2}
+ and
+diff --git a/gas/testsuite/gas/arm/armv9-a_arch.d b/gas/testsuite/gas/arm/armv9-a_arch.d
+new file mode 100644
+index 00000000000..52c8bb0c15f
+--- /dev/null
++++ b/gas/testsuite/gas/arm/armv9-a_arch.d
+@@ -0,0 +1,17 @@
++# name: check for armv9-a command line option settings
++# source: blank.s
++# as: -march=armv9-a
++# readelf: -A
++# This test is only valid on EABI based ports.
++# target: *-*-*eabi* *-*-nacl*
++
++Attribute Section: aeabi
++File Attributes
++  Tag_CPU_name: "9-A"
++  Tag_CPU_arch: v9
++  Tag_CPU_arch_profile: Application
++  Tag_ARM_ISA_use: Yes
++  Tag_THUMB_ISA_use: Thumb-2
++  Tag_Advanced_SIMD_arch: NEON for ARMv8.1
++  Tag_MPextension_use: Allowed
++  Tag_Virtualization_use: TrustZone and Virtualization Extensions
+diff --git a/gas/testsuite/gas/arm/attr-march-all.d b/gas/testsuite/gas/arm/attr-march-all.d
+index e04d98c9fa1..e051691428a 100644
+--- a/gas/testsuite/gas/arm/attr-march-all.d
++++ b/gas/testsuite/gas/arm/attr-march-all.d
+@@ -8,7 +8,7 @@
+ Attribute Section: aeabi
+ File Attributes
+   Tag_CPU_name: "all"
+-  Tag_CPU_arch: v8
++  Tag_CPU_arch: v9
+   Tag_CPU_arch_profile: Application
+   Tag_ARM_ISA_use: Yes
+   Tag_THUMB_ISA_use: Thumb-2
+diff --git a/include/elf/arm.h b/include/elf/arm.h
+index 299f394b7ae..8213b90e981 100644
+--- a/include/elf/arm.h
++++ b/include/elf/arm.h
+@@ -111,8 +111,12 @@
+ #define TAG_CPU_ARCH_V8R	15
+ #define TAG_CPU_ARCH_V8M_BASE	16
+ #define TAG_CPU_ARCH_V8M_MAIN	17
++#define TAG_CPU_ARCH_8_1A       18
++#define TAG_CPU_ARCH_8_2A       19
++#define TAG_CPU_ARCH_8_3A       20
+ #define TAG_CPU_ARCH_V8_1M_MAIN 21
+-#define MAX_TAG_CPU_ARCH	TAG_CPU_ARCH_V8_1M_MAIN
++#define TAG_CPU_ARCH_V9         22
++#define MAX_TAG_CPU_ARCH	TAG_CPU_ARCH_V9
+ /* Pseudo-architecture to allow objects to be compatible with the subset of
+    armv4t and armv6-m.  This value should never be stored in object files.  */
+ #define TAG_CPU_ARCH_V4T_PLUS_V6_M (MAX_TAG_CPU_ARCH + 1)
+diff --git a/include/opcode/arm.h b/include/opcode/arm.h
+index 4a6044f6f68..cf72b90bd55 100644
+--- a/include/opcode/arm.h
++++ b/include/opcode/arm.h
+@@ -94,6 +94,7 @@
+ 					   Authentication and Branch
+ 					   Target Identification
+ 					   Extension.  */
++#define ARM_EXT3_V9A	        0x00000002 /* Armv9-A.	               */
+ 
+ /* Co-processor space extensions.  */
+ #define ARM_CEXT_XSCALE	     0x00000001	/* Allow MIA etc.	 	   */
+@@ -385,11 +386,16 @@
+ #define ARM_ARCH_V8R	       ARM_FEATURE_CORE (ARM_AEXT_V8R, ARM_AEXT2_V8R)
+ #define ARM_ARCH_V8_1M_MAIN    ARM_FEATURE_CORE (ARM_AEXT_V8_1M_MAIN,	   \
+ 						 ARM_AEXT2_V8_1M_MAIN)
++#define ARM_ARCH_V9A	       ARM_FEATURE_ALL(ARM_AEXT_V8A,	   \
++				      ARM_AEXT2_V8_5A | ARM_EXT2_CRC,	   \
++				      ARM_EXT3_V9A,	   \
++                      FPU_NEON_EXT_RDMA	| FPU_NEON_EXT_DOTPROD)
+ 
+ /* Some useful combinations:  */
+-#define ARM_ARCH_NONE	ARM_FEATURE_LOW (0, 0)
+-#define FPU_NONE	ARM_FEATURE_LOW (0, 0)
+-#define ARM_ANY		ARM_FEATURE (-1, -1 & ~ (ARM_EXT2_MVE | ARM_EXT2_MVE_FP), 0)	/* Any basic core.  */
++#define ARM_ARCH_NONE	ARM_FEATURE_ALL (0, 0, 0, 0)
++#define FPU_NONE	ARM_FEATURE_ALL (0, 0, 0, 0)
++#define ARM_ARCH_UNKNOWN	ARM_FEATURE_ALL (-1, -1 & ~(ARM_EXT2_MVE | ARM_EXT2_MVE_FP), -1, -1)	/* Machine type is unknown.  */
++#define ARM_ANY		ARM_FEATURE_ALL (-1, -1 & ~(ARM_EXT2_MVE | ARM_EXT2_MVE_FP), -1, 0)	/* Any basic core.  */
+ #define FPU_ANY		ARM_FEATURE_COPROC (-1 & ~(ARM_CEXT_XSCALE | ARM_CEXT_IWMMXT | ARM_CEXT_IWMMXT2)) /* Any FPU.  */
+ #define FPU_ANY_HARD	ARM_FEATURE_COPROC (FPU_FPA | FPU_VFP_HARD | FPU_MAVERICK)
+ /* Extensions containing some Thumb-2 instructions.  If any is present, Thumb
+@@ -429,8 +435,8 @@
+ 
+ /* There are too many feature bits to fit in a single word, so use a
+    structure.  For simplicity we put all core features in array CORE
+-   and everything else in the other.  All the bits in element core[0]
+-   have been occupied, so new feature should use bit in element core[1]
++   and everything else in the other.  All the bits in element core[0:1]
++   have been occupied, so new feature should use bit in element core[2]
+    and use macro ARM_FEATURE to initialize the feature set variable.  */
+ typedef struct
+ {
+@@ -494,10 +500,13 @@ typedef struct
+    && (T1).core[1] == (T2).core[1]		\
+    && (T1).core[2] == (T2).core[2])
+ 
+-#define ARM_FEATURE_LOW(core, coproc) {{(core), 0}, (coproc)}
+-#define ARM_FEATURE_CORE(core1, core2) {{(core1), (core2)}, 0}
+-#define ARM_FEATURE_CORE_LOW(core) {{(core), 0}, 0}
+-#define ARM_FEATURE_CORE_HIGH(core) {{0, (core)}, 0}
++#define ARM_FEATURE_LOW(core, coproc) {{(core), 0, 0}, (coproc)}
++#define ARM_FEATURE_CORE(core1, core2) {{(core1), (core2), 0}, 0}
++#define ARM_FEATURE_CORE_LOW(core) {{(core), 0, 0}, 0}
++#define ARM_FEATURE_CORE_HIGH(core) {{0, (core), 0}, 0}
+ #define ARM_FEATURE_CORE_HIGH_HIGH(core) {{0, 0, (core)}, 0}
+-#define ARM_FEATURE_COPROC(coproc) {{0, 0}, (coproc)}
+-#define ARM_FEATURE(core1, core2, coproc) {{(core1), (core2)}, (coproc)}
++#define ARM_FEATURE_COPROC(coproc) {{0, 0, 0}, (coproc)}
++#define ARM_FEATURE(core1, core2, coproc) {{(core1), (core2), 0}, (coproc)}
++/* Below macro is used to set all fields in arm_feature_set struct.
++*/
++#define ARM_FEATURE_ALL(core1, core2, core3, coproc) {{(core1), (core2), (core3)}, (coproc)}
+diff --git a/opcodes/arm-dis.c b/opcodes/arm-dis.c
+index 5252d36b1be..1888d9af488 100644
+--- a/opcodes/arm-dis.c
++++ b/opcodes/arm-dis.c
+@@ -12028,12 +12028,11 @@ select_arm_features (unsigned long mach,
+       ARM_MERGE_FEATURE_SETS (arch_fset, arch_fset, mve_all);
+       force_thumb = 1;
+       break;
++    case bfd_mach_arm_9:         ARM_SET_FEATURES (ARM_ARCH_V9A); break;
+       /* If the machine type is unknown allow all architecture types and all
+ 	 extensions, with the exception of MVE as that clashes with NEON.  */
+     case bfd_mach_arm_unknown:
+-      ARM_SET_FEATURES (ARM_FEATURE (-1,
+-				     -1 & ~(ARM_EXT2_MVE | ARM_EXT2_MVE_FP),
+-				     -1));
++      ARM_SET_FEATURES (ARM_ARCH_UNKNOWN);
+       break;
+     default:
+       abort ();
+-- 
+2.34.0
+

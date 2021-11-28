@@ -1,7 +1,7 @@
 From 6cc76c40a99bd13d69a311cae5ec891bd1d1dbf2 Mon Sep 17 00:00:00 2001
 From: liuzhensong <liuzhensong@loongson.cn>
 Date: Fri, 22 Oct 2021 16:42:04 +0800
-Subject: [PATCH 2/5] LoongArch opcodes support
+Subject: [PATCH 02/97] LoongArch opcodes support
 
 2021-10-22  Chenghua Xu  <xuchenghua@loongson.cn>
 	    Zhensong Liu  <liuzhensong@loongson.cn>
@@ -2051,5 +2051,5 @@ index 0659b99b39b..b1037a47533 100644
  m10200-opc.c
  m10300-dis.c
 -- 
-2.33.1
+2.34.0
 

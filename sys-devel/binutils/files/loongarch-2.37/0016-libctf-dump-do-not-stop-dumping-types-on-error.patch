@@ -1,0 +1,75 @@
+From a0cc569d599f92c3a9168fcd23a0b18f7ff42f1d Mon Sep 17 00:00:00 2001
+From: Nick Alcock <nick.alcock@oracle.com>
+Date: Mon, 25 Oct 2021 11:17:02 +0100
+Subject: [PATCH 16/97] libctf: dump: do not stop dumping types on error
+
+If dumping of a single type fails, we obviously can't dump it; but just
+as obviously this doesn't make the other types in the types section
+invalid or undumpable.  So we should not propagate errors seen when
+type-dumping, but rather ignore them and carry on, so we dump as many
+types as we can (leaving out the ones we can't grok).
+
+libctf/ChangeLog
+2021-10-25  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-dump.c (ctf_dump_type): Do not abort on error.
+---
+ libctf/ChangeLog  |  4 ++++
+ libctf/ctf-dump.c | 14 ++++++++++----
+ 2 files changed, 14 insertions(+), 4 deletions(-)
+
+diff --git a/libctf/ChangeLog b/libctf/ChangeLog
+index 5907e2f856a..879e128126a 100644
+--- a/libctf/ChangeLog
++++ b/libctf/ChangeLog
+@@ -1,3 +1,7 @@
++2021-10-25  Nick Alcock  <nick.alcock@oracle.com>
++
++	* ctf-dump.c (ctf_dump_type): Do not abort on error.
++
+ 2021-09-27  Nick Alcock  <nick.alcock@oracle.com>
+ 
+ 	* ctf-lookup.c (ctf_lookup_by_name_internal): Fix pptrtab bounds.
+diff --git a/libctf/ctf-dump.c b/libctf/ctf-dump.c
+index bd9b50d9479..b6af0dfe419 100644
+--- a/libctf/ctf-dump.c
++++ b/libctf/ctf-dump.c
+@@ -564,7 +564,6 @@ ctf_dump_type (ctf_id_t id, int flag, void *arg)
+ {
+   char *str;
+   char *indent;
+-  int err = 0;
+   ctf_dump_state_t *state = arg;
+   ctf_dump_membstate_t membstate = { &str, state->cds_fp, NULL };
+ 
+@@ -619,9 +618,8 @@ ctf_dump_type (ctf_id_t id, int flag, void *arg)
+ 
+ 	  if (asprintf (&bit, "%s: %i\n", enumerand, value) < 0)
+ 	    {
+-	      err = ENOMEM;
+ 	      ctf_next_destroy (it);
+-	      goto err;
++	      goto oom;
+ 	    }
+ 	  str = str_append (str, bit);
+ 	  free (bit);
+@@ -648,7 +646,15 @@ ctf_dump_type (ctf_id_t id, int flag, void *arg)
+  err:
+   free (indent);
+   free (str);
+-  return ctf_set_errno (state->cds_fp, err);
++
++  /* Swallow the error: don't cause an error in one type to abort all
++     type dumping.  */
++  return 0;
++
++ oom:
++  free (indent);
++  free (str);
++  return ctf_set_errno (state->cds_fp, ENOMEM);
+ }
+ 
+ /* Dump the string table into the cds_items.  */
+-- 
+2.34.0
+
