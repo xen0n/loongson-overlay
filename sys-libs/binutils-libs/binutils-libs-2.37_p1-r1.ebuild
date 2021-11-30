@@ -3,7 +3,7 @@
 
 EAPI=7
 
-PATCH_VER=0
+PATCH_VER=1
 PATCH_DEV=dilfridge
 
 inherit libtool toolchain-funcs multilib-minimal
