@@ -13,7 +13,7 @@ SRC_URI="mirror://sourceforge/${PN}/$([[ -z ${PV/*_alpha*} ]] && echo 'alpha')/$
 
 LICENSE="GPL-2 LGPL-2.1 CDDL-Schily"
 SLOT="0"
-KEYWORDS="~alpha amd64 ~arm arm64 ~hppa ~ia64 ~mips ppc ppc64 ~riscv ~s390 sparc x86 ~amd64-linux ~x86-linux ~ppc-macos ~sparc-solaris ~x86-solaris"
+KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~ia64 ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86 ~amd64-linux ~x86-linux ~ppc-macos ~sparc-solaris ~x86-solaris"
 IUSE="acl caps nls unicode selinux"
 
 BDEPEND="
@@ -103,6 +103,15 @@ src_prepare() {
 		cc-gcc.rul || die "sed cc-gcc.rul"
 	sed -i -e "s|^#\(CONFFLAGS +=\).*|\1\t-cc=${tcCC}|" \
 		rules.cnf || die "sed rules.cnf"
+
+	# Add support for arm64
+	ln -sf i586-linux-cc.rul       aarch64_be-linux-cc.rul
+	ln -sf i586-linux-clang.rul    aarch64_be-linux-clang.rul
+	ln -sf i586-linux-clang32.rul  aarch64_be-linux-clang32.rul
+	ln -sf i586-linux-clang64.rul  aarch64_be-linux-clang64.rul
+	ln -sf i586-linux-gcc.rul      aarch64_be-linux-gcc.rul
+	ln -sf i586-linux-gcc32.rul    aarch64_be-linux-gcc32.rul
+	ln -sf i586-linux-gcc64.rul    aarch64_be-linux-gcc64.rul
 
 	# Schily make setup.
 	cd "${S}"/DEFAULTS || die
