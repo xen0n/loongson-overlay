@@ -5,6 +5,7 @@
 <media-libs/libepoxy-9999 **
 <media-libs/libglvnd-9999 **
 <media-libs/mesa-9999 **
+<sys-apps/hwdata-9999 **
 <sys-devel/llvm-9999 **
 <sys-devel/llvm-common-13 **
 <sys-libs/mtdev-9999 **
@@ -29,6 +30,7 @@
 <x11-libs/libX11-9999 **
 <x11-libs/libXau-9999 **
 <x11-libs/libxcb-9999 **
+<x11-libs/libxcvt-9999 **
 <x11-libs/libXdmcp-9999 **
 <x11-libs/libXext-9999 **
 <x11-libs/libXfixes-9999 **
