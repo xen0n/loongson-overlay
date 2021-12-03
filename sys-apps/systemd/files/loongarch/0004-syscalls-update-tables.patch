@@ -1,7 +1,7 @@
-From 05a62f8fd5c1f9d9246f0b6738c23566ec95d265 Mon Sep 17 00:00:00 2001
+From cbae1c8f809397078a41fc8d25275de88160d57b Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <git@xen0n.name>
 Date: Wed, 1 Sep 2021 14:11:54 +0800
-Subject: [PATCH 2/7] syscalls: update tables
+Subject: [PATCH 4/8] syscalls: update tables
 
 ---
  src/basic/syscall-list.txt       | 3 ++-
@@ -425,5 +425,5 @@ index d2ac17ab46..c93d643fe1 100644
  readahead	187
  readdir
 -- 
-2.33.0
+2.34.0
 

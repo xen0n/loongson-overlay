@@ -1,7 +1,7 @@
-From 600c6ecefbed59d9186b246ff7ad1683b50fd368 Mon Sep 17 00:00:00 2001
+From ea4303e656b0b0eb8aded62315025812f00c54fc Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <git@xen0n.name>
 Date: Wed, 1 Sep 2021 14:23:59 +0800
-Subject: [PATCH 5/7] test: add test-execute case for Personality=loongarch64
+Subject: [PATCH 7/8] test: add test-execute case for Personality=loongarch64
 
 ---
  src/test/test-execute.c                                | 4 ++++
@@ -10,7 +10,7 @@ Subject: [PATCH 5/7] test: add test-execute case for Personality=loongarch64
  create mode 100644 test/test-execute/exec-personality-loongarch64.service
 
 diff --git a/src/test/test-execute.c b/src/test/test-execute.c
-index 125e0bbf4f..83b35da179 100644
+index 1119ad4acf..072e3c27b1 100644
 --- a/src/test/test-execute.c
 +++ b/src/test/test-execute.c
 @@ -284,6 +284,10 @@ static void test_exec_personality(Manager *m) {
@@ -38,5 +38,5 @@ index 0000000000..0531ad1164
 +Type=oneshot
 +Personality=loongarch64
 -- 
-2.33.0
+2.34.0
 

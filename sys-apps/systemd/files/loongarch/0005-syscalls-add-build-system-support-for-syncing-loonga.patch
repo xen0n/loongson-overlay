@@ -1,7 +1,7 @@
-From da62a4ee705f72089a35ae4895db9df9b160d582 Mon Sep 17 00:00:00 2001
+From ad4244743260bc28b5af1fcf38b1be3f5372cab8 Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <git@xen0n.name>
 Date: Wed, 1 Sep 2021 14:16:21 +0800
-Subject: [PATCH 3/7] syscalls: add build system support for syncing
+Subject: [PATCH 5/8] syscalls: add build system support for syncing
  loongarch64 syscalls
 
 This is incomplete because the syscalls-loongarch64.txt has not been
@@ -13,10 +13,10 @@ commit.
  2 files changed, 3 insertions(+)
 
 diff --git a/src/basic/meson.build b/src/basic/meson.build
-index 9b016ce5e8..70c052da92 100644
+index 452b965db3..e4b6720fa3 100644
 --- a/src/basic/meson.build
 +++ b/src/basic/meson.build
-@@ -331,6 +331,7 @@ arch_list = [
+@@ -330,6 +330,7 @@ arch_list = [
          'arm64',
          'i386',
          'ia64',
@@ -38,5 +38,5 @@ index 19f9726d4e..1fbd619789 100644
  #    define systemd_NR_{syscall} {nr_m68k}
  #  elif defined(_MIPS_SIM)
 -- 
-2.33.0
+2.34.0
 

@@ -1,7 +1,7 @@
-From 65ff7a3a09dd942bf900671df12addefefe77665 Mon Sep 17 00:00:00 2001
+From 3dd71f56e0b711708c245efb7b6c6f3d33ed23d1 Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <git@xen0n.name>
 Date: Wed, 1 Sep 2021 14:33:40 +0800
-Subject: [PATCH 7/7] udev: add loongarch64 to list of DMI-capable
+Subject: [PATCH 8/8] udev: add loongarch64 to list of DMI-capable
  architectures
 
 ---
@@ -22,5 +22,5 @@ index 4e80f9bfd7..f2eb0b2c60 100644
          udev_id_progs += [['dmi_memory_id/dmi_memory_id.c']]
  endif
 -- 
-2.33.0
+2.34.0
 
