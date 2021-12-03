@@ -10,7 +10,7 @@ else
 fi
 
 MINKV="3.11"
-MUSL_PATCHSET="${PV%.*}.1-r1"
+MUSL_PATCHSET="${PV}-r1"
 PYTHON_COMPAT=( python3_{8..10} )
 inherit flag-o-matic meson python-any-r1
 
@@ -24,7 +24,7 @@ SRC_URI="https://github.com/systemd/${MY_PN}/archive/v${PV}.tar.gz -> ${MY_PN}-$
 
 LICENSE="BSD-2 GPL-2 LGPL-2.1 MIT public-domain"
 SLOT="0"
-KEYWORDS="~alpha amd64 arm arm64 hppa ~ia64 ~m68k ~mips ppc ppc64 ~riscv ~s390 sparc x86"
+KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~ia64 ~m68k ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc x86"
 IUSE="selinux test"
 RESTRICT="!test? ( test )"
 
@@ -58,11 +58,6 @@ BDEPEND="
 "
 
 S="${WORKDIR}/${MY_PN}-${PV}"
-
-PATCHES=(
-	# backport from 250 to silence musl warnings
-	"${FILESDIR}/249-sys-include-posix.patch"
-)
 
 python_check_deps() {
 	has_version -b "dev-python/jinja[${PYTHON_USEDEP}]"
