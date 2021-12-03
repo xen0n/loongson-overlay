@@ -23,13 +23,14 @@ else
 
 	# musl patches taken from:
 	# http://cgit.openembedded.org/openembedded-core/tree/meta/recipes-core/systemd/systemd
+	MUSL_PATCHSET="249.5"
 	SRC_URI+="
 	elibc_musl? (
-		https://dev.gentoo.org/~gyakovlev/distfiles/systemd-musl-patches-${PV}.1-r1.tar.xz
-		https://dev.gentoo.org/~soap/distfiles/systemd-musl-patches-${PV}.1-r1.tar.xz
+		https://dev.gentoo.org/~gyakovlev/distfiles/systemd-musl-patches-${MUSL_PATCHSET}.tar.xz
+		https://dev.gentoo.org/~soap/distfiles/systemd-musl-patches-${MUSL_PATCHSET}.tar.xz
 	)"
 
-	KEYWORDS="~alpha amd64 arm arm64 hppa ~ia64 ~m68k ~mips ppc ppc64 ~s390 sparc x86"
+	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~ia64 ~m68k ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86"
 fi
 
 DESCRIPTION="Linux dynamic and persistent device naming support (aka userspace devfs)"
@@ -82,9 +83,11 @@ RDEPEND="${COMMON_DEPEND}
 	acct-group/video
 	!sys-apps/gentoo-systemd-integration
 	!sys-apps/systemd
+	!sys-apps/hwids[udev]
 "
-PDEPEND=">=sys-apps/hwids-20140304[udev]
-	>=sys-fs/udev-init-scripts-34"
+PDEPEND="
+	>=sys-fs/udev-init-scripts-34
+"
 
 python_check_deps() {
 	has_version -b "dev-python/jinja[${PYTHON_USEDEP}]"
@@ -113,9 +116,6 @@ pkg_setup() {
 
 src_prepare() {
 	local PATCHES=(
-		# backport from 250 to silence musl warnings
-		"${FILESDIR}/249-sys-include-posix.patch"
-		"${FILESDIR}/249-libudev-static.patch"
 		"${FILESDIR}/loongarch/"*.patch
 	)
 	use elibc_musl && PATCHES+=( "${WORKDIR}"/musl-patches )
@@ -188,6 +188,7 @@ multilib_src_compile() {
 			man/udev.7
 			man/systemd-udevd.service.8
 			man/udevadm.8
+			hwdb.d/60-autosuspend-chromiumos.hwdb
 			rules.d/50-udev-default.rules
 			rules.d/64-btrfs.rules
 		)
@@ -242,6 +243,8 @@ multilib_src_install() {
 		# Install generated rules (${BUILD_DIR}/rules.d/*.rules)
 		insinto /lib/udev/rules.d
 		doins rules.d/*.rules
+		insinto /lib/udev/hwdb.d
+		doins hwdb.d/*.hwdb
 
 		insinto /usr/share/pkgconfig
 		doins src/udev/udev.pc
@@ -266,6 +269,8 @@ multilib_src_install_all() {
 	insinto /lib/udev/rules.d
 	doins rules.d/*.rules
 	doins "${FILESDIR}"/40-gentoo.rules
+	insinto /lib/udev/hwdb.d
+	doins hwdb.d/*.hwdb
 
 	dobashcomp shell-completion/bash/udevadm
 
