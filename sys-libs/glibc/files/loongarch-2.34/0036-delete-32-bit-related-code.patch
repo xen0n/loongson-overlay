@@ -1,10 +1,11 @@
-From d5d6c7b1ecf807dd5d72a38d4b7d2b4bee788881 Mon Sep 17 00:00:00 2001
+From 6e2cef608beffdb30f673570a075149a20d62da5 Mon Sep 17 00:00:00 2001
 From: caiyinyu <caiyinyu@loongson.cn>
 Date: Fri, 26 Nov 2021 16:34:49 +0800
-Subject: [PATCH 36/42] delete 32-bit related code
+Subject: [PATCH 36/46] delete 32-bit related code
 
 ---
  sysdeps/loongarch/Makefile                 |  3 +--
+ sysdeps/loongarch/dl-machine.h             |  2 --
  sysdeps/loongarch/dl-trampoline.S          | 17 ++++++-----------
  sysdeps/loongarch/start.S                  |  5 ++---
  sysdeps/loongarch/sys/asm.h                | 10 +---------
@@ -12,7 +13,7 @@ Subject: [PATCH 36/42] delete 32-bit related code
  sysdeps/unix/sysv/linux/loongarch/Makefile |  5 -----
  sysdeps/unix/sysv/linux/loongarch/clone.S  |  4 ++--
  sysdeps/unix/sysv/linux/loongarch/clone3.S |  4 ++--
- 8 files changed, 15 insertions(+), 37 deletions(-)
+ 9 files changed, 15 insertions(+), 39 deletions(-)
 
 diff --git a/sysdeps/loongarch/Makefile b/sysdeps/loongarch/Makefile
 index c08dedbaaf..8202ee234f 100644
@@ -31,6 +32,19 @@ index c08dedbaaf..8202ee234f 100644
  
  abi-lp64-condition    := defined _ABILP64
 -abi-lp32-condition    := defined _ABILP32
+diff --git a/sysdeps/loongarch/dl-machine.h b/sysdeps/loongarch/dl-machine.h
+index 5f2656e574..39ca235c5d 100644
+--- a/sysdeps/loongarch/dl-machine.h
++++ b/sysdeps/loongarch/dl-machine.h
+@@ -67,8 +67,6 @@ elf_machine_matches_host (const ElfW (Ehdr) * ehdr)
+ 
+ #ifdef _ABILP64
+   if ((ehdr->e_flags & EF_LARCH_ABI) != EF_LARCH_ABI_LP64)
+-#elif defined _ABILP32
+-  if ((ehdr->e_flags & EF_LARCH_ABI) != EF_LARCH_ABI_LP32)
+ #else
+ #error "Unknown ABI"
+ #endif
 diff --git a/sysdeps/loongarch/dl-trampoline.S b/sysdeps/loongarch/dl-trampoline.S
 index e7dc68a1b0..68355f4fde 100644
 --- a/sysdeps/loongarch/dl-trampoline.S

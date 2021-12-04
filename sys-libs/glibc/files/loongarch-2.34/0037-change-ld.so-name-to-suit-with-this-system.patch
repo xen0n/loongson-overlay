@@ -1,17 +1,17 @@
-From a5b4e063b80813b48da9b0718ce444e294eaf671 Mon Sep 17 00:00:00 2001
+From b75d1aaac759217f3a7579268c59d042cf15aac6 Mon Sep 17 00:00:00 2001
 From: caiyinyu <caiyinyu@loongson.cn>
 Date: Mon, 15 Nov 2021 09:54:36 +0800
-Subject: [PATCH 37/42] change ld.so name to suit with this system
+Subject: [PATCH 37/46] change ld.so name to suit with this system
 
 ---
  config.h.in                                   |  6 +++
- sysdeps/loongarch/preconfigure                | 45 ++++++++++++++++---
+ sysdeps/loongarch/preconfigure                | 44 ++++++++++++++++---
  sysdeps/unix/sysv/linux/loongarch/configure   |  2 +-
  .../unix/sysv/linux/loongarch/configure.ac    |  6 +--
  sysdeps/unix/sysv/linux/loongarch/ldconfig.h  | 31 +++++++++++++
  .../unix/sysv/linux/loongarch/ldd-rewrite.sed |  4 +-
  .../unix/sysv/linux/loongarch/shlib-versions  |  8 ++++
- 7 files changed, 92 insertions(+), 10 deletions(-)
+ 7 files changed, 91 insertions(+), 10 deletions(-)
  create mode 100644 sysdeps/unix/sysv/linux/loongarch/ldconfig.h
 
 diff --git a/config.h.in b/config.h.in
@@ -32,10 +32,10 @@ index 0a6f57b006..bb456cf7fd 100644
  #undef	__LINUX_KERNEL_VERSION
  
 diff --git a/sysdeps/loongarch/preconfigure b/sysdeps/loongarch/preconfigure
-index 79699c6751..f51e5c0c03 100644
+index 79699c6751..1612c1d6de 100644
 --- a/sysdeps/loongarch/preconfigure
 +++ b/sysdeps/loongarch/preconfigure
-@@ -1,11 +1,46 @@
+@@ -1,11 +1,45 @@
  case "$machine" in
  loongarch*)
 -	base_machine=loongarch
@@ -50,7 +50,6 @@ index 79699c6751..f51e5c0c03 100644
 +    case "$float_abi" in
 +    soft)
 +	abi_flen=0
-+	with_fp_cond="defined __loongarch_soft_float"
 +	;;
 +    single)
 +	echo "glibc does not yet support the single floating-point ABI" >&2

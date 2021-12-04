@@ -1,7 +1,7 @@
-From 1db4f800bfa837c3357497f37e32673a07adcc2b Mon Sep 17 00:00:00 2001
+From 932b2320d80c991958be5680e2109dcbec6d8d76 Mon Sep 17 00:00:00 2001
 From: Feiyang Chen <chenfeiyang@loongson.cn>
 Date: Tue, 28 Sep 2021 16:20:26 +0800
-Subject: [PATCH 30/42] loongarch: Add the clone3 wrapper
+Subject: [PATCH 30/46] loongarch: Add the clone3 wrapper
 
 extern int clone3 (struct clone_args *__cl_args, size_t __size,
 		   int (*__func) (void *__arg), void *__arg);

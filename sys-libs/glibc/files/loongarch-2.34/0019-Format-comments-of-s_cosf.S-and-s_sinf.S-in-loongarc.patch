@@ -1,7 +1,7 @@
-From eb3e55496fbfcca0c1c4516f6c90941ae60de01e Mon Sep 17 00:00:00 2001
+From e17848b2179b5daadc91eaa1d8797bc9b758ddfc Mon Sep 17 00:00:00 2001
 From: caiyinyu <caiyinyu@loongson.cn>
 Date: Tue, 17 Aug 2021 15:07:28 +0800
-Subject: [PATCH 19/42] Format comments of s_cosf.S and s_sinf.S in loongarch
+Subject: [PATCH 19/46] Format comments of s_cosf.S and s_sinf.S in loongarch
 
 ---
  sysdeps/loongarch/lp64/s_cosf.S | 71 ++++++++++++++++++---------------

@@ -1,14 +1,14 @@
-From 971673142b660aadcd906536a8cccc8059053ea1 Mon Sep 17 00:00:00 2001
+From a05f2036942ce4738d47344fef993590b8bcb9df Mon Sep 17 00:00:00 2001
 From: Chenghua Xu <xuchenghua@loongson.cn>
 Date: Sun, 15 Aug 2021 10:40:59 -0400
-Subject: [PATCH 16/42] Adjust EM_NUM to 259.
+Subject: [PATCH 16/46] Adjust EM_NUM to 259.
 
 ---
  elf/elf.h | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/elf/elf.h b/elf/elf.h
-index 7717c1df7d..a422f2a62b 100644
+index 339e91c5b9..6006c19481 100644
 --- a/elf/elf.h
 +++ b/elf/elf.h
 @@ -360,7 +360,7 @@ typedef struct

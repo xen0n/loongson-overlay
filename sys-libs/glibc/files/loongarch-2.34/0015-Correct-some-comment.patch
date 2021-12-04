@@ -1,7 +1,7 @@
-From d1f7b055de2afec1de2f66c8d2c52e08eb33b0c1 Mon Sep 17 00:00:00 2001
+From 9c859b88418e9bef5a0a2dd3593e249e15af8755 Mon Sep 17 00:00:00 2001
 From: Chenghua Xu <xuchenghua@loongson.cn>
 Date: Sun, 15 Aug 2021 10:38:57 -0400
-Subject: [PATCH 15/42] Correct some comment.
+Subject: [PATCH 15/46] Correct some comment.
 
 ---
  sysdeps/loongarch/dl-tls.h    | 2 +-

@@ -1,7 +1,7 @@
-From f83c378307422915c280bd6edc8dd19409047cfe Mon Sep 17 00:00:00 2001
+From 255fc6c69d4cdfc49beaebee5de26ec21be57878 Mon Sep 17 00:00:00 2001
 From: caiyinyu <caiyinyu@loongson.cn>
 Date: Tue, 27 Jul 2021 15:14:34 +0800
-Subject: [PATCH 01/42] LoongArch: Add relocations and ELF flags to elf.h
+Subject: [PATCH 01/46] LoongArch: Add relocations and ELF flags to elf.h
 
         * elf/elf.h (EM_LOONGARCH): New define.
         (EF_LARCH_ABI): Likewise.
@@ -64,7 +64,7 @@ Subject: [PATCH 01/42] LoongArch: Add relocations and ELF flags to elf.h
  1 file changed, 70 insertions(+)
 
 diff --git a/elf/elf.h b/elf/elf.h
-index 50f87baceb..7717c1df7d 100644
+index baa6c6693e..339e91c5b9 100644
 --- a/elf/elf.h
 +++ b/elf/elf.h
 @@ -358,6 +358,7 @@ typedef struct
@@ -75,7 +75,7 @@ index 50f87baceb..7717c1df7d 100644
  
  #define EM_NUM		253
  
-@@ -4051,6 +4052,75 @@ enum
+@@ -4057,6 +4058,75 @@ enum
  #define R_NDS32_TLS_TPOFF	102
  #define R_NDS32_TLS_DESC	119
  

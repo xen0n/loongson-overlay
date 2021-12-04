@@ -1,7 +1,7 @@
-From 10680ef07da8f91c7f32303eed5ae9bcd4df907c Mon Sep 17 00:00:00 2001
+From bf638d368622f1d1f1bdf33ead99aa49e19851d6 Mon Sep 17 00:00:00 2001
 From: caiyinyu <caiyinyu@loongson.cn>
 Date: Tue, 27 Jul 2021 15:53:52 +0800
-Subject: [PATCH 07/42] LoongArch: Linux ABI
+Subject: [PATCH 07/46] LoongArch: Linux ABI
 
 Linux-specific code that is required for maintaining ABI compatibility.
 

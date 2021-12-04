@@ -1,0 +1,61 @@
+From 3ea4233fa53b6eb7704d2650af4d75ffa437ad11 Mon Sep 17 00:00:00 2001
+From: WANG Xuerui <git@xen0n.name>
+Date: Sun, 28 Nov 2021 12:40:22 +0800
+Subject: [PATCH 46/46] LoongArch: update port after rebase to incorporate BZ
+ #28340 fix
+
+---
+ sysdeps/loongarch/dl-relocate-ld.h | 25 +++++++++++++++++++++++++
+ sysdeps/loongarch/ldsodefs.h       |  4 ----
+ 2 files changed, 25 insertions(+), 4 deletions(-)
+ create mode 100644 sysdeps/loongarch/dl-relocate-ld.h
+
+diff --git a/sysdeps/loongarch/dl-relocate-ld.h b/sysdeps/loongarch/dl-relocate-ld.h
+new file mode 100644
+index 0000000000..484942ec34
+--- /dev/null
++++ b/sysdeps/loongarch/dl-relocate-ld.h
+@@ -0,0 +1,25 @@
++/* Check if dynamic section should be relocated.  LoongArch version.
++   Copyright (C) 2021 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library; if not, see
++   <https://www.gnu.org/licenses/>.  */
++
++#ifndef _DL_RELOCATE_LD_H
++#define _DL_RELOCATE_LD_H
++
++/* The dynamic section is readonly for ABI compatibility.  */
++#define DL_RO_DYN_SECTION 1
++
++#endif /* _DL_RELOCATE_LD_H */
+diff --git a/sysdeps/loongarch/ldsodefs.h b/sysdeps/loongarch/ldsodefs.h
+index 9f690bb76d..ec91f64096 100644
+--- a/sysdeps/loongarch/ldsodefs.h
++++ b/sysdeps/loongarch/ldsodefs.h
+@@ -36,10 +36,6 @@ struct La_loongarch_retval;
+ 		uintptr_t *, uintptr_t *, const struct La_loongarch_regs *, \
+ 		struct La_loongarch_retval *, const char *);
+ 
+-/* The LoongArch ABI specifies that the dynamic section has to be read-only.  */
+-
+-#define DL_RO_DYN_SECTION 1
+-
+ #include_next <ldsodefs.h>
+ 
+ #endif
+-- 
+2.34.0
+

@@ -1,7 +1,7 @@
-From d6b56ea705dace937883c0218926d7b63fa84ec6 Mon Sep 17 00:00:00 2001
+From 691069a0326d256947acbb3e02fdc0b655ae5947 Mon Sep 17 00:00:00 2001
 From: caiyinyu <caiyinyu@loongson.cn>
 Date: Mon, 16 Aug 2021 20:00:48 +0800
-Subject: [PATCH 17/42] Format code: Replace spaces with tabs.
+Subject: [PATCH 17/46] Format code: Replace spaces with tabs.
 
 ---
  elf/elf.h                                     |   2 +-
@@ -30,7 +30,7 @@ Subject: [PATCH 17/42] Format code: Replace spaces with tabs.
  23 files changed, 2446 insertions(+), 2379 deletions(-)
 
 diff --git a/elf/elf.h b/elf/elf.h
-index a422f2a62b..0712a36baf 100644
+index 6006c19481..7280ba53d3 100644
 --- a/elf/elf.h
 +++ b/elf/elf.h
 @@ -358,7 +358,7 @@ typedef struct
