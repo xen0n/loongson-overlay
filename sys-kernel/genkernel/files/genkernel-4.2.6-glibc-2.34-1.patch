@@ -1,4 +1,4 @@
-From 7b5765815878aa555088990f1971ca952c3c7c17 Mon Sep 17 00:00:00 2001
+From 289f73c5d24a55399f4a2fb5be648840261c995a Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <git@xen0n.name>
 Date: Sun, 3 Oct 2021 14:55:27 +0800
 Subject: [PATCH 2/3] gen_funcs.sh: support probing if glibc is 2.34 or later
@@ -9,7 +9,7 @@ Signed-off-by: WANG Xuerui <git@xen0n.name>
  1 file changed, 28 insertions(+)
 
 diff --git a/gen_funcs.sh b/gen_funcs.sh
-index 6bc59e6..fce04d2 100755
+index 500caf2..e110519 100755
 --- a/gen_funcs.sh
 +++ b/gen_funcs.sh
 @@ -239,6 +239,34 @@ is_glibc() {
@@ -48,5 +48,5 @@ index 6bc59e6..fce04d2 100755
  	[[ ${#} -ne 1 ]] \
  		&& gen_die "$(get_useful_function_stack "${FUNCNAME}")Invalid usage of ${FUNCNAME}(): Function takes exactly one argument (${#} given)!"
 -- 
-2.33.0
+2.34.0
 
