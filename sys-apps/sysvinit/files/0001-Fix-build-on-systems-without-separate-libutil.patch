@@ -1,0 +1,40 @@
+From 11af84603e5f68b496bd6212368a9291341189a6 Mon Sep 17 00:00:00 2001
+From: WANG Xuerui <git@xen0n.name>
+Date: Sun, 5 Dec 2021 12:05:29 +0800
+Subject: [PATCH] Fix build on systems without separate libutil.
+
+---
+ src/Makefile | 10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/src/Makefile b/src/Makefile
+index 1b368dc..93af6ad 100644
+--- a/src/Makefile
++++ b/src/Makefile
+@@ -101,6 +101,14 @@ ifneq ($(findstring -lcrypt, $(SULOGINLIBS)), -lcrypt)
+ endif
+ endif
+ 
++# Some systems (e.g. ports introduced after GNU libc 2.34) do not have
++# separate libutil.
++ifneq ($(wildcard $(ROOT)/usr/lib*/libutil.*),)
++  BOOTLOGDLIBS = -lutil
++else
++  BOOTLOGDLIBS =
++endif
++
+ all:		$(BIN) $(SBIN) $(USRBIN)
+ 
+ #%: %.o
+@@ -141,7 +149,7 @@ wall:		dowall.o wall.o
+ shutdown:	LDLIBS += $(STATIC)
+ shutdown:	dowall.o shutdown.o utmp.o
+ 
+-bootlogd:	LDLIBS += -lutil $(STATIC)
++bootlogd:	LDLIBS += $(BOOTLOGDLIBS) $(STATIC)
+ bootlogd:	bootlogd.o
+ 
+ readbootlog:	LDLIBS += $(STATIC)
+-- 
+2.34.0
+

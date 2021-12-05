@@ -32,6 +32,7 @@ PATCHES=(
 	"${FILESDIR}/${PN}-2.86-kexec.patch" #80220
 	"${FILESDIR}/${PN}-2.94_beta-shutdown-single.patch" #158615
 	"${FILESDIR}/${PN}-2.99-shutdown-h.patch" #449354
+	"${FILESDIR}/0001-Fix-build-on-systems-without-separate-libutil.patch"
 )
 
 src_prepare() {
