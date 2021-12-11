@@ -898,6 +898,10 @@ src_prepare() {
 		einfo "Done."
 	fi
 
+	einfo "Applying LoongArch support patches"
+	eapply "${FILESDIR}"/loongarch-2.34
+	einfo "Done."
+
 	if use clone3 ; then
 		append-cppflags -DGENTOO_USE_CLONE3
 	else
