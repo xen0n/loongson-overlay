@@ -252,6 +252,7 @@
 <sys-libs/zlib-9999 **
 <sys-process/procps-9999 **
 <sys-process/psmisc-9999 **
+virtual/acl **
 virtual/awk **
 virtual/dev-manager **
 virtual/editor **
