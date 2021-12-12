@@ -1,7 +1,7 @@
 # Copyright 2019 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-# LoongArch profile for baseline multilib
+# LoongArch profile for la64v100 multilib
 #
 # This immediate profile is ONLY useful for internal purposes; it can generate
 # stages just fine, but the only "hardware" that can run them is qemu-user ...
