@@ -4,5 +4,5 @@ mips    targets/desktop/3a3000/systemd  dev
 mips    targets/desktop/3a4000          dev
 mips    targets/desktop/3a4000/systemd  dev
 
-loong   targets/desktop/3a5000          dev
-loong   targets/desktop/3a5000/systemd  dev
+loong   default/linux/loong/21.0/la64v100/lp64d/desktop          dev
+loong   default/linux/loong/21.0/la64v100/lp64d/desktop/systemd  dev
