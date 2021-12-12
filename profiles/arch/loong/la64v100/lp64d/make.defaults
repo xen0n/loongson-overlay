@@ -3,7 +3,7 @@
 
 # LoongArch la64v100/lp64d no-multilib profile
 
-CFLAGS="-O2 -pipe -march=loongarch64"
+CFLAGS="-O2 -pipe -march=loongarch64 -mabi=lp64d"
 CXXFLAGS="${CFLAGS}"
 FFLAGS="${CFLAGS}"
 FCFLAGS="${CFLAGS}"
@@ -16,6 +16,6 @@ ABI="lp64d"
 # Temporarily workaround multilib.eclass having no support for LoongArch
 #LIBDIR_default="lib64"
 CONF_LIBDIR="lib64"
-CFLAGS_default=""
+CFLAGS_default="-mabi=lp64d"
 LDFLAGS_default="-m elf64loongarch"
 CHOST_default="loongarch64-unknown-linux-gnu"

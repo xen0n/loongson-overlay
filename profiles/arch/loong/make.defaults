@@ -19,7 +19,7 @@ SYMLINK_LIB="no"
 
 # Flags for lp64d
 LIBDIR_lp64d="lib64"
-CFLAGS_lp64d=""
+CFLAGS_lp64d="-mabi=lp64d"
 LDFLAGS_lp64d="-m elf64loongarch"
 CHOST_lp64d="loongarch64-unknown-linux-gnu"
 
