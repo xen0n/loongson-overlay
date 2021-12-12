@@ -81,6 +81,7 @@ pkg_pretend() {
 
 python_prepare_all() {
 	local PATCHES=(
+		"${FILESDIR}"/0001-multilib_category.py-recognize-LoongArch-ABIs.patch
 	)
 
 	distutils-r1_python_prepare_all
