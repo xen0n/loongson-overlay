@@ -35,6 +35,10 @@ BDEPEND="
 "
 REQUIRED_USE="python? ( ${PYTHON_REQUIRED_USE} )"
 
+PATCHES=(
+	"${FILESDIR}"/0001-Add-LoongArch-to-recognized-ELF-machine-types.patch
+)
+
 _emake() {
 	emake \
 		USE_CAP=$(usex caps) \

@@ -1,0 +1,40 @@
+From d0b9174ca6e4670496aafd137b6efa04c0589288 Mon Sep 17 00:00:00 2001
+From: WANG Xuerui <git@xen0n.name>
+Date: Mon, 20 Dec 2021 16:14:56 +0800
+Subject: [PATCH] Add LoongArch to recognized ELF machine types
+
+Signed-off-by: WANG Xuerui <git@xen0n.name>
+---
+ elf.h    | 3 ++-
+ paxelf.c | 1 +
+ 2 files changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/elf.h b/elf.h
+index 51962c9..e6c8b20 100644
+--- a/elf.h
++++ b/elf.h
+@@ -268,7 +268,8 @@ typedef struct
+ #define EM_MICROBLAZE	189		/* Xilinx MicroBlaze */
+ #define EM_TILEGX	191		/* Tilera TILE-Gx */
+ #define EM_RISCV	243		/* RISC-V */
+-#define EM_NUM		244
++#define EM_LOONGARCH	258		/* LoongArch */
++#define EM_NUM		259
+ 
+ /* If it is necessary to assign new unofficial EM_* values, please
+    pick large random numbers (0x8523, 0xa7f2, etc.) to minimize the
+diff --git a/paxelf.c b/paxelf.c
+index bbd38bf..331f1b4 100644
+--- a/paxelf.c
++++ b/paxelf.c
+@@ -277,6 +277,7 @@ static pairtype elf_emtypes[] = {
+ 	QUERY(EM_TILEGX),
+ 	QUERY(EM_ALPHA),
+ 	QUERY(EM_RISCV),
++	QUERY(EM_LOONGARCH),
+ 	{ 0, 0 }
+ };
+ 
+-- 
+2.34.0
+
