@@ -1,0 +1,192 @@
+From a494defdf10c9dfd722a64c6fbde829378827e96 Mon Sep 17 00:00:00 2001
+From: caiyinyu <caiyinyu@loongson.cn>
+Date: Fri, 26 Nov 2021 16:34:49 +0800
+Subject: [PATCH 40/55] delete 32-bit related code
+
+---
+ sysdeps/loongarch/Makefile                 |  3 +--
+ sysdeps/loongarch/dl-machine.h             |  2 --
+ sysdeps/loongarch/dl-trampoline.S          | 17 ++++++-----------
+ sysdeps/loongarch/start.S                  |  5 ++---
+ sysdeps/loongarch/sys/asm.h                | 10 +---------
+ sysdeps/loongarch/sys/regdef.h             |  4 +---
+ sysdeps/unix/sysv/linux/loongarch/Makefile |  5 -----
+ sysdeps/unix/sysv/linux/loongarch/clone.S  |  4 ++--
+ sysdeps/unix/sysv/linux/loongarch/clone3.S |  4 ++--
+ 9 files changed, 15 insertions(+), 39 deletions(-)
+
+diff --git a/sysdeps/loongarch/Makefile b/sysdeps/loongarch/Makefile
+index c08dedbaaf..8202ee234f 100644
+--- a/sysdeps/loongarch/Makefile
++++ b/sysdeps/loongarch/Makefile
+@@ -6,11 +6,10 @@ endif
+ # definition of some assembler macros.
+ ASFLAGS-.os += $(pic-ccflag)
+ 
+-abi-variants := lp32 lp64
++abi-variants := lp64
+ 
+ ifeq (,$(filter $(default-abi),$(abi-variants)))
+ $(error Unknown ABI $(default-abi), must be one of $(abi-variants))
+ endif
+ 
+ abi-lp64-condition    := defined _ABILP64
+-abi-lp32-condition    := defined _ABILP32
+diff --git a/sysdeps/loongarch/dl-machine.h b/sysdeps/loongarch/dl-machine.h
+index 5f2656e574..39ca235c5d 100644
+--- a/sysdeps/loongarch/dl-machine.h
++++ b/sysdeps/loongarch/dl-machine.h
+@@ -67,8 +67,6 @@ elf_machine_matches_host (const ElfW (Ehdr) * ehdr)
+ 
+ #ifdef _ABILP64
+   if ((ehdr->e_flags & EF_LARCH_ABI) != EF_LARCH_ABI_LP64)
+-#elif defined _ABILP32
+-  if ((ehdr->e_flags & EF_LARCH_ABI) != EF_LARCH_ABI_LP32)
+ #else
+ #error "Unknown ABI"
+ #endif
+diff --git a/sysdeps/loongarch/dl-trampoline.S b/sysdeps/loongarch/dl-trampoline.S
+index e7dc68a1b0..68355f4fde 100644
+--- a/sysdeps/loongarch/dl-trampoline.S
++++ b/sysdeps/loongarch/dl-trampoline.S
+@@ -33,8 +33,8 @@ ENTRY (_dl_runtime_resolve)
+ 	/* Save arguments to stack. */
+ #if _LOONGARCH_SIM == _ABILP64
+ 	addi.d	sp, sp, -FRAME_SIZE
+-#elif _LOONGARCH_SIM == _ABILP32
+-	addi.w	sp, sp, -FRAME_SIZE
++#else
++#error "32bit LoongArch systems are not supported"
+ #endif
+ 
+ 	REG_S	ra, sp, 9*SZREG
+@@ -66,13 +66,8 @@ ENTRY (_dl_runtime_resolve)
+ 	la	a2, _dl_fixup
+ 	jirl	ra, a2, 0
+ 	or	t1, v0, zero
+-#elif _LOONGARCH_SIM == _ABILP32
+-	slli.w	a1, t1, 1
+-	or	a0, t0, zero
+-	add.w	a1, a1, t1
+-	la	a2, _dl_fixup
+-	jirl	ra, a2, 0
+-	or	t1, v0, zero
++#else
++#error "32bit LoongArch systems are not supported"
+ #endif
+ 
+ 	/* Restore arguments from stack. */
+@@ -99,8 +94,8 @@ ENTRY (_dl_runtime_resolve)
+ 
+ #if _LOONGARCH_SIM == _ABILP64
+ 	addi.d	sp, sp, FRAME_SIZE
+-#elif _LOONGARCH_SIM == _ABILP32
+-	addi.w	sp, sp, FRAME_SIZE
++#else
++#error "32bit LoongArch systems are not supported"
+ #endif
+ 
+ 	/* Invoke the callee. */
+diff --git a/sysdeps/loongarch/start.S b/sysdeps/loongarch/start.S
+index b008b195af..8854468a38 100644
+--- a/sysdeps/loongarch/start.S
++++ b/sysdeps/loongarch/start.S
+@@ -51,9 +51,8 @@ ENTRY (ENTRY_POINT)
+ #if _LOONGARCH_SIM == _ABILP64
+ 	ld.d		a1, sp, 0
+ 	addi.d		a2, sp, SZREG
+-#elif _LOONGARCH_SIM == _ABILP32
+-	ld.w		a1, sp, 0
+-	addi.w		a2, sp, SZREG
++#else
++#error "32bit LoongArch systems are not supported"
+ #endif
+ 	/* Adjust $sp for 16-aligned */
+ 	srli.d		sp, sp, 4
+diff --git a/sysdeps/loongarch/sys/asm.h b/sysdeps/loongarch/sys/asm.h
+index 35ab3892fa..cdcd0c187c 100644
+--- a/sysdeps/loongarch/sys/asm.h
++++ b/sysdeps/loongarch/sys/asm.h
+@@ -32,16 +32,8 @@
+ #define REG_S st.d
+ #define FREG_L fld.d
+ #define FREG_S fst.d
+-#elif _LOONGARCH_SIM == _ABILP32
+-#define PTRLOG 2
+-#define SZREG 4
+-#define SZFREG 4
+-#define REG_L ld.w
+-#define REG_S st.w
+-#define FREG_L fld.w
+-#define FREG_S fst.w
+ #else
+-#error _LOONGARCH_SIM must equal _ABILP32 or _ABILP64
++#error "32bit LoongArch systems are not supported"
+ #endif
+ 
+ /* Declare leaf routine.  */
+diff --git a/sysdeps/loongarch/sys/regdef.h b/sysdeps/loongarch/sys/regdef.h
+index fb959f3901..e367505f9a 100644
+--- a/sysdeps/loongarch/sys/regdef.h
++++ b/sysdeps/loongarch/sys/regdef.h
+@@ -91,10 +91,8 @@
+ #define fs6 $f30
+ #define fs7 $f31
+ 
+-#elif _LOONGARCH_SIM == _ABILP32
+-#error ABILP32
+ #else
+-#error noABI
++#error "32bit LoongArch systems are not supported"
+ #endif
+ 
+ #endif /* _SYS_REGDEF_H */
+diff --git a/sysdeps/unix/sysv/linux/loongarch/Makefile b/sysdeps/unix/sysv/linux/loongarch/Makefile
+index 30ac6fd497..99ac734f91 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/Makefile
++++ b/sysdeps/unix/sysv/linux/loongarch/Makefile
+@@ -5,11 +5,6 @@ sysdep-dl-routines += dl-static
+ endif
+ endif
+ 
+-#ifeq ($(subdir),misc)
+-#sysdep_headers += sys/cachectl.h
+-#sysdep_routines += flush-icache
+-#endif
+-
+ ifeq ($(subdir),stdlib)
+ gen-as-const-headers += ucontext_i.sym
+ endif
+diff --git a/sysdeps/unix/sysv/linux/loongarch/clone.S b/sysdeps/unix/sysv/linux/loongarch/clone.S
+index 15cc74a6c0..b147529738 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/clone.S
++++ b/sysdeps/unix/sysv/linux/loongarch/clone.S
+@@ -34,8 +34,8 @@ ENTRY (__clone)
+ 	/* Align stack to 16 or 8 bytes per the ABI.  */
+ #if _LOONGARCH_SIM == _ABILP64
+ 	bstrins.d	a1, zero, 3, 0
+-#elif _LOONGARCH_SIM == _ABILP32
+-	bstrins.w	a1, zero, 2, 0
++#else
++#error "32bit LoongArch systems are not supported"
+ #endif
+ 
+ 	/* Sanity check arguments.  */
+diff --git a/sysdeps/unix/sysv/linux/loongarch/clone3.S b/sysdeps/unix/sysv/linux/loongarch/clone3.S
+index ed3ef5ae75..12ff3055e1 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/clone3.S
++++ b/sysdeps/unix/sysv/linux/loongarch/clone3.S
+@@ -68,8 +68,8 @@ L (thread_start3):
+ 	/* Align stack to 16 or 8 bytes per the ABI.  */
+ #if _LOONGARCH_SIM == _ABILP64
+ 	bstrins.d	sp, zero, 3, 0
+-#elif _LOONGARCH_SIM == _ABILP32
+-	bstrins.w	sp, zero, 2, 0
++#else
++#error "32bit LoongArch systems are not supported"
+ #endif
+ 
+ 	/* Set up arguments for the function call.  */
+-- 
+2.34.0
+

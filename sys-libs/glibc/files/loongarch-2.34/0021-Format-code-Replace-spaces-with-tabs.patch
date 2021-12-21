@@ -1,0 +1,5836 @@
+From cb7d806ffa266065a3df8d8f7b78f6ebbdc113c5 Mon Sep 17 00:00:00 2001
+From: caiyinyu <caiyinyu@loongson.cn>
+Date: Mon, 16 Aug 2021 20:00:48 +0800
+Subject: [PATCH 21/55] Format code: Replace spaces with tabs.
+
+---
+ elf/elf.h                                     |   2 +-
+ sysdeps/loongarch/__longjmp.S                 |  52 +-
+ sysdeps/loongarch/dl-trampoline.S             | 110 +--
+ sysdeps/loongarch/lp64/memcpy.S               | 579 +++++++-------
+ sysdeps/loongarch/lp64/memmove.S              | 718 +++++++++---------
+ sysdeps/loongarch/lp64/memset.S               | 204 ++---
+ sysdeps/loongarch/lp64/s_cosf.S               | 593 ++++++++-------
+ sysdeps/loongarch/lp64/s_sinf.S               | 540 +++++++------
+ sysdeps/loongarch/lp64/strchr.S               | 150 ++--
+ sysdeps/loongarch/lp64/strchrnul.S            | 150 ++--
+ sysdeps/loongarch/lp64/strcmp.S               | 239 +++---
+ sysdeps/loongarch/lp64/strcpy.S               | 227 +++---
+ sysdeps/loongarch/lp64/strlen.S               | 152 ++--
+ sysdeps/loongarch/lp64/strncmp.S              | 346 ++++-----
+ sysdeps/loongarch/lp64/strnlen.S              | 178 +++--
+ sysdeps/loongarch/setjmp.S                    |  48 +-
+ sysdeps/loongarch/start.S                     |  47 +-
+ sysdeps/unix/sysv/linux/loongarch/clone.S     |  75 +-
+ .../unix/sysv/linux/loongarch/getcontext.S    |  73 +-
+ .../unix/sysv/linux/loongarch/setcontext.S    | 125 +--
+ .../unix/sysv/linux/loongarch/swapcontext.S   | 165 ++--
+ sysdeps/unix/sysv/linux/loongarch/sysdep.S    |  33 +-
+ sysdeps/unix/sysv/linux/loongarch/vfork.S     |  19 +-
+ 23 files changed, 2446 insertions(+), 2379 deletions(-)
+
+diff --git a/elf/elf.h b/elf/elf.h
+index c18207b52d..03ece6832d 100644
+--- a/elf/elf.h
++++ b/elf/elf.h
+@@ -358,7 +358,7 @@ typedef struct
+ 
+ #define EM_BPF		247	/* Linux BPF -- in-kernel virtual machine */
+ #define EM_CSKY		252     /* C-SKY */
+-#define	EM_LOONGARCH	258	/* LoongArch */
++#define EM_LOONGARCH	258	/* LoongArch */
+ 
+ #define EM_NUM		259
+ 
+diff --git a/sysdeps/loongarch/__longjmp.S b/sysdeps/loongarch/__longjmp.S
+index 18b5ef67a5..32325753f6 100644
+--- a/sysdeps/loongarch/__longjmp.S
++++ b/sysdeps/loongarch/__longjmp.S
+@@ -20,31 +20,31 @@
+ #include <sys/asm.h>
+ 
+ ENTRY (__longjmp)
+-  REG_L ra, a0, 0*SZREG
+-  REG_L sp, a0, 1*SZREG
+-  REG_L x,  a0, 2*SZREG
+-  REG_L fp, a0, 3*SZREG
+-  REG_L s0, a0, 4*SZREG
+-  REG_L s1, a0, 5*SZREG
+-  REG_L s2, a0, 6*SZREG
+-  REG_L s3, a0, 7*SZREG
+-  REG_L s4, a0, 8*SZREG
+-  REG_L s5, a0, 9*SZREG
+-  REG_L s6, a0, 10*SZREG
+-  REG_L s7, a0, 11*SZREG
+-  REG_L s8, a0, 12*SZREG
+-
+-  FREG_L $f24, a0, 13*SZREG + 0*SZFREG
+-  FREG_L $f25, a0, 13*SZREG + 1*SZFREG
+-  FREG_L $f26, a0, 13*SZREG + 2*SZFREG
+-  FREG_L $f27, a0, 13*SZREG + 3*SZFREG
+-  FREG_L $f28, a0, 13*SZREG + 4*SZFREG
+-  FREG_L $f29, a0, 13*SZREG + 5*SZFREG
+-  FREG_L $f30, a0, 13*SZREG + 6*SZFREG
+-  FREG_L $f31, a0, 13*SZREG + 7*SZFREG
+-
+-  sltui a0,a1,1
+-  add.d a0, a0, a1   # a0 = (a1 == 0) ? 1 : a1
+-  jirl  zero,ra,0
++	REG_L ra, a0, 0*SZREG
++	REG_L sp, a0, 1*SZREG
++	REG_L x,  a0, 2*SZREG
++	REG_L fp, a0, 3*SZREG
++	REG_L s0, a0, 4*SZREG
++	REG_L s1, a0, 5*SZREG
++	REG_L s2, a0, 6*SZREG
++	REG_L s3, a0, 7*SZREG
++	REG_L s4, a0, 8*SZREG
++	REG_L s5, a0, 9*SZREG
++	REG_L s6, a0, 10*SZREG
++	REG_L s7, a0, 11*SZREG
++	REG_L s8, a0, 12*SZREG
++
++	FREG_L $f24, a0, 13*SZREG + 0*SZFREG
++	FREG_L $f25, a0, 13*SZREG + 1*SZFREG
++	FREG_L $f26, a0, 13*SZREG + 2*SZFREG
++	FREG_L $f27, a0, 13*SZREG + 3*SZFREG
++	FREG_L $f28, a0, 13*SZREG + 4*SZFREG
++	FREG_L $f29, a0, 13*SZREG + 5*SZFREG
++	FREG_L $f30, a0, 13*SZREG + 6*SZFREG
++	FREG_L $f31, a0, 13*SZREG + 7*SZFREG
++
++	sltui	a0,a1,1
++	add.d	a0, a0, a1	 # a0 = (a1 == 0) ? 1 : a1
++	jirl	zero,ra,0
+ 
+ END (__longjmp)
+diff --git a/sysdeps/loongarch/dl-trampoline.S b/sysdeps/loongarch/dl-trampoline.S
+index 2343a18a94..3991557c3a 100644
+--- a/sysdeps/loongarch/dl-trampoline.S
++++ b/sysdeps/loongarch/dl-trampoline.S
+@@ -29,80 +29,80 @@
+ #endif
+ 
+ ENTRY (_dl_runtime_resolve)
+-  # Save arguments to stack.
+ 
++	/* Save arguments to stack. */
+ #ifdef __loongarch64
+-    addi.d  sp, sp, -FRAME_SIZE
++	addi.d	sp, sp, -FRAME_SIZE
+ #elif defined __loongarch32
+-    addi.w  sp, sp, -FRAME_SIZE
++	addi.w	sp, sp, -FRAME_SIZE
+ #endif
+ 
+-    REG_S   ra, sp, 9*SZREG
+-    REG_S   a0, sp, 1*SZREG
+-    REG_S   a1, sp, 2*SZREG
+-    REG_S   a2, sp, 3*SZREG
+-    REG_S   a3, sp, 4*SZREG
+-    REG_S   a4, sp, 5*SZREG
+-    REG_S   a5, sp, 6*SZREG
+-    REG_S   a6, sp, 7*SZREG
+-    REG_S   a7, sp, 8*SZREG
++	REG_S	ra, sp, 9*SZREG
++	REG_S	a0, sp, 1*SZREG
++	REG_S	a1, sp, 2*SZREG
++	REG_S	a2, sp, 3*SZREG
++	REG_S	a3, sp, 4*SZREG
++	REG_S	a4, sp, 5*SZREG
++	REG_S	a5, sp, 6*SZREG
++	REG_S	a6, sp, 7*SZREG
++	REG_S	a7, sp, 8*SZREG
+ 
+ #ifndef __loongarch_soft_float
+-    FREG_S  fa0, sp, 10*SZREG + 0*SZFREG
+-    FREG_S  fa1, sp, 10*SZREG + 1*SZFREG
+-    FREG_S  fa2, sp, 10*SZREG + 2*SZFREG
+-    FREG_S  fa3, sp, 10*SZREG + 3*SZFREG
+-    FREG_S  fa4, sp, 10*SZREG + 4*SZFREG
+-    FREG_S  fa5, sp, 10*SZREG + 5*SZFREG
+-    FREG_S  fa6, sp, 10*SZREG + 6*SZFREG
+-    FREG_S  fa7, sp, 10*SZREG + 7*SZFREG
++	FREG_S	fa0, sp, 10*SZREG + 0*SZFREG
++	FREG_S	fa1, sp, 10*SZREG + 1*SZFREG
++	FREG_S	fa2, sp, 10*SZREG + 2*SZFREG
++	FREG_S	fa3, sp, 10*SZREG + 3*SZFREG
++	FREG_S	fa4, sp, 10*SZREG + 4*SZFREG
++	FREG_S	fa5, sp, 10*SZREG + 5*SZFREG
++	FREG_S	fa6, sp, 10*SZREG + 6*SZFREG
++	FREG_S	fa7, sp, 10*SZREG + 7*SZFREG
+ #endif
+ 
+-  # Update .got.plt and obtain runtime address of callee.
++	/* Update .got.plt and obtain runtime address of callee */
+ #ifdef __loongarch64
+-    slli.d  a1, t1, 1
+-    or      a0, t0, zero
+-    add.d   a1, a1, t1
+-    la      a2, _dl_fixup
+-    jirl    ra, a2, 0
+-    or      t1, v0, zero
++	slli.d	a1, t1, 1
++	or	a0, t0, zero
++	add.d	a1, a1, t1
++	la	a2, _dl_fixup
++	jirl	ra, a2, 0
++	or	t1, v0, zero
+ #elif defined __loongarch32
+-    slli.w  a1, t1, 1
+-    or      a0, t0, zero
+-    add.w   a1, a1, t1
+-    la      a2, _dl_fixup
+-    jirl    ra, a2, 0
+-    or      t1, v0, zero
++	slli.w	a1, t1, 1
++	or	a0, t0, zero
++	add.w	a1, a1, t1
++	la	a2, _dl_fixup
++	jirl	ra, a2, 0
++	or	t1, v0, zero
+ #endif
+ 
+-  # Restore arguments from stack.
+-    REG_L   ra, sp, 9*SZREG
+-    REG_L   a0, sp, 1*SZREG
+-    REG_L   a1, sp, 2*SZREG
+-    REG_L   a2, sp, 3*SZREG
+-    REG_L   a3, sp, 4*SZREG
+-    REG_L   a4, sp, 5*SZREG
+-    REG_L   a5, sp, 6*SZREG
+-    REG_L   a6, sp, 7*SZREG
+-    REG_L   a7, sp, 8*SZREG
++	/* Restore arguments from stack. */
++	REG_L	ra, sp, 9*SZREG
++	REG_L	a0, sp, 1*SZREG
++	REG_L	a1, sp, 2*SZREG
++	REG_L	a2, sp, 3*SZREG
++	REG_L	a3, sp, 4*SZREG
++	REG_L	a4, sp, 5*SZREG
++	REG_L	a5, sp, 6*SZREG
++	REG_L	a6, sp, 7*SZREG
++	REG_L	a7, sp, 8*SZREG
+ 
+ #ifndef __loongarch_soft_float
+-    FREG_L  fa0, sp, 10*SZREG + 0*SZFREG
+-    FREG_L  fa1, sp, 10*SZREG + 1*SZFREG
+-    FREG_L  fa2, sp, 10*SZREG + 2*SZFREG
+-    FREG_L  fa3, sp, 10*SZREG + 3*SZFREG
+-    FREG_L  fa4, sp, 10*SZREG + 4*SZFREG
+-    FREG_L  fa5, sp, 10*SZREG + 5*SZFREG
+-    FREG_L  fa6, sp, 10*SZREG + 6*SZFREG
+-    FREG_L  fa7, sp, 10*SZREG + 7*SZFREG
++	FREG_L	fa0, sp, 10*SZREG + 0*SZFREG
++	FREG_L	fa1, sp, 10*SZREG + 1*SZFREG
++	FREG_L	fa2, sp, 10*SZREG + 2*SZFREG
++	FREG_L	fa3, sp, 10*SZREG + 3*SZFREG
++	FREG_L	fa4, sp, 10*SZREG + 4*SZFREG
++	FREG_L	fa5, sp, 10*SZREG + 5*SZFREG
++	FREG_L	fa6, sp, 10*SZREG + 6*SZFREG
++	FREG_L	fa7, sp, 10*SZREG + 7*SZFREG
+ #endif
+ 
+ #ifdef __loongarch64
+-    addi.d  sp, sp, FRAME_SIZE
++	addi.d	sp, sp, FRAME_SIZE
+ #elif defined __loongarch32
+-    addi.w  sp, sp, FRAME_SIZE
++	addi.w	sp, sp, FRAME_SIZE
+ #endif
+ 
+-  # Invoke the callee.
+-    jirl    zero, t1, 0
++	/* Invoke the callee. */
++	jirl		zero, t1, 0
+ END (_dl_runtime_resolve)
+diff --git a/sysdeps/loongarch/lp64/memcpy.S b/sysdeps/loongarch/lp64/memcpy.S
+index a7cc0958d5..cb4a406e11 100644
+--- a/sysdeps/loongarch/lp64/memcpy.S
++++ b/sysdeps/loongarch/lp64/memcpy.S
+@@ -31,60 +31,60 @@
+ #define MEMCPY_NAME memcpy
+ #endif
+ 
+-#define LD_64(reg, n)      \
+-    ld.d    t0, reg, n;    \
+-    ld.d    t1, reg, n+8;  \
+-    ld.d    t2, reg, n+16; \
+-    ld.d    t3, reg, n+24; \
+-    ld.d    t4, reg, n+32; \
+-    ld.d    t5, reg, n+40; \
+-    ld.d    t6, reg, n+48; \
+-    ld.d    t7, reg, n+56;
+-
+-
+-#define ST_64(reg, n)      \
+-    st.d    t0, reg, n;    \
+-    st.d    t1, reg, n+8;  \
+-    st.d    t2, reg, n+16; \
+-    st.d    t3, reg, n+24; \
+-    st.d    t4, reg, n+32; \
+-    st.d    t5, reg, n+40; \
+-    st.d    t6, reg, n+48; \
+-    st.d    t7, reg, n+56;
+-
+-#define LDST_1024    \
+-    LD_64(a1, 0);    \
+-    ST_64(a0, 0);    \
+-    LD_64(a1, 64);   \
+-    ST_64(a0, 64);   \
+-    LD_64(a1, 128);  \
+-    ST_64(a0, 128);  \
+-    LD_64(a1, 192);  \
+-    ST_64(a0, 192);  \
+-    LD_64(a1, 256);  \
+-    ST_64(a0, 256);  \
+-    LD_64(a1, 320);  \
+-    ST_64(a0, 320);  \
+-    LD_64(a1, 384);  \
+-    ST_64(a0, 384);  \
+-    LD_64(a1, 448);  \
+-    ST_64(a0, 448);  \
+-    LD_64(a1, 512);  \
+-    ST_64(a0, 512);  \
+-    LD_64(a1, 576);  \
+-    ST_64(a0, 576);  \
+-    LD_64(a1, 640);  \
+-    ST_64(a0, 640);  \
+-    LD_64(a1, 704);  \
+-    ST_64(a0, 704);  \
+-    LD_64(a1, 768);  \
+-    ST_64(a0, 768);  \
+-    LD_64(a1, 832);  \
+-    ST_64(a0, 832);  \
+-    LD_64(a1, 896);  \
+-    ST_64(a0, 896);  \
+-    LD_64(a1, 960);  \
+-    ST_64(a0, 960);
++#define LD_64(reg, n)		\
++	ld.d	t0, reg, n;	\
++	ld.d	t1, reg, n+8;	\
++	ld.d	t2, reg, n+16;	\
++	ld.d	t3, reg, n+24;	\
++	ld.d	t4, reg, n+32;	\
++	ld.d	t5, reg, n+40;	\
++	ld.d	t6, reg, n+48;	\
++	ld.d	t7, reg, n+56;
++
++
++#define ST_64(reg, n)		\
++	st.d	t0, reg, n;	\
++	st.d	t1, reg, n+8; 	\
++	st.d	t2, reg, n+16;	\
++	st.d	t3, reg, n+24;	\
++	st.d	t4, reg, n+32;	\
++	st.d	t5, reg, n+40;	\
++	st.d	t6, reg, n+48;	\
++	st.d	t7, reg, n+56;
++
++#define LDST_1024		\
++	LD_64(a1, 0);		\
++	ST_64(a0, 0);		\
++	LD_64(a1, 64);		\
++	ST_64(a0, 64);		\
++	LD_64(a1, 128);		\
++	ST_64(a0, 128);		\
++	LD_64(a1, 192);		\
++	ST_64(a0, 192);		\
++	LD_64(a1, 256);		\
++	ST_64(a0, 256);		\
++	LD_64(a1, 320);		\
++	ST_64(a0, 320);		\
++	LD_64(a1, 384);		\
++	ST_64(a0, 384);		\
++	LD_64(a1, 448);		\
++	ST_64(a0, 448);		\
++	LD_64(a1, 512);		\
++	ST_64(a0, 512);		\
++	LD_64(a1, 576);		\
++	ST_64(a0, 576);		\
++	LD_64(a1, 640);		\
++	ST_64(a0, 640);		\
++	LD_64(a1, 704);		\
++	ST_64(a0, 704);		\
++	LD_64(a1, 768);		\
++	ST_64(a0, 768);		\
++	LD_64(a1, 832);		\
++	ST_64(a0, 832);		\
++	LD_64(a1, 896);		\
++	ST_64(a0, 896);		\
++	LD_64(a1, 960);		\
++	ST_64(a0, 960);
+ 
+ #ifdef ANDROID_CHANGES
+ LEAF(MEMCPY_NAME, 0)
+@@ -97,321 +97,320 @@ LEAF(MEMCPY_NAME)
+ /* 3rd var: size_t num */
+ /* t0~t9 registers as temp */
+ 
+-    add.d   a4, a1, a2
+-    add.d   a3, a0, a2
+-    move    t8, a0
+-    move    a5, a1
+-    srai.d  a6, a2, 4		#num/16
+-    beqz    a6, less_16bytes	#num<16
+-    slti    a6, a2, 137
+-    beqz    a6, more_137bytes	#num>137
+-    srai.d  a6, a2, 6
+-    beqz    a6, less_64bytes	#num<64
+-
+-    srli.d  a0, a0, 3
+-    slli.d  a0, a0, 3
+-    addi.d  a0, a0, 0x8
+-    sub.d   a7, t8, a0
+-    ld.d    t0, a1, 0
+-    sub.d   a1, a1, a7
+-    st.d    t0, t8, 0
+-
+-    add.d   a7, a7, a2
+-    addi.d  a7, a7, -0x20
++	add.d		a4, a1, a2
++	add.d		a3, a0, a2
++	move		t8, a0
++	move		a5, a1
++	srai.d		a6, a2, 4		#num/16
++	beqz		a6, less_16bytes	#num<16
++	slti		a6, a2, 137
++	beqz		a6, more_137bytes	#num>137
++	srai.d		a6, a2, 6
++	beqz		a6, less_64bytes	#num<64
++
++	srli.d		a0, a0, 3
++	slli.d		a0, a0, 3
++	addi.d		a0, a0, 0x8
++	sub.d		a7, t8, a0
++	ld.d		t0, a1, 0
++	sub.d		a1, a1, a7
++	st.d		t0, t8, 0
++
++	add.d		a7, a7, a2
++	addi.d		a7, a7, -0x20
+ loop_32:
+-    ld.d    t0, a1, 0
+-    ld.d    t1, a1, 8
+-    ld.d    t2, a1, 16
+-    ld.d    t3, a1, 24
+-    st.d    t0, a0, 0
+-    st.d    t1, a0, 8
+-    st.d    t2, a0, 16
+-    st.d    t3, a0, 24
+-
+-    addi.d  a0,  a0,  0x20
+-    addi.d  a1,  a1,  0x20
+-    addi.d  a7,  a7,  -0x20
+-    blt     zero, a7, loop_32
+-
+-    ld.d    t4, a4, -32
+-    ld.d    t5, a4, -24
+-    ld.d    t6, a4, -16
+-    ld.d    t7, a4, -8
+-    st.d    t4, a3, -32
+-    st.d    t5, a3, -24
+-    st.d    t6, a3, -16
+-    st.d    t7, a3, -8
+-
+-    move    v0,  t8
+-    jr      ra
++	ld.d		t0, a1, 0
++	ld.d		t1, a1, 8
++	ld.d		t2, a1, 16
++	ld.d		t3, a1, 24
++	st.d		t0, a0, 0
++	st.d		t1, a0, 8
++	st.d		t2, a0, 16
++	st.d		t3, a0, 24
++
++	addi.d		a0,  a0,  0x20
++	addi.d		a1,  a1,  0x20
++	addi.d		a7,  a7,  -0x20
++	blt		zero, a7, loop_32
++
++	ld.d		t4, a4, -32
++	ld.d		t5, a4, -24
++	ld.d		t6, a4, -16
++	ld.d		t7, a4, -8
++	st.d		t4, a3, -32
++	st.d		t5, a3, -24
++	st.d		t6, a3, -16
++	st.d		t7, a3, -8
++
++	move		v0,  t8
++	jr		ra
+ 
+ less_64bytes:
+-    srai.d  a6, a2, 5
+-    beqz    a6, less_32bytes
+-
+-    ld.d    t0, a1, 0
+-    ld.d    t1, a1, 8
+-    ld.d    t2, a1, 16
+-    ld.d    t3, a1, 24
+-    ld.d    t4, a4, -32
+-    ld.d    t5, a4, -24
+-    ld.d    t6, a4, -16
+-    ld.d    t7, a4, -8
+-    st.d    t0, a0, 0
+-    st.d    t1, a0, 8
+-    st.d    t2, a0, 16
+-    st.d    t3, a0, 24
+-    st.d    t4, a3, -32
+-    st.d    t5, a3, -24
+-    st.d    t6, a3, -16
+-    st.d    t7, a3, -8
+-
+-    jr      ra
++	srai.d		a6, a2, 5
++	beqz		a6, less_32bytes
++
++	ld.d		t0, a1, 0
++	ld.d		t1, a1, 8
++	ld.d		t2, a1, 16
++	ld.d		t3, a1, 24
++	ld.d		t4, a4, -32
++	ld.d		t5, a4, -24
++	ld.d		t6, a4, -16
++	ld.d		t7, a4, -8
++	st.d		t0, a0, 0
++	st.d		t1, a0, 8
++	st.d		t2, a0, 16
++	st.d		t3, a0, 24
++	st.d		t4, a3, -32
++	st.d		t5, a3, -24
++	st.d		t6, a3, -16
++	st.d		t7, a3, -8
++
++	jr		ra
+ 
+ less_32bytes:
+-    ld.d    t0, a1, 0
+-    ld.d    t1, a1, 8
+-    ld.d    t2, a4, -16
+-    ld.d    t3, a4, -8
+-    st.d    t0, a0, 0
+-    st.d    t1, a0, 8
+-    st.d    t2, a3, -16
+-    st.d    t3, a3, -8
++	ld.d		t0, a1, 0
++	ld.d		t1, a1, 8
++	ld.d		t2, a4, -16
++	ld.d		t3, a4, -8
++	st.d		t0, a0, 0
++	st.d		t1, a0, 8
++	st.d		t2, a3, -16
++	st.d		t3, a3, -8
+ 
+-    jr      ra
++	jr		ra
+ 
+ less_16bytes:
+-    srai.d  a6, a2, 3   	#num/8
+-    beqz    a6, less_8bytes
++	srai.d		a6, a2, 3   	#num/8
++	beqz		a6, less_8bytes
+ 
+-    ld.d    t0, a1, 0
+-    ld.d    t1, a4, -8
+-    st.d    t0, a0, 0
+-    st.d    t1, a3, -8
++	ld.d		t0, a1, 0
++	ld.d		t1, a4, -8
++	st.d		t0, a0, 0
++	st.d		t1, a3, -8
+ 
+-    jr      ra
++	jr		ra
+ 
+ less_8bytes:
+-    srai.d  a6, a2, 2
+-    beqz    a6, less_4bytes
++	srai.d		a6, a2, 2
++	beqz		a6, less_4bytes
+ 
+-    ld.w    t0, a1, 0
+-    ld.w    t1, a4, -4
+-    st.w    t0, a0, 0
+-    st.w    t1, a3, -4
++	ld.w		t0, a1, 0
++	ld.w		t1, a4, -4
++	st.w		t0, a0, 0
++	st.w		t1, a3, -4
+ 
+-    jr      ra
++	jr		ra
+ 
+ less_4bytes:
+-    srai.d  a6, a2, 1
+-    beqz    a6, less_2bytes
++	srai.d		a6, a2, 1
++	beqz		a6, less_2bytes
+ 
+-    ld.h    t0, a1, 0
+-    ld.h    t1, a4, -2
+-    st.h    t0, a0, 0
+-    st.h    t1, a3, -2
++	ld.h		t0, a1, 0
++	ld.h		t1, a4, -2
++	st.h		t0, a0, 0
++	st.h		t1, a3, -2
+ 
+-    jr      ra
++	jr		ra
+ 
+ less_2bytes:
+-    beqz    a2, less_1bytes
++	beqz		a2, less_1bytes
+ 
+-    ld.b    t0, a1, 0
+-    st.b    t0, a0, 0
++	ld.b		t0, a1, 0
++	st.b		t0, a0, 0
+ 
+-    jr      ra
++	jr		ra
+ 
+ less_1bytes:
+-    jr      ra
++	jr		ra
+ 
+ more_137bytes:
+-    li.w    a6, 64
+-    andi    t1, a0, 7
+-    srli.d  a0, a0, 3
+-    andi    t2, a2, 7
+-    slli.d  a0, a0, 3
+-    add.d   t1, t1, t2
+-    beqz    t1, all_align
+-    beq     a0, t8, start_over
+-    addi.d  a0, a0, 0x8
+-    sub.d   a7, t8, a0
+-    sub.d   a1, a1, a7
+-    add.d   a2, a7, a2
++	li.w		a6, 64
++	andi		t1, a0, 7
++	srli.d		a0, a0, 3
++	andi		t2, a2, 7
++	slli.d		a0, a0, 3
++	add.d		t1, t1, t2
++	beqz		t1, all_align
++	beq		a0, t8, start_over
++	addi.d		a0, a0, 0x8
++	sub.d		a7, t8, a0
++	sub.d		a1, a1, a7
++	add.d		a2, a7, a2
+ 
+ start_unalign_proc:
+-    ld.d    t0, a5, 0
+-    slli.d  t0, t0, 8
+-    pcaddi  t1, 18
+-    slli.d  t2, a7, 3
+-    add.d   t1, t1, t2
+-    jirl    zero, t1, 0
++	ld.d		t0, a5, 0
++	slli.d		t0, t0, 8
++	pcaddi		t1, 18
++	slli.d		t2, a7, 3
++	add.d		t1, t1, t2
++	jirl		zero, t1, 0
+ 
+ start_7_unalign:
+-    srli.d  t0, t0, 8
+-    st.b    t0, a0, -7
++	srli.d		t0, t0, 8
++	st.b		t0, a0, -7
+ start_6_unalign:
+-    srli.d  t0, t0, 8
+-    st.b    t0, a0, -6
++	srli.d		t0, t0, 8
++	st.b		t0, a0, -6
+ start_5_unalign:
+-    srli.d  t0, t0, 8
+-    st.b    t0, a0, -5
++	srli.d		t0, t0, 8
++	st.b		t0, a0, -5
+ start_4_unalign:
+-    srli.d  t0, t0, 8
+-    st.b    t0, a0, -4
++	srli.d		t0, t0, 8
++	st.b		t0, a0, -4
+ start_3_unalign:
+-    srli.d  t0, t0, 8
+-    st.b    t0, a0, -3
++	srli.d		t0, t0, 8
++	st.b		t0, a0, -3
+ start_2_unalign:
+-    srli.d  t0, t0, 8
+-    st.b    t0, a0, -2
++	srli.d		t0, t0, 8
++	st.b		t0, a0, -2
+ start_1_unalign:
+-    srli.d  t0, t0, 8
+-    st.b    t0, a0, -1
++	srli.d		t0, t0, 8
++	st.b		t0, a0, -1
+ start_over:
+ 
+-    addi.d  a2, a2, -0x80
+-    blt     a2, zero, end_unalign_proc
++	addi.d		a2, a2, -0x80
++	blt		a2, zero, end_unalign_proc
+ 
+ loop_less:
+-    LD_64(a1, 0)
+-    ST_64(a0, 0)
+-    LD_64(a1, 64)
+-    ST_64(a0, 64)
++	LD_64(a1, 0)
++	ST_64(a0, 0)
++	LD_64(a1, 64)
++	ST_64(a0, 64)
+ 
+-    addi.d  a0, a0, 0x80
+-    addi.d  a1, a1, 0x80
+-    addi.d  a2, a2, -0x80
+-    bge     a2, zero, loop_less
++	addi.d		a0, a0, 0x80
++	addi.d		a1, a1, 0x80
++	addi.d		a2, a2, -0x80
++	bge		a2, zero, loop_less
+ 
+ end_unalign_proc:
+-    addi.d  a2, a2, 0x80
++	addi.d		a2, a2, 0x80
+ 
+-    pcaddi  t1, 34
+-    andi    t2, a2, 0x78
+-    sub.d   t1, t1, t2
+-    jirl    zero, t1, 0
++	pcaddi		t1, 34
++	andi		t2, a2, 0x78
++	sub.d		t1, t1, t2
++	jirl		zero, t1, 0
+ 
+ end_120_128_unalign:
+-    ld.d    t0, a1, 112
+-    st.d    t0, a0, 112
++	ld.d		t0, a1, 112
++	st.d		t0, a0, 112
+ end_112_120_unalign:
+-    ld.d    t0, a1, 104
+-    st.d    t0, a0, 104
++	ld.d		t0, a1, 104
++	st.d		t0, a0, 104
+ end_104_112_unalign:
+-    ld.d    t0, a1, 96
+-    st.d    t0, a0, 96
++	ld.d		t0, a1, 96
++	st.d		t0, a0, 96
+ end_96_104_unalign:
+-    ld.d    t0, a1, 88
+-    st.d    t0, a0, 88
++	ld.d		t0, a1, 88
++	st.d		t0, a0, 88
+ end_88_96_unalign:
+-    ld.d    t0, a1, 80
+-    st.d    t0, a0, 80
++	ld.d		t0, a1, 80
++	st.d		t0, a0, 80
+ end_80_88_unalign:
+-    ld.d    t0, a1, 72
+-    st.d    t0, a0, 72
++	ld.d		t0, a1, 72
++	st.d		t0, a0, 72
+ end_72_80_unalign:
+-    ld.d    t0, a1, 64
+-    st.d    t0, a0, 64
++	ld.d		t0, a1, 64
++	st.d		t0, a0, 64
+ end_64_72_unalign:
+-    ld.d    t0, a1, 56
+-    st.d    t0, a0, 56
++	ld.d		t0, a1, 56
++	st.d		t0, a0, 56
+ end_56_64_unalign:
+-    ld.d    t0, a1, 48
+-    st.d    t0, a0, 48
++	ld.d		t0, a1, 48
++	st.d		t0, a0, 48
+ end_48_56_unalign:
+-    ld.d    t0, a1, 40
+-    st.d    t0, a0, 40
++	ld.d		t0, a1, 40
++	st.d		t0, a0, 40
+ end_40_48_unalign:
+-    ld.d    t0, a1, 32
+-    st.d    t0, a0, 32
++	ld.d		t0, a1, 32
++	st.d		t0, a0, 32
+ end_32_40_unalign:
+-    ld.d    t0, a1, 24
+-    st.d    t0, a0, 24
++	ld.d		t0, a1, 24
++	st.d		t0, a0, 24
+ end_24_32_unalign:
+-    ld.d    t0, a1, 16
+-    st.d    t0, a0, 16
++	ld.d		t0, a1, 16
++	st.d		t0, a0, 16
+ end_16_24_unalign:
+-    ld.d    t0, a1, 8
+-    st.d    t0, a0, 8
++	ld.d		t0, a1, 8
++	st.d		t0, a0, 8
+ end_8_16_unalign:
+-    ld.d    t0, a1, 0
+-    st.d    t0, a0, 0
++	ld.d		t0, a1, 0
++	st.d		t0, a0, 0
+ end_0_8_unalign:
+ 
+-    mod.d   t0, a3, a6
+-    srli.d  t1, t0, 3
+-    slti    t0, t0, 1
+-    add.d   t0, t0, t1
+-    blt     zero, t0, end_8_without_cross_cache_line
++	mod.d		t0, a3, a6
++	srli.d		t1, t0, 3
++	slti		t0, t0, 1
++	add.d		t0, t0, t1
++	blt		zero, t0, end_8_without_cross_cache_line
+ 
+-    andi    a2, a2, 0x7
+-    pcaddi  t1, 18
+-    slli.d  a2, a2, 3
+-    sub.d   t1, t1, a2
+-    jirl    zero, t1, 0
++	andi		a2, a2, 0x7
++	pcaddi		t1, 18
++	slli.d		a2, a2, 3
++	sub.d		t1, t1, a2
++	jirl		zero, t1, 0
+ 
+ end_7_unalign:
+-    ld.b    t0, a4, -7
+-    st.b    t0, a3, -7
++	ld.b		t0, a4, -7
++	st.b		t0, a3, -7
+ end_6_unalign:
+-    ld.b    t0, a4, -6
+-    st.b    t0, a3, -6
++	ld.b		t0, a4, -6
++	st.b		t0, a3, -6
+ end_5_unalign:
+-    ld.b    t0, a4, -5
+-    st.b    t0, a3, -5
++	ld.b		t0, a4, -5
++	st.b		t0, a3, -5
+ end_4_unalign:
+-    ld.b    t0, a4, -4
+-    st.b    t0, a3, -4
++	ld.b		t0, a4, -4
++	st.b		t0, a3, -4
+ end_3_unalign:
+-    ld.b    t0, a4, -3
+-    st.b    t0, a3, -3
++	ld.b		t0, a4, -3
++	st.b		t0, a3, -3
+ end_2_unalign:
+-    ld.b    t0, a4, -2
+-    st.b    t0, a3, -2
++	ld.b		t0, a4, -2
++	st.b		t0, a3, -2
+ end_1_unalign:
+-    ld.b    t0, a4, -1
+-    st.b    t0, a3, -1
++	ld.b		t0, a4, -1
++	st.b		t0, a3, -1
+ end:
+-
+-    move    v0, t8
+-    jr      ra
++	move		v0, t8
++	jr		ra
+ 
+ all_align:
+-    addi.d  a2, a2, -0x20
++	addi.d		a2, a2, -0x20
+ 
+ align_loop_less:
+-    ld.d    t0, a1, 0
+-    ld.d    t1, a1, 8
+-    ld.d    t2, a1, 16
+-    ld.d    t3, a1, 24
+-    st.d    t0, a0, 0
+-    st.d    t1, a0, 8
+-    st.d    t2, a0, 16
+-    st.d    t3, a0, 24
+-
+-    addi.d  a0,  a0,  0x20
+-    addi.d  a1,  a1,  0x20
+-    addi.d  a2,  a2,  -0x20
+-    blt     zero, a2, align_loop_less
+-
+-    ld.d    t4, a4, -32
+-    ld.d    t5, a4, -24
+-    ld.d    t6, a4, -16
+-    ld.d    t7, a4, -8
+-    st.d    t4, a3, -32
+-    st.d    t5, a3, -24
+-    st.d    t6, a3, -16
+-    st.d    t7, a3, -8
+-
+-    move    v0, t8
+-    jr      ra
++	ld.d		t0, a1, 0
++	ld.d		t1, a1, 8
++	ld.d		t2, a1, 16
++	ld.d		t3, a1, 24
++	st.d		t0, a0, 0
++	st.d		t1, a0, 8
++	st.d		t2, a0, 16
++	st.d		t3, a0, 24
++
++	addi.d		a0,  a0,  0x20
++	addi.d		a1,  a1,  0x20
++	addi.d		a2,  a2,  -0x20
++	blt		zero, a2, align_loop_less
++
++	ld.d		t4, a4, -32
++	ld.d		t5, a4, -24
++	ld.d		t6, a4, -16
++	ld.d		t7, a4, -8
++	st.d		t4, a3, -32
++	st.d		t5, a3, -24
++	st.d		t6, a3, -16
++	st.d		t7, a3, -8
++
++	move		v0, t8
++	jr		ra
+ 
+ end_8_without_cross_cache_line:
+-    ld.d    t0, a4, -8
+-    st.d    t0, a3, -8
++	ld.d		t0, a4, -8
++	st.d		t0, a3, -8
+ 
+-    move    v0, t8
+-    jr      ra
++	move		v0, t8
++	jr		ra
+ 
+ END(MEMCPY_NAME)
+ #ifndef ANDROID_CHANGES
+diff --git a/sysdeps/loongarch/lp64/memmove.S b/sysdeps/loongarch/lp64/memmove.S
+index 877c0e18f8..0d35062f1b 100644
+--- a/sysdeps/loongarch/lp64/memmove.S
++++ b/sysdeps/loongarch/lp64/memmove.S
+@@ -31,94 +31,94 @@
+ #define MEMMOVE_NAME memmove
+ #endif
+ 
+-#define LD_64(reg, n) \
+-    ld.d    t0, reg, n;    \
+-    ld.d    t1, reg, n+8;  \
+-    ld.d    t2, reg, n+16; \
+-    ld.d    t3, reg, n+24; \
+-    ld.d    t4, reg, n+32; \
+-    ld.d    t5, reg, n+40; \
+-    ld.d    t6, reg, n+48; \
+-    ld.d    t7, reg, n+56;
+-
+-
+-#define ST_64(reg, n) \
+-    st.d    t0, reg, n;    \
+-    st.d    t1, reg, n+8;  \
+-    st.d    t2, reg, n+16; \
+-    st.d    t3, reg, n+24; \
+-    st.d    t4, reg, n+32; \
+-    st.d    t5, reg, n+40; \
+-    st.d    t6, reg, n+48; \
+-    st.d    t7, reg, n+56;
+-
+-#define LDST_1024 \
+-    LD_64(a1, 0);    \
+-    ST_64(a0, 0);    \
+-    LD_64(a1, 64);   \
+-    ST_64(a0, 64);   \
+-    LD_64(a1, 128);  \
+-    ST_64(a0, 128);  \
+-    LD_64(a1, 192);  \
+-    ST_64(a0, 192);  \
+-    LD_64(a1, 256);  \
+-    ST_64(a0, 256);  \
+-    LD_64(a1, 320);  \
+-    ST_64(a0, 320);  \
+-    LD_64(a1, 384);  \
+-    ST_64(a0, 384);  \
+-    LD_64(a1, 448);  \
+-    ST_64(a0, 448);  \
+-    LD_64(a1, 512);  \
+-    ST_64(a0, 512);  \
+-    LD_64(a1, 576);  \
+-    ST_64(a0, 576);  \
+-    LD_64(a1, 640);  \
+-    ST_64(a0, 640);  \
+-    LD_64(a1, 704);  \
+-    ST_64(a0, 704);  \
+-    LD_64(a1, 768);  \
+-    ST_64(a0, 768);  \
+-    LD_64(a1, 832);  \
+-    ST_64(a0, 832);  \
+-    LD_64(a1, 896);  \
+-    ST_64(a0, 896);  \
+-    LD_64(a1, 960);  \
+-    ST_64(a0, 960);
+-
+-#define LDST_1024_BACK \
+-    LD_64(a4, -64);   \
+-    ST_64(a3, -64);   \
+-    LD_64(a4, -128);  \
+-    ST_64(a3, -128);  \
+-    LD_64(a4, -192);  \
+-    ST_64(a3, -192);  \
+-    LD_64(a4, -256);  \
+-    ST_64(a3, -256);  \
+-    LD_64(a4, -320);  \
+-    ST_64(a3, -320);  \
+-    LD_64(a4, -384);  \
+-    ST_64(a3, -384);  \
+-    LD_64(a4, -448);  \
+-    ST_64(a3, -448);  \
+-    LD_64(a4, -512);  \
+-    ST_64(a3, -512);  \
+-    LD_64(a4, -576);  \
+-    ST_64(a3, -576);  \
+-    LD_64(a4, -640);  \
+-    ST_64(a3, -640);  \
+-    LD_64(a4, -704);  \
+-    ST_64(a3, -704);  \
+-    LD_64(a4, -768);  \
+-    ST_64(a3, -768);  \
+-    LD_64(a4, -832);  \
+-    ST_64(a3, -832);  \
+-    LD_64(a4, -896);  \
+-    ST_64(a3, -896);  \
+-    LD_64(a4, -960);  \
+-    ST_64(a3, -960);  \
+-    LD_64(a4, -1024); \
+-    ST_64(a3, -1024);
++#define LD_64(reg, n)		\
++	ld.d	t0, reg, n;	\
++	ld.d	t1, reg, n+8;	\
++	ld.d	t2, reg, n+16;	\
++	ld.d	t3, reg, n+24;	\
++	ld.d	t4, reg, n+32;	\
++	ld.d	t5, reg, n+40;	\
++	ld.d	t6, reg, n+48;	\
++	ld.d	t7, reg, n+56;
++
++
++#define ST_64(reg, n)		\
++	st.d	t0, reg, n;	\
++	st.d	t1, reg, n+8;	\
++	st.d	t2, reg, n+16;	\
++	st.d	t3, reg, n+24;	\
++	st.d	t4, reg, n+32;	\
++	st.d	t5, reg, n+40;	\
++	st.d	t6, reg, n+48;	\
++	st.d	t7, reg, n+56;
++
++#define LDST_1024		\
++	LD_64(a1, 0);		\
++	ST_64(a0, 0);		\
++	LD_64(a1, 64);		\
++	ST_64(a0, 64);		\
++	LD_64(a1, 128);		\
++	ST_64(a0, 128);		\
++	LD_64(a1, 192);		\
++	ST_64(a0, 192);		\
++	LD_64(a1, 256);		\
++	ST_64(a0, 256);		\
++	LD_64(a1, 320);		\
++	ST_64(a0, 320);		\
++	LD_64(a1, 384);		\
++	ST_64(a0, 384);		\
++	LD_64(a1, 448);		\
++	ST_64(a0, 448);		\
++	LD_64(a1, 512);		\
++	ST_64(a0, 512);		\
++	LD_64(a1, 576);		\
++	ST_64(a0, 576);		\
++	LD_64(a1, 640);		\
++	ST_64(a0, 640);		\
++	LD_64(a1, 704);		\
++	ST_64(a0, 704);		\
++	LD_64(a1, 768);		\
++	ST_64(a0, 768);		\
++	LD_64(a1, 832);		\
++	ST_64(a0, 832);		\
++	LD_64(a1, 896);		\
++	ST_64(a0, 896);		\
++	LD_64(a1, 960);		\
++	ST_64(a0, 960);
++
++#define LDST_1024_BACK		\
++	LD_64(a4, -64);		\
++	ST_64(a3, -64);		\
++	LD_64(a4, -128);	\
++	ST_64(a3, -128);	\
++	LD_64(a4, -192);	\
++	ST_64(a3, -192);	\
++	LD_64(a4, -256);	\
++	ST_64(a3, -256);	\
++	LD_64(a4, -320);	\
++	ST_64(a3, -320);	\
++	LD_64(a4, -384);	\
++	ST_64(a3, -384);	\
++	LD_64(a4, -448);	\
++	ST_64(a3, -448);	\
++	LD_64(a4, -512);	\
++	ST_64(a3, -512);	\
++	LD_64(a4, -576);	\
++	ST_64(a3, -576);	\
++	LD_64(a4, -640);	\
++	ST_64(a3, -640);	\
++	LD_64(a4, -704);	\
++	ST_64(a3, -704);	\
++	LD_64(a4, -768);	\
++	ST_64(a3, -768);	\
++	LD_64(a4, -832);	\
++	ST_64(a3, -832);	\
++	LD_64(a4, -896);	\
++	ST_64(a3, -896);	\
++	LD_64(a4, -960);	\
++	ST_64(a3, -960);	\
++	LD_64(a4, -1024);	\
++	ST_64(a3, -1024);
+ 
+ #ifdef ANDROID_CHANGES
+ LEAF(MEMMOVE_NAME, 0)
+@@ -131,358 +131,358 @@ LEAF(MEMMOVE_NAME)
+ /* 3rd var: size_t num */
+ /* t0~t9 registers as temp */
+ 
+-    add.d   a4, a1, a2
+-    add.d   a3, a0, a2
+-    beq     a1, a0, less_1bytes
+-    move    t8, a0
+-    srai.d  a6, a2, 4       	#num/16
+-    beqz    a6, less_16bytes	#num<16
+-    srai.d  a6, a2, 6		#num/64
+-    bnez    a6, more_64bytes	#num>64
+-    srai.d  a6, a2, 5
+-    beqz    a6, less_32bytes	#num<32
+-
+-    ld.d    t0, a1, 0		#32<num<64
+-    ld.d    t1, a1, 8
+-    ld.d    t2, a1, 16
+-    ld.d    t3, a1, 24
+-    ld.d    t4, a4, -32
+-    ld.d    t5, a4, -24
+-    ld.d    t6, a4, -16
+-    ld.d    t7, a4, -8
+-    st.d    t0, a0, 0
+-    st.d    t1, a0, 8
+-    st.d    t2, a0, 16
+-    st.d    t3, a0, 24
+-    st.d    t4, a3, -32
+-    st.d    t5, a3, -24
+-    st.d    t6, a3, -16
+-    st.d    t7, a3, -8
+-
+-    jr      ra
++	add.d		a4, a1, a2
++	add.d		a3, a0, a2
++	beq		a1, a0, less_1bytes
++	move		t8, a0
++	srai.d		a6, a2, 4		#num/16
++	beqz		a6, less_16bytes	#num<16
++	srai.d		a6, a2, 6		#num/64
++	bnez		a6, more_64bytes	#num>64
++	srai.d		a6, a2, 5
++	beqz		a6, less_32bytes	#num<32
++
++	ld.d		t0, a1, 0		#32<num<64
++	ld.d		t1, a1, 8
++	ld.d		t2, a1, 16
++	ld.d		t3, a1, 24
++	ld.d		t4, a4, -32
++	ld.d		t5, a4, -24
++	ld.d		t6, a4, -16
++	ld.d		t7, a4, -8
++	st.d		t0, a0, 0
++	st.d		t1, a0, 8
++	st.d		t2, a0, 16
++	st.d		t3, a0, 24
++	st.d		t4, a3, -32
++	st.d		t5, a3, -24
++	st.d		t6, a3, -16
++	st.d		t7, a3, -8
++
++	jr		ra
+ 
+ less_32bytes:
+-    ld.d    t0, a1, 0
+-    ld.d    t1, a1, 8
+-    ld.d    t2, a4, -16
+-    ld.d    t3, a4, -8
+-    st.d    t0, a0, 0
+-    st.d    t1, a0, 8
+-    st.d    t2, a3, -16
+-    st.d    t3, a3, -8
++	ld.d		t0, a1, 0
++	ld.d		t1, a1, 8
++	ld.d		t2, a4, -16
++	ld.d		t3, a4, -8
++	st.d		t0, a0, 0
++	st.d		t1, a0, 8
++	st.d		t2, a3, -16
++	st.d		t3, a3, -8
+ 
+-    jr      ra
++	jr		ra
+ 
+ less_16bytes:
+-    srai.d  a6, a2, 3		#num/8
+-    beqz    a6, less_8bytes
++	srai.d		a6, a2, 3		#num/8
++	beqz		a6, less_8bytes
+ 
+-    ld.d    t0, a1, 0
+-    ld.d    t1, a4, -8
+-    st.d    t0, a0, 0
+-    st.d    t1, a3, -8
++	ld.d		t0, a1, 0
++	ld.d		t1, a4, -8
++	st.d		t0, a0, 0
++	st.d		t1, a3, -8
+ 
+-    jr      ra
++	jr		ra
+ 
+ less_8bytes:
+-    srai.d  a6, a2, 2
+-    beqz    a6, less_4bytes
++	srai.d		a6, a2, 2
++	beqz		a6, less_4bytes
+ 
+-    ld.w    t0, a1, 0
+-    ld.w    t1, a4, -4
+-    st.w    t0, a0, 0
+-    st.w    t1, a3, -4
++	ld.w		t0, a1, 0
++	ld.w		t1, a4, -4
++	st.w		t0, a0, 0
++	st.w		t1, a3, -4
+ 
+-    jr      ra
++	jr		ra
+ 
+ less_4bytes:
+-    srai.d  a6, a2, 1
+-    beqz    a6, less_2bytes
++	srai.d		a6, a2, 1
++	beqz		a6, less_2bytes
+ 
+-    ld.h    t0, a1, 0
+-    ld.h    t1, a4, -2
+-    st.h    t0, a0, 0
+-    st.h    t1, a3, -2
++	ld.h		t0, a1, 0
++	ld.h		t1, a4, -2
++	st.h		t0, a0, 0
++	st.h		t1, a3, -2
+ 
+-    jr      ra
++	jr		ra
+ 
+ less_2bytes:
+-    beqz    a2, less_1bytes
++	beqz		a2, less_1bytes
+ 
+-    ld.b    t0, a1, 0
+-    st.b    t0, a0, 0
++	ld.b		t0, a1, 0
++	st.b		t0, a0, 0
+ 
+-    jr      ra
++	jr		ra
+ 
+ less_1bytes:
+-    jr      ra
++	jr		ra
+ 
+ more_64bytes:
+-    sub.d   a7, a0, a1
+-    bltu    a7, a2, copy_backward
++	sub.d		a7, a0, a1
++	bltu		a7, a2, copy_backward
+ 
+ copy_forward:
+-    srli.d  a0, a0, 3
+-    slli.d  a0, a0, 3
+-    beq     a0, t8, all_align
+-    addi.d  a0, a0, 0x8
+-    sub.d   a7, t8, a0
+-    sub.d   a1, a1, a7
+-    add.d   a2, a7, a2
++	srli.d		a0, a0, 3
++	slli.d		a0, a0, 3
++	beq		a0, t8, all_align
++	addi.d		a0, a0, 0x8
++	sub.d		a7, t8, a0
++	sub.d		a1, a1, a7
++	add.d		a2, a7, a2
+ 
+ start_unalign_proc:
+-    pcaddi  t1, 18
+-    slli.d  a6, a7, 3
+-    add.d   t1, t1, a6
+-    jirl    zero, t1, 0
++	pcaddi		t1, 18
++	slli.d		a6, a7, 3
++	add.d		t1, t1, a6
++	jirl		zero, t1, 0
+ 
+ start_7_unalign:
+-    ld.b    t0, a1, -7
+-    st.b    t0, a0, -7
++	ld.b		t0, a1, -7
++	st.b		t0, a0, -7
+ start_6_unalign:
+-    ld.b    t0, a1, -6
+-    st.b    t0, a0, -6
++	ld.b		t0, a1, -6
++	st.b		t0, a0, -6
+ start_5_unalign:
+-    ld.b    t0, a1, -5
+-    st.b    t0, a0, -5
++	ld.b		t0, a1, -5
++	st.b		t0, a0, -5
+ start_4_unalign:
+-    ld.b    t0, a1, -4
+-    st.b    t0, a0, -4
++	ld.b		t0, a1, -4
++	st.b		t0, a0, -4
+ start_3_unalign:
+-    ld.b    t0, a1, -3
+-    st.b    t0, a0, -3
++	ld.b		t0, a1, -3
++	st.b		t0, a0, -3
+ start_2_unalign:
+-    ld.b    t0, a1, -2
+-    st.b    t0, a0, -2
++	ld.b		t0, a1, -2
++	st.b		t0, a0, -2
+ start_1_unalign:
+-    ld.b    t0, a1, -1
+-    st.b    t0, a0, -1
++	ld.b		t0, a1, -1
++	st.b		t0, a0, -1
+ 
+ start_over:
+-    addi.d  a2, a2, -0x80
+-    blt     a2, zero, end_unalign_proc
++	addi.d		a2, a2, -0x80
++	blt		a2, zero, end_unalign_proc
+ 
+ loop_less:
+-    LD_64(a1, 0)
+-    ST_64(a0, 0)
+-    LD_64(a1, 64)
+-    ST_64(a0, 64)
++	LD_64(a1, 0)
++	ST_64(a0, 0)
++	LD_64(a1, 64)
++	ST_64(a0, 64)
+ 
+-    addi.d  a0, a0,  0x80
+-    addi.d  a1, a1,  0x80
+-    addi.d  a2, a2, -0x80
+-    bge     a2, zero, loop_less
++	addi.d		a0, a0,  0x80
++	addi.d		a1, a1,  0x80
++	addi.d		a2, a2, -0x80
++	bge		a2, zero, loop_less
+ 
+ end_unalign_proc:
+-    addi.d  a2, a2, 0x80
++	addi.d		a2, a2, 0x80
+ 
+-    pcaddi  t1, 36
+-    andi    t2, a2, 0x78
+-    add.d   a1, a1, t2
+-    add.d   a0, a0, t2
+-    sub.d   t1, t1, t2
+-    jirl    zero, t1, 0
++	pcaddi		t1, 36
++	andi		t2, a2, 0x78
++	add.d		a1, a1, t2
++	add.d		a0, a0, t2
++	sub.d		t1, t1, t2
++	jirl		zero, t1, 0
+ 
+ end_120_128_unalign:
+-    ld.d    t0, a1, -120
+-    st.d    t0, a0, -120
++	ld.d		t0, a1, -120
++	st.d		t0, a0, -120
+ end_112_120_unalign:
+-    ld.d    t0, a1, -112
+-    st.d    t0, a0, -112
++	ld.d		t0, a1, -112
++	st.d		t0, a0, -112
+ end_104_112_unalign:
+-    ld.d    t0, a1, -104
+-    st.d    t0, a0, -104
++	ld.d		t0, a1, -104
++	st.d		t0, a0, -104
+ end_96_104_unalign:
+-    ld.d    t0, a1, -96
+-    st.d    t0, a0, -96
++	ld.d		t0, a1, -96
++	st.d		t0, a0, -96
+ end_88_96_unalign:
+-    ld.d    t0, a1, -88
+-    st.d    t0, a0, -88
++	ld.d		t0, a1, -88
++	st.d		t0, a0, -88
+ end_80_88_unalign:
+-    ld.d    t0, a1, -80
+-    st.d    t0, a0, -80
++	ld.d		t0, a1, -80
++	st.d		t0, a0, -80
+ end_72_80_unalign:
+-    ld.d    t0, a1, -72
+-    st.d    t0, a0, -72
++	ld.d		t0, a1, -72
++	st.d		t0, a0, -72
+ end_64_72_unalign:
+-    ld.d    t0, a1, -64
+-    st.d    t0, a0, -64
++	ld.d		t0, a1, -64
++	st.d		t0, a0, -64
+ end_56_64_unalign:
+-    ld.d    t0, a1, -56
+-    st.d    t0, a0, -56
++	ld.d		t0, a1, -56
++	st.d		t0, a0, -56
+ end_48_56_unalign:
+-    ld.d    t0, a1, -48
+-    st.d    t0, a0, -48
++	ld.d		t0, a1, -48
++	st.d		t0, a0, -48
+ end_40_48_unalign:
+-    ld.d    t0, a1, -40
+-    st.d    t0, a0, -40
++	ld.d		t0, a1, -40
++	st.d		t0, a0, -40
+ end_32_40_unalign:
+-    ld.d    t0, a1, -32
+-    st.d    t0, a0, -32
++	ld.d		t0, a1, -32
++	st.d		t0, a0, -32
+ end_24_32_unalign:
+-    ld.d    t0, a1, -24
+-    st.d    t0, a0, -24
++	ld.d		t0, a1, -24
++	st.d		t0, a0, -24
+ end_16_24_unalign:
+-    ld.d    t0, a1, -16
+-    st.d    t0, a0, -16
++	ld.d		t0, a1, -16
++	st.d		t0, a0, -16
+ end_8_16_unalign:
+-    ld.d    t0, a1, -8
+-    st.d    t0, a0, -8
++	ld.d		t0, a1, -8
++	st.d		t0, a0, -8
+ end_0_8_unalign:
+-    andi    a2, a2, 0x7
+-    pcaddi  t1, 18
+-    slli.d  a2, a2, 3
+-    sub.d   t1, t1, a2
+-    jirl    zero, t1, 0
++	andi		a2, a2, 0x7
++	pcaddi		t1, 18
++	slli.d		a2, a2, 3
++	sub.d		t1, t1, a2
++	jirl		zero, t1, 0
+ end_7_unalign:
+-    ld.b    t0, a4, -7
+-    st.b    t0, a3, -7
++	ld.b		t0, a4, -7
++	st.b		t0, a3, -7
+ end_6_unalign:
+-    ld.b    t0, a4, -6
+-    st.b    t0, a3, -6
++	ld.b		t0, a4, -6
++	st.b		t0, a3, -6
+ end_5_unalign:
+-    ld.b    t0, a4, -5
+-    st.b    t0, a3, -5
++	ld.b		t0, a4, -5
++	st.b		t0, a3, -5
+ end_4_unalign:
+-    ld.b    t0, a4, -4
+-    st.b    t0, a3, -4
++	ld.b		t0, a4, -4
++	st.b		t0, a3, -4
+ end_3_unalign:
+-    ld.b    t0, a4, -3
+-    st.b    t0, a3, -3
++	ld.b		t0, a4, -3
++	st.b		t0, a3, -3
+ end_2_unalign:
+-    ld.b    t0, a4, -2
+-    st.b    t0, a3, -2
++	ld.b		t0, a4, -2
++	st.b		t0, a3, -2
+ end_1_unalign:
+-    ld.b    t0, a4, -1
+-    st.b    t0, a3, -1
++	ld.b		t0, a4, -1
++	st.b		t0, a3, -1
+ end:
+-    move    v0, t8
+-    jr      ra
++	move		v0, t8
++	jr		ra
+ 
+ all_align:
+-    addi.d  a1, a1, 0x8
+-    addi.d  a0, a0, 0x8
+-    ld.d    t0, a1, -8
+-    st.d    t0, a0, -8
+-    addi.d  a2, a2, -8
+-    b       start_over
++	addi.d		a1, a1, 0x8
++	addi.d		a0, a0, 0x8
++	ld.d		t0, a1, -8
++	st.d		t0, a0, -8
++	addi.d		a2, a2, -8
++	b		start_over
+ 
+ all_align_back:
+-    addi.d  a4, a4, -0x8
+-    addi.d  a3, a3, -0x8
+-    ld.d    t0, a4, 0
+-    st.d    t0, a3, 0
+-    addi.d  a2, a2, -8
+-    b       start_over_back
++	addi.d		a4, a4, -0x8
++	addi.d		a3, a3, -0x8
++	ld.d		t0, a4, 0
++	st.d		t0, a3, 0
++	addi.d		a2, a2, -8
++	b		start_over_back
+ 
+ copy_backward:
+-    move    a5, a3
+-    srli.d  a3, a3, 3
+-    slli.d  a3, a3, 3
+-    beq     a3, a5, all_align_back
+-    sub.d   a7, a3, a5
+-    add.d   a4, a4, a7
+-    add.d   a2, a7, a2
+-
+-    pcaddi  t1, 18
+-    slli.d  a6, a7, 3
+-    add.d   t1, t1, a6
+-    jirl    zero, t1, 0
+-
+-    ld.b    t0, a4, 6
+-    st.b    t0, a3, 6
+-    ld.b    t0, a4, 5
+-    st.b    t0, a3, 5
+-    ld.b    t0, a4, 4
+-    st.b    t0, a3, 4
+-    ld.b    t0, a4, 3
+-    st.b    t0, a3, 3
+-    ld.b    t0, a4, 2
+-    st.b    t0, a3, 2
+-    ld.b    t0, a4, 1
+-    st.b    t0, a3, 1
+-    ld.b    t0, a4, 0
+-    st.b    t0, a3, 0
++	move		a5, a3
++	srli.d		a3, a3, 3
++	slli.d		a3, a3, 3
++	beq		a3, a5, all_align_back
++	sub.d		a7, a3, a5
++	add.d		a4, a4, a7
++	add.d		a2, a7, a2
++
++	pcaddi		t1, 18
++	slli.d		a6, a7, 3
++	add.d		t1, t1, a6
++	jirl		zero, t1, 0
++
++	ld.b		t0, a4, 6
++	st.b		t0, a3, 6
++	ld.b		t0, a4, 5
++	st.b		t0, a3, 5
++	ld.b		t0, a4, 4
++	st.b		t0, a3, 4
++	ld.b		t0, a4, 3
++	st.b		t0, a3, 3
++	ld.b		t0, a4, 2
++	st.b		t0, a3, 2
++	ld.b		t0, a4, 1
++	st.b		t0, a3, 1
++	ld.b		t0, a4, 0
++	st.b		t0, a3, 0
+ 
+ start_over_back:
+-    addi.d  a2, a2, -0x80
+-    blt     a2, zero, end_unalign_proc_back
++	addi.d		a2, a2, -0x80
++	blt		a2, zero, end_unalign_proc_back
+ 
+ loop_less_back:
+-    LD_64(a4, -64)
+-    ST_64(a3, -64)
+-    LD_64(a4, -128)
+-    ST_64(a3, -128)
++	LD_64(a4, -64)
++	ST_64(a3, -64)
++	LD_64(a4, -128)
++	ST_64(a3, -128)
+ 
+-    addi.d a4, a4, -0x80
+-    addi.d a3, a3, -0x80
+-    addi.d a2, a2, -0x80
+-    bge    a2, zero, loop_less_back
++	addi.d		a4, a4, -0x80
++	addi.d		a3, a3, -0x80
++	addi.d		a2, a2, -0x80
++	bge		a2, zero, loop_less_back
+ 
+ end_unalign_proc_back:
+-    addi.d  a2, a2, 0x80
+-
+-    pcaddi  t1, 36
+-    andi    t2, a2, 0x78
+-    sub.d   a4, a4, t2
+-    sub.d   a3, a3, t2
+-    sub.d   t1, t1, t2
+-    jirl    zero, t1, 0
+-
+-    ld.d    t0, a4, 112
+-    st.d    t0, a3, 112
+-    ld.d    t0, a4, 104
+-    st.d    t0, a3, 104
+-    ld.d    t0, a4, 96
+-    st.d    t0, a3, 96
+-    ld.d    t0, a4, 88
+-    st.d    t0, a3, 88
+-    ld.d    t0, a4, 80
+-    st.d    t0, a3, 80
+-    ld.d    t0, a4, 72
+-    st.d    t0, a3, 72
+-    ld.d    t0, a4, 64
+-    st.d    t0, a3, 64
+-    ld.d    t0, a4, 56
+-    st.d    t0, a3, 56
+-    ld.d    t0, a4, 48
+-    st.d    t0, a3, 48
+-    ld.d    t0, a4, 40
+-    st.d    t0, a3, 40
+-    ld.d    t0, a4, 32
+-    st.d    t0, a3, 32
+-    ld.d    t0, a4, 24
+-    st.d    t0, a3, 24
+-    ld.d    t0, a4, 16
+-    st.d    t0, a3, 16
+-    ld.d    t0, a4, 8
+-    st.d    t0, a3, 8
+-    ld.d    t0, a4, 0
+-    st.d    t0, a3, 0
+-
+-    andi    a2, a2, 0x7
+-    pcaddi  t1, 18
+-    slli.d  a2, a2, 3
+-    sub.d   t1, t1, a2
+-    jirl    zero, t1, 0
+-
+-    ld.b    t0, a1, 6
+-    st.b    t0, a0, 6
+-    ld.b    t0, a1, 5
+-    st.b    t0, a0, 5
+-    ld.b    t0, a1, 4
+-    st.b    t0, a0, 4
+-    ld.b    t0, a1, 3
+-    st.b    t0, a0, 3
+-    ld.b    t0, a1, 2
+-    st.b    t0, a0, 2
+-    ld.b    t0, a1, 1
+-    st.b    t0, a0, 1
+-    ld.b    t0, a1, 0
+-    st.b    t0, a0, 0
+-
+-    move    v0, t8
+-    jr      ra
++	addi.d		a2, a2, 0x80
++
++	pcaddi		t1, 36
++	andi		t2, a2, 0x78
++	sub.d		a4, a4, t2
++	sub.d		a3, a3, t2
++	sub.d		t1, t1, t2
++	jirl		zero, t1, 0
++
++	ld.d		t0, a4, 112
++	st.d		t0, a3, 112
++	ld.d		t0, a4, 104
++	st.d		t0, a3, 104
++	ld.d		t0, a4, 96
++	st.d		t0, a3, 96
++	ld.d		t0, a4, 88
++	st.d		t0, a3, 88
++	ld.d		t0, a4, 80
++	st.d		t0, a3, 80
++	ld.d		t0, a4, 72
++	st.d		t0, a3, 72
++	ld.d		t0, a4, 64
++	st.d		t0, a3, 64
++	ld.d		t0, a4, 56
++	st.d		t0, a3, 56
++	ld.d		t0, a4, 48
++	st.d		t0, a3, 48
++	ld.d		t0, a4, 40
++	st.d		t0, a3, 40
++	ld.d		t0, a4, 32
++	st.d		t0, a3, 32
++	ld.d		t0, a4, 24
++	st.d		t0, a3, 24
++	ld.d		t0, a4, 16
++	st.d		t0, a3, 16
++	ld.d		t0, a4, 8
++	st.d		t0, a3, 8
++	ld.d		t0, a4, 0
++	st.d		t0, a3, 0
++
++	andi		a2, a2, 0x7
++	pcaddi		t1, 18
++	slli.d		a2, a2, 3
++	sub.d		t1, t1, a2
++	jirl		zero, t1, 0
++
++	ld.b		t0, a1, 6
++	st.b		t0, a0, 6
++	ld.b		t0, a1, 5
++	st.b		t0, a0, 5
++	ld.b		t0, a1, 4
++	st.b		t0, a0, 4
++	ld.b		t0, a1, 3
++	st.b		t0, a0, 3
++	ld.b		t0, a1, 2
++	st.b		t0, a0, 2
++	ld.b		t0, a1, 1
++	st.b		t0, a0, 1
++	ld.b		t0, a1, 0
++	st.b		t0, a0, 0
++
++	move		v0, t8
++	jr		ra
+ 
+ END(MEMMOVE_NAME)
+ #ifndef ANDROID_CHANGES
+diff --git a/sysdeps/loongarch/lp64/memset.S b/sysdeps/loongarch/lp64/memset.S
+index e3d91d8992..341de8c6c4 100644
+--- a/sysdeps/loongarch/lp64/memset.S
++++ b/sysdeps/loongarch/lp64/memset.S
+@@ -33,149 +33,149 @@
+ #endif
+ 
+ #define ST_128(n)   \
+-    st.d    a1, a0, n;       \
+-    st.d    a1, a0, n+8  ;   \
+-    st.d    a1, a0, n+16 ;   \
+-    st.d    a1, a0, n+24 ;   \
+-    st.d    a1, a0, n+32 ;   \
+-    st.d    a1, a0, n+40 ;   \
+-    st.d    a1, a0, n+48 ;   \
+-    st.d    a1, a0, n+56 ;   \
+-    st.d    a1, a0, n+64 ;   \
+-    st.d    a1, a0, n+72 ;   \
+-    st.d    a1, a0, n+80 ;   \
+-    st.d    a1, a0, n+88 ;   \
+-    st.d    a1, a0, n+96 ;   \
+-    st.d    a1, a0, n+104;   \
+-    st.d    a1, a0, n+112;   \
+-    st.d    a1, a0, n+120;   \
+-
+-/* 1st var: void    *str  $4	a0 */
+-/* 2nd var: int	    val   $5	a1 */
+-/* 3rd var: size_t  num	  $6	a2 */
++	st.d	a1, a0, n;	\
++	st.d	a1, a0, n+8  ;	\
++	st.d	a1, a0, n+16 ;	\
++	st.d	a1, a0, n+24 ;	\
++	st.d	a1, a0, n+32 ;	\
++	st.d	a1, a0, n+40 ;	\
++	st.d	a1, a0, n+48 ;	\
++	st.d	a1, a0, n+56 ;	\
++	st.d	a1, a0, n+64 ;	\
++	st.d	a1, a0, n+72 ;	\
++	st.d	a1, a0, n+80 ;	\
++	st.d	a1, a0, n+88 ;	\
++	st.d	a1, a0, n+96 ;	\
++	st.d	a1, a0, n+104;	\
++	st.d	a1, a0, n+112;	\
++	st.d	a1, a0, n+120;
++
++/* 1st var: void	*str	$4	a0 */
++/* 2nd var: int		val	$5	a1 */
++/* 3rd var: size_t	num	$6	a2 */
+ 
+ LEAF(MEMSET)
+ 
+ memset:
+-    .align    6
+-
+-    bstrins.d a1, a1, 15, 8
+-    add.d     t7, a0, a2
+-    bstrins.d a1, a1, 31, 16
+-    move      t0, a0
+-    bstrins.d a1, a1, 63, 32
+-    srai.d    t8, a2, 4	     #num/16
+-    beqz      t8, less_16bytes      #num<16
+-    srai.d    t8, a2, 6	     #num/64
+-    bnez      t8, more_64bytes      #num>64
+-    srai.d    t8, a2, 5	     #num/32
+-    beqz      t8, less_32bytes      #num<32
+-    st.d      a1, a0, 0	     #32<num<64
+-    st.d      a1, a0, 8
+-    st.d      a1, a0, 16
+-    st.d      a1, a0, 24
+-    st.d      a1, t7, -32
+-    st.d      a1, t7, -24
+-    st.d      a1, t7, -16
+-    st.d      a1, t7, -8
+-    jr	       ra
++	.align		6
++
++	bstrins.d	a1, a1, 15, 8
++	add.d		t7, a0, a2
++	bstrins.d	a1, a1, 31, 16
++	move		t0, a0
++	bstrins.d	a1, a1, 63, 32
++	srai.d		t8, a2, 4		#num/16
++	beqz		t8, less_16bytes	#num<16
++	srai.d		t8, a2, 6		#num/64
++	bnez		t8, more_64bytes	#num>64
++	srai.d		t8, a2, 5		#num/32
++	beqz		t8, less_32bytes	#num<32
++	st.d		a1, a0, 0		#32<num<64
++	st.d		a1, a0, 8
++	st.d		a1, a0, 16
++	st.d		a1, a0, 24
++	st.d		a1, t7, -32
++	st.d		a1, t7, -24
++	st.d		a1, t7, -16
++	st.d		a1, t7, -8
++	jr		ra
+ 
+ less_32bytes:
+-    st.d      a1, a0, 0
+-    st.d      a1, a0, 8
+-    st.d      a1, t7, -16
+-    st.d      a1, t7, -8
+-    jr	       ra
++	st.d		a1, a0, 0
++	st.d		a1, a0, 8
++	st.d		a1, t7, -16
++	st.d		a1, t7, -8
++	jr		ra
+ 
+ less_16bytes:
+-    srai.d    t8, a2, 3	     #num/8
+-    beqz      t8, less_8bytes
+-    st.d      a1, a0, 0
+-    st.d      a1, t7, -8
+-    jr	       ra
++	srai.d		t8, a2, 3		 #num/8
++	beqz		t8, less_8bytes
++	st.d		a1, a0, 0
++	st.d		a1, t7, -8
++	jr		ra
+ 
+ less_8bytes:
+-    srai.d    t8, a2, 2
+-    beqz      t8, less_4bytes
+-    st.w      a1, a0, 0
+-    st.w      a1, t7, -4
+-    jr	       ra
++	srai.d		t8, a2, 2
++	beqz		t8, less_4bytes
++	st.w		a1, a0, 0
++	st.w		a1, t7, -4
++	jr		ra
+ 
+ less_4bytes:
+-    srai.d    t8, a2, 1
+-    beqz      t8, less_2bytes
+-    st.h      a1, a0, 0
+-    st.h      a1, t7, -2
+-    jr	       ra
++	srai.d		t8, a2, 1
++	beqz		t8, less_2bytes
++	st.h		a1, a0, 0
++	st.h		a1, t7, -2
++	jr		ra
+ 
+ less_2bytes:
+-    beqz      a2, less_1bytes
+-    st.b      a1, a0, 0
+-    jr	       ra
++	beqz		a2, less_1bytes
++	st.b		a1, a0, 0
++	jr		ra
+ 
+ less_1bytes:
+-    jr	       ra
++	jr		ra
+ 
+ more_64bytes:
+-    srli.d    a0, a0, 3
+-    slli.d    a0, a0, 3
+-    addi.d    a0, a0, 0x8
+-    st.d      a1, t0, 0
+-    sub.d     t2, t0, a0
+-    add.d     a2, t2, a2
++	srli.d		a0, a0, 3
++	slli.d		a0, a0, 3
++	addi.d		a0, a0, 0x8
++	st.d		a1, t0, 0
++	sub.d		t2, t0, a0
++	add.d		a2, t2, a2
+ 
+-    addi.d    a2, a2, -0x80
+-    blt       a2, zero, end_unalign_proc
++	addi.d		a2, a2, -0x80
++	blt		a2, zero, end_unalign_proc
+ 
+ loop_less:
+-    ST_128(0)
+-    addi.d    a0, a0,  0x80
+-    addi.d    a2, a2, -0x80
+-    bge       a2, zero, loop_less
++	ST_128(0)
++	addi.d		a0, a0,  0x80
++	addi.d		a2, a2, -0x80
++	bge		a2, zero, loop_less
+ 
+ end_unalign_proc:
+-    addi.d    a2, a2, 0x80
++	addi.d		a2, a2, 0x80
+ 
+-    pcaddi    t1, 20
+-    andi      t5, a2, 0x78
+-    srli.d    t5, t5, 1
+-    sub.d     t1, t1, t5
+-    jirl      zero, t1, 0
++	pcaddi		t1, 20
++	andi		t5, a2, 0x78
++	srli.d		t5, t5, 1
++	sub.d		t1, t1, t5
++	jirl		zero, t1, 0
+ 
+ end_120_128_unalign:
+-    st.d      a1, a0, 112
++	st.d		a1, a0, 112
+ end_112_120_unalign:
+-    st.d      a1, a0, 104
++	st.d		a1, a0, 104
+ end_104_112_unalign:
+-    st.d      a1, a0, 96
++	st.d		a1, a0, 96
+ end_96_104_unalign:
+-    st.d      a1, a0, 88
++	st.d		a1, a0, 88
+ end_88_96_unalign:
+-    st.d      a1, a0, 80
++	st.d		a1, a0, 80
+ end_80_88_unalign:
+-    st.d      a1, a0, 72
++	st.d		a1, a0, 72
+ end_72_80_unalign:
+-    st.d      a1, a0, 64
++	st.d		a1, a0, 64
+ end_64_72_unalign:
+-    st.d      a1, a0, 56
++	st.d		a1, a0, 56
+ end_56_64_unalign:
+-    st.d      a1, a0, 48
++	st.d		a1, a0, 48
+ end_48_56_unalign:
+-    st.d      a1, a0, 40
++	st.d		a1, a0, 40
+ end_40_48_unalign:
+-    st.d      a1, a0, 32
++	st.d		a1, a0, 32
+ end_32_40_unalign:
+-    st.d      a1, a0, 24
++	st.d		a1, a0, 24
+ end_24_32_unalign:
+-    st.d      a1, a0, 16
++	st.d		a1, a0, 16
+ end_16_24_unalign:
+-    st.d      a1, a0, 8
++	st.d		a1, a0, 8
+ end_8_16_unalign:
+-    st.d      a1, a0, 0
++	st.d		a1, a0, 0
+ end_0_8_unalign:
+-    st.d      a1, t7, -8
+-    move      v0, t0
+-    jr	       ra
++	st.d		a1, t7, -8
++	move		v0, t0
++	jr		ra
+ 
+ END(MEMSET)
+ 
+diff --git a/sysdeps/loongarch/lp64/s_cosf.S b/sysdeps/loongarch/lp64/s_cosf.S
+index af37320bfc..bc4edec86b 100644
+--- a/sysdeps/loongarch/lp64/s_cosf.S
++++ b/sysdeps/loongarch/lp64/s_cosf.S
+@@ -70,365 +70,398 @@
+ #define COSF __cosf
+ 
+ #define LOADFD(rd, rs, label) \
+-    la.local	rs, label;\
+-    fld.d	rd, rs, 0
++	la.local	rs, label;\
++	fld.d		rd, rs, 0
+ 
+ #define LOADFS(rd, rs, label) \
+-    la.local	rs, label;\
+-    fld.s	rd, rs, 0
++	la.local	rs, label;\
++	fld.s		rd, rs, 0
+ 
+ #define FTOL(rd, rs, tmp) \
+-    ftintrz.l.d tmp, rs;\
+-    movfr2gr.d	rd, tmp
++	ftintrz.l.d	tmp, rs;\
++	movfr2gr.d	rd, tmp
+ 
+ #define FTOW(rd, rs, tmp) \
+-    ftintrz.w.d tmp, rs;\
+-    movfr2gr.s	rd, tmp
++	ftintrz.w.d	tmp, rs;\
++	movfr2gr.s	rd, tmp
+ 
+ #define WTOF(rd, rs, tmp) \
+-    movgr2fr.w	tmp, rs;\
+-    ffint.d.w	rd, tmp
++	movgr2fr.w	tmp, rs;\
++	ffint.d.w	rd, tmp
+ 
+ #define LTOF(rd, rs, tmp) \
+-    movgr2fr.d	tmp, rs;\
+-    ffint.d.l	rd, tmp
++	movgr2fr.d	tmp, rs;\
++	ffint.d.l	rd, tmp
+ 
+ LEAF(COSF)
+-    .align	2
+-    .align	3
++	.align		2
++	.align		3
++
+ /* fa0 is SP x; fa1 is DP x */
+-    movfr2gr.s	t0, fa0			   /* Bits of x */
+-    fcvt.d.s	fa1, fa0		   /* DP x */
+-    li.w	t1, 0x7fffffff
+-    and 	t0, t0, t1		   /* |x| */
+-    li.w	t1, 0x3f490fdb		   /* const Pi/4 */
+-    bltu	t0, t1, L(arg_less_pio4)   /* |x| < Pi/4 branch */
+-    li.w	t1, 0x40e231d6		   /* 9*Pi/4 */
+-    la.local	t4, L(DP_)		   /*DP_ base addr*/
+-    bgeu	t0, t1, L(greater_or_equal_9pio4)    /* |x| >= 9*Pi/4 branch */
++	movfr2gr.s	t0, fa0			/* Bits of x */
++	fcvt.d.s	fa1, fa0		/* DP x */
++	li.w		t1, 0x7fffffff
++	and		t0, t0, t1		/* |x| */
++	li.w		t1, 0x3f490fdb		/* const Pi/4 */
++	bltu		t0, t1, L(arg_less_pio4)/* |x| < Pi/4 branch */
++	li.w		t1, 0x40e231d6		/* 9*Pi/4 */
++	la.local	t4, L(DP_)		/*DP_ base addr*/
++
++	/* |x| >= 9*Pi/4 branch */
++	bgeu		t0, t1, L(greater_or_equal_9pio4)
++
+ /* L(median_args): */
+-    /* Here if Pi/4<=|x|<9*Pi/4 */
+-    fabs.d	fa0, fa1		   /* DP |x| */
+-    fld.d	fa1, t4, 56		   /* 4/Pi */
+-    fmul.d	fa1, fa1, fa0		   /* DP |x|/(Pi/4) */
+-    FTOW(t0, fa1, fa1)			   /* k=trunc(|x|/(Pi/4)) */
+-    la.local	t1, L(PIO2J)		   /* base addr of PIO2J table */
+-    addi.w	t0, t0, 1		   /* k+1 */
+-    bstrpick.d	t2, t0, 3, 1		   /* j=n/2 */
+-    alsl.d	t1, t2, t1, 3
+-    fld.d	fa1, t1, 0		   /* j*Pi/2 */
+-    addi.w	t0, t0, 2		   /* n = k+3 */
+-    fsub.d	fa0, fa0, fa1		   /* t = |x| - j * Pi/2 */
++	/* Here if Pi/4<=|x|<9*Pi/4 */
++	fabs.d		fa0, fa1		/* DP |x| */
++	fld.d		fa1, t4, 56		/* 4/Pi */
++	fmul.d		fa1, fa1, fa0		/* DP |x|/(Pi/4) */
++	FTOW(t0, fa1, fa1)			/* k=trunc(|x|/(Pi/4)) */
++	la.local	t1, L(PIO2J)		/* base addr of PIO2J table */
++	addi.w		t0, t0, 1		/* k+1 */
++	bstrpick.d	t2, t0, 3, 1		/* j=n/2 */
++	alsl.d		t1, t2, t1, 3
++	fld.d		fa1, t1, 0		/* j*Pi/2 */
++	addi.w		t0, t0, 2		/* n = k+3 */
++	fsub.d		fa0, fa0, fa1		/* t = |x| - j * Pi/2 */
++
+ /* Input: t0=n fa0=t*/
+ L(reduced):
++
+ /* Here if cos(x) calculated using cos(t) polynomial for |t|<Pi/4:
+-    * y = t*t; z = y*y;
+-    * s = sign(x) * (-1.0)^((n>>2)&1)
+-    * result = s * (1.0+t^2*(C0+t^2*(C1+t^2*(C2+t^2*(C3+t^2*C4)))))
+-
+-    * Here if cos(x) calculated using sin(t) polynomial for |t|<Pi/4:
+-    * y = t*t; z = y*y;
+-    * s = sign(x) * (-1.0)^((n>>2)&1)
+-    * result = s * t * (1.0+t^2*(S0+t^2*(S1+t^2*(S2+t^2*(S3+t^2*S4)))))
+-    */
++	* y = t*t; z = y*y;
++	* s = sign(x) * (-1.0)^((n>>2)&1)
++	* result = s * (1.0+t^2*(C0+t^2*(C1+t^2*(C2+t^2*(C3+t^2*C4)))))
++
++	* Here if cos(x) calculated using sin(t) polynomial for |t|<Pi/4:
++	* y = t*t; z = y*y;
++	* s = sign(x) * (-1.0)^((n>>2)&1)
++	* result = s * t * (1.0+t^2*(S0+t^2*(S1+t^2*(S2+t^2*(S3+t^2*S4)))))
++	*/
+ /* TODO: what is the best order ??? */
+ /* load-to-use latency, hardware module usage, integer pipeline & float
+  * pipeline */
+ /* cancel branch */
+-    slli.w	t0, t0, 1	   	/* (n << 1) */
+-    andi	t1, t0, 4	   	/* (n << 1) & 4 */
+-    alsl.d	t2, t1, t4, 4	   	/* adjust to DP_C or DP_S */
+-    fld.d	fa3, t2, 32	   	/* C4 */
+-    andi	t0, t0, 8	   	/* =====> (n << 1) & 8 */
+-    fmul.d	fa1, fa0, fa0	   	/* y=x^2 */
+-    fld.d	fa4, t2, 16	   	/* C2 */
+-    fmul.d	fa2, fa1, fa1	   	/* z=x^4 */
+-    fld.d	fa5, t2, 24	   	/* C3 */
+-    la.local	t3, L(DP_ONES)	   	/* =====> DP_ONES */
+-    fld.d	fa6, t2, 8	   	/* C1 */
+-    fmadd.d	fa4, fa2, fa3, fa4 	/* cx = C2+z*C4 */
+-    fld.d	fa3, t2, 0	   	/* C0 */
+-    fmadd.d	fa5, fa2, fa5, fa6 	/* cy = C1+z*C3 */
+-    fld.d	fa6, t3, 0	   	/* one */
+-    fmadd.d	fa4, fa2, fa4, fa3 	/* cx = C0+z*cx */
+-    add.d	t0, t0, t3	   	/* =====> addr */
+-    fmadd.d	fa4, fa1, fa5, fa4 	/* cx = cx+y*cy */
+-    fld.d	fa2, t0, 0	   	/* sign */
+-    fmadd.d	fa4, fa4, fa1, fa6 	/* 1.0+y*cx */
+-    fmul.d	fa1, fa2, fa4	   	/* sign * cx */
+-    bnez	t1, L_return
+-    /* t*s, where s = sign(x) * (-1.0)^((n>>2)&1) */
+-    fmul.d	fa1, fa1, fa0
++	slli.w		t0, t0, 1		/* (n << 1) */
++	andi		t1, t0, 4		/* (n << 1) & 4 */
++	alsl.d		t2, t1, t4, 4		/* adjust to DP_C or DP_S */
++	fld.d		fa3, t2, 32		/* C4 */
++	andi		t0, t0, 8		/* =====> (n << 1) & 8 */
++	fmul.d		fa1, fa0, fa0		/* y=x^2 */
++	fld.d		fa4, t2, 16		/* C2 */
++	fmul.d		fa2, fa1, fa1		/* z=x^4 */
++	fld.d		fa5, t2, 24		/* C3 */
++	la.local	t3, L(DP_ONES)		/* =====> DP_ONES */
++	fld.d		fa6, t2, 8		/* C1 */
++	fmadd.d		fa4, fa2, fa3, fa4	/* cx = C2+z*C4 */
++	fld.d		fa3, t2, 0		/* C0 */
++	fmadd.d		fa5, fa2, fa5, fa6	/* cy = C1+z*C3 */
++	fld.d		fa6, t3, 0		/* one */
++	fmadd.d		fa4, fa2, fa4, fa3	/* cx = C0+z*cx */
++	add.d		t0, t0, t3		/* =====> addr */
++	fmadd.d		fa4, fa1, fa5, fa4	/* cx = cx+y*cy */
++	fld.d		fa2, t0, 0		/* sign */
++	fmadd.d		fa4, fa4, fa1, fa6	/* 1.0+y*cx */
++	fmul.d		fa1, fa2, fa4		/* sign * cx */
++	bnez		t1, L_return
++
++	/* t*s, where s = sign(x) * (-1.0)^((n>>2)&1) */
++	fmul.d		fa1, fa1, fa0
+ L_return:
+-    fcvt.s.d	fa0, fa1 /* SP result */
+-    jr		ra
++	fcvt.s.d	fa0, fa1 /* SP result */
++	jr		ra
+ 
+ L(greater_or_equal_9pio4):
++
+ /* Here if |x|>=9*Pi/4 */
+-    li.w	t1, 0x7f800000			 /* x is Inf or NaN?  */
+-    bgeu	t0, t1, L(inf_or_nan)		 /* |x| >= Inf branch */
++	li.w		t1, 0x7f800000		/* x is Inf or NaN?  */
++	bgeu		t0, t1, L(inf_or_nan)	/* |x| >= Inf branch */
++
+ /* Here if finite |x|>=9*Pi/4 */
+-    li.w	t1, 0x4b000000			 /* 2^23  */
+-    bgeu	t0, t1, L(greater_or_equal_2p23) /* |x| >= 2^23 branch */
++	li.w		t1, 0x4b000000		/* 2^23  */
++	/* |x| >= 2^23 branch */
++	bgeu		t0, t1, L(greater_or_equal_2p23)
++
+ /* Here if 9*Pi/4<=|x|<2^23 */
+-    fabs.d	fa0, fa1			 /* DP |x| */
+-    fld.d	fa1, t4, 56
+-    fmul.d	fa1, fa1, fa0			 /* |x|/(Pi/4) */
+-    FTOW(t0, fa1, fa1)			/* k=trunc(|x|/(Pi/4)) */
+-    addi.w	t0, t0, 1		/* k+1 */
+-    srli.w	t1, t0, 1		/* x=n/2 */
+-    WTOF(fa1, t1, fa1)			/* DP x */
+-    fld.d	fa2, t4, 104		/* -PIO2HI = high part of -Pi/2 */
+-    fld.d	fa3, t4, 112		/* -PIO2LO = low part of -Pi/2 */
+-    fmadd.d	fa0, fa2, fa1, fa0	/* |x| - x*PIO2HI */
+-    addi.w	t0, t0, 2		/* n = k+3 */
+-    fmadd.d	fa0, fa3, fa1, fa0	/* |x| - x*PIO2HI - x*PIO2LO */
+-    b		L(reduced)
++	fabs.d		fa0, fa1	/* DP |x| */
++	fld.d		fa1, t4, 56
++	fmul.d		fa1, fa1, fa0	/* |x|/(Pi/4) */
++	FTOW(t0, fa1, fa1)		/* k=trunc(|x|/(Pi/4)) */
++	addi.w		t0, t0, 1	/* k+1 */
++	srli.w		t1, t0, 1	/* x=n/2 */
++	WTOF(fa1, t1, fa1)		/* DP x */
++	fld.d		fa2, t4, 104	/* -PIO2HI = high part of -Pi/2 */
++	fld.d		fa3, t4, 112	/* -PIO2LO = low part of -Pi/2 */
++	fmadd.d		fa0, fa2, fa1, fa0	/* |x| - x*PIO2HI */
++	addi.w		t0, t0, 2		/* n = k+3 */
++	fmadd.d		fa0, fa3, fa1, fa0	/* |x| - x*PIO2HI - x*PIO2LO */
++	b		L(reduced)
+ 
+ L(greater_or_equal_2p23):
++
+ /* Here if finite |x|>=2^23 */
+-    fabs.s	fa5, fa0		/* SP |x| */
++	fabs.s		fa5, fa0		/* SP |x| */
++
+ /* bitpos = (ix>>23) - BIAS_32; */
+ /*TODO???srai.w eb = biased exponent of x */
+-    srli.w	t0, t0, 23
++	srli.w		t0, t0, 23
++
+ /* bitpos = eb - 0x7f + 59, where 0x7f is exponent bias */
+-    addi.w	t0, t0, -124		/* t0 = bitpos */
++	addi.w		t0, t0, -124		/* t0 = bitpos */
++
+ /* t3= j = bitpos/28 */
+ /* x/28 = (x * ((0x100000000 / 28) + 1)) >> 32 */
+-    li.w	t1, 0x924924a
+-    mulh.wu	t0, t1, t0
+-    fcvt.d.s	fa5, fa5	     	/* Convert to double */
++	li.w		t1, 0x924924a
++	mulh.wu		t0, t1, t0
++	fcvt.d.s	fa5, fa5		/* Convert to double */
++
+ /* TODO: what is the best order ??? */
+-    la.local	t1, L(invpio4_table) 	/* t2 */
+-    alsl.d	t1, t0, t1, 3
+-    fld.d	fa0, t1, 0	     	/* invpio4_table[j] */
+-    fld.d	fa1, t1, 8	     	/* invpio4_table[j+1] */
+-    fmul.d	fa0, fa0, fa5	     	/* a = invpio4_table[j]*|x| */
+-    fld.d	fa2, t1, 16	     	/* invpio4_table[j+2] */
+-    fmul.d	fa1, fa1, fa5	     	/* b = invpio4_table[j+1]*|x| */
+-    fld.d	fa3, t1, 24	     	/* invpio4_table[j+3] */
+-    fmul.d	fa2, fa2, fa5	     	/* c = invpio4_table[j+2]*|x| */
+-    fmul.d	fa3, fa3, fa5	     	/* d = invpio4_table[j+3]*|x| */
++	la.local	t1, L(invpio4_table) 	/* t2 */
++	alsl.d		t1, t0, t1, 3
++	fld.d		fa0, t1, 0	/* invpio4_table[j] */
++	fld.d		fa1, t1, 8	/* invpio4_table[j+1] */
++	fmul.d		fa0, fa0, fa5	/* a = invpio4_table[j]*|x| */
++	fld.d		fa2, t1, 16	/* invpio4_table[j+2] */
++	fmul.d		fa1, fa1, fa5	/* b = invpio4_table[j+1]*|x| */
++	fld.d		fa3, t1, 24	/* invpio4_table[j+3] */
++	fmul.d		fa2, fa2, fa5	/* c = invpio4_table[j+2]*|x| */
++	fmul.d		fa3, fa3, fa5	/* d = invpio4_table[j+3]*|x| */
++
+ /*TODO: overflow check*/
+ /*uint64_t l = a; TODO: change the order*/
+-    FTOL(t0, fa0, fa4)
+-    li.w	t1, -8		     	/* 0xfffffffffffffff8 */
+-    and 	t0, t0, t1	     	/* l &= ~0x7; */
+-    LTOF(fa4, t0, fa4)	     		/* DP l */
+-    fsub.d	fa0, fa0, fa4	     	/* a -= l; */
+-    fadd.d	fa4, fa0, fa1	     	/* fa4 double e = a + b; */
++
++	FTOL(t0, fa0, fa4)
++	li.w		t1, -8		/* 0xfffffffffffffff8 */
++	and 		t0, t0, t1	/* l &= ~0x7; */
++	LTOF(fa4, t0, fa4)		/* DP l */
++	fsub.d		fa0, fa0, fa4	/* a -= l; */
++	fadd.d		fa4, fa0, fa1	/* fa4 double e = a + b; */
++
+ /*TODO: overflow check*/
+-    FTOL(t0, fa4, fa4)	     		/* uint64_t l = e; */
+-    andi	t2, t0, 1	     	/* l & 1 TODO: change the order */
+-    LOADFD(fa5, t1, L(DP_ONES))    	/* fa5 = 1.0 */
+-    LTOF(fa4, t0, fa4)	     		/* fa4 DP l */
++	FTOL(t0, fa4, fa4)		/* uint64_t l = e; */
++	andi		t2, t0, 1	/* l & 1 TODO: change the order */
++	LOADFD(fa5, t1, L(DP_ONES))	/* fa5 = 1.0 */
++	LTOF(fa4, t0, fa4)		/* fa4 DP l */
++
+ /* critical!!!! the order */
+-    fsub.d	fa0, fa0, fa4
+-    fld.d	fa4, t4, 120	     	/* PI_4 */
+-    beqz	t2, L_even_integer
++	fsub.d		fa0, fa0, fa4
++	fld.d		fa4, t4, 120	/* PI_4 */
++	beqz		t2, L_even_integer
++
+ /*L_odd_integer:*/
+-    fsub.d	fa0, fa0, fa5
+-    fadd.d	fa0, fa0, fa1
+-    fadd.d	fa2, fa2, fa3
+-    fadd.d	fa0, fa0, fa2
+-    addi.d	t0, t0, 3
+-    fmul.d	fa0, fa0, fa4
+-    b		L(reduced)
++	fsub.d		fa0, fa0, fa5
++	fadd.d		fa0, fa0, fa1
++	fadd.d		fa2, fa2, fa3
++	fadd.d		fa0, fa0, fa2
++	addi.d		t0, t0, 3
++	fmul.d		fa0, fa0, fa4
++	b		L(reduced)
+ L_even_integer:
+-    fadd.d	fa0, fa0, fa1
+-    fadd.d	fa2, fa2, fa3
+-    fadd.d	fa0, fa0, fa2
+-    fcmp.sle.d	$fcc0, fa0, fa5
+-    addi.d	t0, t0, 3
+-    bcnez	$fcc0, L_leq_one
++	fadd.d		fa0, fa0, fa1
++	fadd.d		fa2, fa2, fa3
++	fadd.d		fa0, fa0, fa2
++	fcmp.sle.d	$fcc0, fa0, fa5
++	addi.d		t0, t0, 3
++	bcnez		$fcc0, L_leq_one
++
+ /*L_gt_one:*/
+-    fld.d	fa2, t1, 16	     	/* 2.0 */
+-    addi.d	t0, t0, 1
+-    fsub.d	fa0, fa0, fa2
++	fld.d		fa2, t1, 16		/* 2.0 */
++	addi.d		t0, t0, 1
++	fsub.d		fa0, fa0, fa2
+ L_leq_one:
+-    fmul.d	fa0, fa0, fa4
+-    b		L(reduced)
++	fmul.d		fa0, fa0, fa4
++	b		L(reduced)
+ 
+ L(arg_less_pio4):
++
+ /* Here if |x|<Pi/4 */
+-    li.w	t1, 0x3d000000       	/* const 2^-5 */
+-    blt 	t0, t1, L(less_2pn5)   	/* |x| < 2^-5 branch */
++	li.w		t1, 0x3d000000		/* const 2^-5 */
++	blt 		t0, t1, L(less_2pn5)	/* |x| < 2^-5 branch */
++
+ /* Here if 2^-5<=|x|<Pi/4 */
+ /*
+  * Chebyshev polynomial of the form:
+  * 1.0+x^2*(C0+x^2*(C1+x^2*(C2+x^2*(C3+x^2*C4)))).
+  */
+-    la.local	t0, L(DP_)		/* DP_ base addr */
+-    fld.d	fa3, t0, 96		/* C4 */
+-    fmul.d	fa1, fa1, fa1		/* y=x^2 */
+-    fld.d	fa4, t0, 80		/* C2 */
+-    fmul.d	fa2, fa1, fa1		/* z=x^4 */
+-    fld.d	fa5, t0, 88		/* C3 */
+-    fld.d	fa6, t0, 72		/* C1 */
+-    fmadd.d	fa0, fa2, fa3, fa4	/* cx = C2+z*C4 */
+-    fld.d	fa3, t0, 64		/* C0 */
+-    fmadd.d	fa5, fa2, fa5, fa6	/* cy = C1+z*C3 */
+-    la.local	t0, L(DP_ONES)
+-    fmadd.d	fa0, fa0, fa2, fa3	/* cx = C0+z*cx */
+-    fld.d	fa2, t0, 0		/* 1.0 */
+-    fmadd.d	fa0, fa1, fa5, fa0	/* cx = cx+y*cy */
+-    fmadd.d	fa0, fa0, fa1, fa2	/* 1.0+y*cx */
+-    /*
+-    fld.d	fa6, t0, 96
+-    fld.d	fa5, t0, 88
+-    fld.d	fa4, t0, 80
+-    fmul.d	fa1, fa1, fa1
+-    fld.d	fa3, t0, 72
+-    fld.d	fa2, t0, 64
+-    la.local	t0, L(DP_ONES)
+-    fld.d	fa6, t0, 0
+-    fmadd.d	fa0, fa1, fa5, fa0
+-    fmadd.d	fa0, fa1, fa4, fa0
+-    fmadd.d	fa0, fa1, fa3, fa0
+-    fmadd.d	fa0, fa1, fa2, fa0
+-    fmadd.d	fa0, fa1, fa5, fa4
+-    */
+-    fcvt.s.d	fa0, fa0
+-    jr		ra
++	la.local	t0, L(DP_)		/* DP_ base addr */
++	fld.d		fa3, t0, 96		/* C4 */
++	fmul.d		fa1, fa1, fa1		/* y=x^2 */
++	fld.d		fa4, t0, 80		/* C2 */
++	fmul.d		fa2, fa1, fa1		/* z=x^4 */
++	fld.d		fa5, t0, 88		/* C3 */
++	fld.d		fa6, t0, 72		/* C1 */
++	fmadd.d		fa0, fa2, fa3, fa4	/* cx = C2+z*C4 */
++	fld.d		fa3, t0, 64		/* C0 */
++	fmadd.d		fa5, fa2, fa5, fa6	/* cy = C1+z*C3 */
++	la.local	t0, L(DP_ONES)
++	fmadd.d		fa0, fa0, fa2, fa3	/* cx = C0+z*cx */
++	fld.d		fa2, t0, 0		/* 1.0 */
++	fmadd.d		fa0, fa1, fa5, fa0	/* cx = cx+y*cy */
++	fmadd.d		fa0, fa0, fa1, fa2	/* 1.0+y*cx */
++
++	/*
++	fld.d	fa6, t0, 96
++	fld.d	fa5, t0, 88
++	fld.d	fa4, t0, 80
++	fmul.d	fa1, fa1, fa1
++	fld.d	fa3, t0, 72
++	fld.d	fa2, t0, 64
++	la.local	t0, L(DP_ONES)
++	fld.d	fa6, t0, 0
++	fmadd.d	fa0, fa1, fa5, fa0
++	fmadd.d	fa0, fa1, fa4, fa0
++	fmadd.d	fa0, fa1, fa3, fa0
++	fmadd.d	fa0, fa1, fa2, fa0
++	fmadd.d	fa0, fa1, fa5, fa4
++	*/
++
++	fcvt.s.d	fa0, fa0
++	jr		ra
+ 
+ L(less_2pn5):
++
+ /* Here if |x|<2^-5 */
+-    li.w	t1, 0x32000000		/* 2^-27? */
+-    blt 	t0, t1, L(less_2pn27)
++	li.w		t1, 0x32000000		/* 2^-27? */
++	blt 		t0, t1, L(less_2pn27)
++
+ /* Here if 2^-27<=|x|<2^-5 */
+-    fmul.d	fa0, fa1, fa1		/* theta2=x^2 */
+-    la.local	t0, L(DP_)
+-    fld.d	fa2, t0, 48		/* DP_COS2_1 */
+-    fmul.d	fa1, fa1, fa0		/* x*theta2 */
+-    fld.d	fa3, t0, 40		/* DP_COS2_0 */
+-    la.local	t0, L(DP_ONES)
+-    fld.d	fa4, t0, 0		/* 1.0 */
+-    fmadd.d	fa1, fa1, fa2, fa3	/* DP_COS2_0+x^2*DP_COS2_1 */
+-    fmadd.d	fa0, fa0, fa1, fa4	/* cx = 1.0 + theta2 * cx */
+-    fcvt.s.d	fa0, fa0
+-    jr		ra
++	fmul.d		fa0, fa1, fa1		/* theta2=x^2 */
++	la.local	t0, L(DP_)
++	fld.d		fa2, t0, 48		/* DP_COS2_1 */
++	fmul.d		fa1, fa1, fa0		/* x*theta2 */
++	fld.d		fa3, t0, 40		/* DP_COS2_0 */
++	la.local	t0, L(DP_ONES)
++	fld.d		fa4, t0, 0		/* 1.0 */
++	fmadd.d		fa1, fa1, fa2, fa3	/* DP_COS2_0+x^2*DP_COS2_1 */
++	fmadd.d		fa0, fa0, fa1, fa4	/* cx = 1.0 + theta2 * cx */
++	fcvt.s.d	fa0, fa0
++	jr		ra
+ 
+ L(less_2pn27):
++
+ /* Here if |x|<2^-27 */
+-    fabs.s	fa0, fa0
+-    LOADFS(fa1, t0, L(SP_ONE))		/* 1.0 */
+-    fsub.s	fa0, fa1, fa0		/* 1.0 - abstheta */
++	fabs.s		fa0, fa0
++	LOADFS(fa1, t0, L(SP_ONE))		/* 1.0 */
++	fsub.s		fa0, fa1, fa0		/* 1.0 - abstheta */
++
+ /* No need to convert */
+-    jr		ra
++	jr		ra
+ 
+ L(inf_or_nan):
++
+ /* Here if |x| is Inf or NAN */
+-    bne 	t0, t1, L_skip_errno_setting	/* in case of x is NaN */
+-    la.tls.ie	t0, errno
+-    li.w	t1, 0x21
+-    stx.w	t1, t0, tp
++	/* in case of x is NaN */
++	bne		t0, t1, L_skip_errno_setting
++	la.tls.ie	t0, errno
++	li.w		t1, 0x21
++	stx.w		t1, t0, tp
+ L_skip_errno_setting:
++
+ /* Here if |x| is Inf or NAN.  Continued.  */
+-    fsub.s	fa0, fa0, fa0		/* Result is NaN */
+-    jr		ra
++	fsub.s		fa0, fa0, fa0		/* Result is NaN */
++	jr		ra
+ END(COSF)
+ 
+-    .section .rodata
+-    .align 3
+-    .type L(PIO2J), @object
+-    .size L(PIO2J), 48
++	.section .rodata
++	.align		3
++	.type		L(PIO2J), @object
++	.size		L(PIO2J), 48
+ L(PIO2J):		/* Table of j*Pi/2, for j=0,1,..,5 */
+-    .word   0x00000000
+-    .word   0x00000000
+-    .word   0x54442d18
+-    .word   0x3ff921fb
+-    .word   0x54442d18
+-    .word   0x400921fb
+-    .word   0x7f3321d2
+-    .word   0x4012d97c
+-    .word   0x54442d18
+-    .word   0x401921fb
+-    .word   0x2955385e
+-    .word   0x401f6a7a
+-
+-    .align 3
+-    .type L(invpio4_table), @object
+-    .size L(invpio4_table), 64
++	.word	0x00000000
++	.word	0x00000000
++	.word	0x54442d18
++	.word	0x3ff921fb
++	.word	0x54442d18
++	.word	0x400921fb
++	.word	0x7f3321d2
++	.word	0x4012d97c
++	.word	0x54442d18
++	.word	0x401921fb
++	.word	0x2955385e
++	.word	0x401f6a7a
++
++	.align		3
++	.type		L(invpio4_table), @object
++	.size		L(invpio4_table), 64
+ L(invpio4_table):	/* 4/Pi broken into sum of positive DP values */
+-    .word   0x00000000
+-    .word   0x00000000
+-    .word   0x6c000000
+-    .word   0x3ff45f30
+-    .word   0x2a000000
+-    .word   0x3e3c9c88
+-    .word   0xa8000000
+-    .word   0x3c54fe13
+-    .word   0xd0000000
+-    .word   0x3aaf47d4
+-    .word   0x6c000000
+-    .word   0x38fbb81b
+-    .word   0xe0000000
+-    .word   0x3714acc9
+-    .word   0x7c000000
+-    .word   0x3560e410
++	.word	0x00000000
++	.word	0x00000000
++	.word	0x6c000000
++	.word	0x3ff45f30
++	.word	0x2a000000
++	.word	0x3e3c9c88
++	.word	0xa8000000
++	.word	0x3c54fe13
++	.word	0xd0000000
++	.word	0x3aaf47d4
++	.word	0x6c000000
++	.word	0x38fbb81b
++	.word	0xe0000000
++	.word	0x3714acc9
++	.word	0x7c000000
++	.word	0x3560e410
+ 
+ /* Coefficients of polynomial
+-    for sin(x)~=x+x^3*DP_SIN2_0+x^5*DP_SIN2_1, |x|<2^-5.
++	for sin(x)~=x+x^3*DP_SIN2_0+x^5*DP_SIN2_1, |x|<2^-5.
+  */
+ /* Coefficients of polynomial
+-    for sin(t)~=t+t^3*(S0+t^2*(S1+t^2*(S2+t^2*(S3+t^2*S4)))), |t|<Pi/4.
+-    for cos(t)~=1.0+t^2*(C0+t^2*(C1+t^2*(C2+t^2*(C3+t^2*C4)))), |t|<Pi/4.
++	for sin(t)~=t+t^3*(S0+t^2*(S1+t^2*(S2+t^2*(S3+t^2*S4)))), |t|<Pi/4.
++	for cos(t)~=1.0+t^2*(C0+t^2*(C1+t^2*(C2+t^2*(C3+t^2*C4)))), |t|<Pi/4.
+  */
+ 
+-    .align 3
+-    .type L(DP_), @object
+-    .size L(DP_), 128
++	.align		3
++	.type		L(DP_), @object
++	.size		L(DP_), 128
+ L(DP_):
+-    .word   0x55551cd9
+-    .word   0xbfc55555		/* S0 */
+-    .word   0x10c2688b
+-    .word   0x3f811111		/* S1 */
+-    .word   0x8b4bd1f9
+-    .word   0xbf2a019f		/* S2 */
+-    .word   0x64e6b5b4
+-    .word   0x3ec71d72		/* S3 */
+-    .word   0x1674b58a
+-    .word   0xbe5a947e		/* S4 */
+-    .word   0xff5cc6fd
+-    .word   0xbfdfffff		/* CC0 +40 */
+-    .word   0xb178dac5
+-    .word   0x3fa55514		/* CC1 +48 */
+-    .word   0x6dc9c883
+-    .word   0x3ff45f30		/* inv_PI_4 */
+-    .word   0xfffe98ae
+-    .word   0xbfdfffff		/* C0 */
+-    .word   0x545c50c7
+-    .word   0x3fa55555		/* C1 */
+-    .word   0x348b6874
+-    .word   0xbf56c16b		/* C2 */
+-    .word   0x9ac43cc0
+-    .word   0x3efa00eb		/* C3 */
+-    .word   0xdd8844d7
+-    .word   0xbe923c97		/* C4 */
+-    .word   0x54400000
+-    .word   0xbff921fb		/* PI_2_hi */
+-    .word   0x1a626332
+-    .word   0xbdd0b461		/* PI_2_lo */
+-    .word   0x54442d18
+-    .word   0x3fe921fb		/* PI_4 */
+-
+-    .align 3
+-    .type L(DP_ONES), @object
+-    .size L(DP_ONES), 24
++	.word	0x55551cd9
++	.word	0xbfc55555		/* S0 */
++	.word	0x10c2688b
++	.word	0x3f811111		/* S1 */
++	.word	0x8b4bd1f9
++	.word	0xbf2a019f		/* S2 */
++	.word	0x64e6b5b4
++	.word	0x3ec71d72		/* S3 */
++	.word	0x1674b58a
++	.word	0xbe5a947e		/* S4 */
++	.word	0xff5cc6fd
++	.word	0xbfdfffff		/* CC0 +40 */
++	.word	0xb178dac5
++	.word	0x3fa55514		/* CC1 +48 */
++	.word	0x6dc9c883
++	.word	0x3ff45f30		/* inv_PI_4 */
++	.word	0xfffe98ae
++	.word	0xbfdfffff		/* C0 */
++	.word	0x545c50c7
++	.word	0x3fa55555		/* C1 */
++	.word	0x348b6874
++	.word	0xbf56c16b		/* C2 */
++	.word	0x9ac43cc0
++	.word	0x3efa00eb		/* C3 */
++	.word	0xdd8844d7
++	.word	0xbe923c97		/* C4 */
++	.word	0x54400000
++	.word	0xbff921fb		/* PI_2_hi */
++	.word	0x1a626332
++	.word	0xbdd0b461		/* PI_2_lo */
++	.word	0x54442d18
++	.word	0x3fe921fb		/* PI_4 */
++
++	.align		3
++	.type		L(DP_ONES), @object
++	.size		L(DP_ONES), 24
+ L(DP_ONES):
+-    .word   0x00000000
+-    .word   0x3ff00000		/* +1.0 */
+-    .word   0x00000000
+-    .word   0xbff00000		/* -1.0 */
+-    .word   0x00000000
+-    .word   0x40000000		/* +2.0 */
+-
+-    .align 2
++	.word	0x00000000
++	.word	0x3ff00000		/* +1.0 */
++	.word	0x00000000
++	.word	0xbff00000		/* -1.0 */
++	.word	0x00000000
++	.word	0x40000000		/* +2.0 */
++
++	.align		2
+ L(SP_INVPIO4):
+-    .word   0x3fa2f983		/* 4/Pi */
++	.word	0x3fa2f983		/* 4/Pi */
+ 
+-    .align 2
++	.align		2
+ L(SP_ONE):
+-    .word   0x3f800000		/* 1.0 */
++	.word	0x3f800000		/* 1.0 */
+ 
+ libm_alias_float (__cos, cos)
+diff --git a/sysdeps/loongarch/lp64/s_sinf.S b/sysdeps/loongarch/lp64/s_sinf.S
+index 22ad3e28bc..0606877e57 100644
+--- a/sysdeps/loongarch/lp64/s_sinf.S
++++ b/sysdeps/loongarch/lp64/s_sinf.S
+@@ -70,64 +70,69 @@
+ #define SINF __sinf
+ 
+ #define LOADFD(rd, rs, label) \
+-    la.local	rs, label;\
+-    fld.d	rd, rs, 0
++	la.local	rs, label;\
++	fld.d		rd, rs, 0
+ 
+ #define LOADFS(rd, rs, label) \
+-    la.local	rs, label;\
+-    fld.s	rd, rs, 0
++	la.local	rs, label;\
++	fld.s		rd, rs, 0
+ 
+ #define FTOL(rd, rs, tmp) \
+-    ftintrz.l.d tmp, rs;\
+-    movfr2gr.d	rd, tmp
++	ftintrz.l.d	tmp, rs;\
++	movfr2gr.d	rd, tmp
+ 
+ #define FTOW(rd, rs, tmp) \
+-    ftintrz.w.d tmp, rs;\
+-    movfr2gr.s	rd, tmp
++	ftintrz.w.d	tmp, rs;\
++	movfr2gr.s	rd, tmp
+ 
+ #define WTOF(rd, rs, tmp) \
+-    movgr2fr.w	tmp, rs;\
+-    ffint.d.w	rd, tmp
++	movgr2fr.w	tmp, rs;\
++	ffint.d.w	rd, tmp
+ 
+ #define LTOF(rd, rs, tmp) \
+-    movgr2fr.d	tmp, rs;\
+-    ffint.d.l	rd, tmp
++	movgr2fr.d	tmp, rs;\
++	ffint.d.l	rd, tmp
+ 
+ LEAF(SINF)
+-    .align	2
+-    .align	3
++	.align		2
++	.align		3
++
+ /* fa0 is SP x; fa1 is DP x */
+-    movfr2gr.s	t2, fa0				  /* Bits of x */
+-    fcvt.d.s	fa1, fa0			  /* DP x */
+-    li.w	t1, 0x7fffffff
+-    and 	t0, t2, t1			  /* |x| */
+-    li.w	t1, 0x3f490fdb			  /* const Pi/4 */
+-    bltu	t0, t1, L(arg_less_pio4)	  /* |x| < Pi/4 branch */
+-    li.w	t1, 0x40e231d6			  /* 9*Pi/4 */
+-    la.local	t4, L(DP_)			  /* DP_ base addr */
+-    bstrpick.d	t5, t2, 31, 31			  /* sign of x */
+-    slli.w	t5, t5, 3
+-    bgeu	t0, t1, L(greater_or_equal_9pio4) /* |x| >= 9*Pi/4 branch */
++	movfr2gr.s	t2, fa0			/* Bits of x */
++	fcvt.d.s	fa1, fa0		/* DP x */
++	li.w		t1, 0x7fffffff
++	and 		t0, t2, t1		/* |x| */
++	li.w		t1, 0x3f490fdb		/* const Pi/4 */
++	bltu		t0, t1, L(arg_less_pio4)/* |x| < Pi/4 branch */
++	li.w		t1, 0x40e231d6		/* 9*Pi/4 */
++	la.local	t4, L(DP_)		/* DP_ base addr */
++	bstrpick.d	t5, t2, 31, 31		/* sign of x */
++	slli.w		t5, t5, 3
++
++	/* |x| >= 9*Pi/4 branch */
++	bgeu		t0, t1, L(greater_or_equal_9pio4)
++
+ /* L(median_args): */
+ /* Here if Pi/4<=|x|<9*Pi/4 */
+-    fabs.d	fa0, fa1			  /* DP |x| */
+-    fld.d	fa1, t4, 56			  /* 4/Pi */
+-    fmul.d	fa1, fa1, fa0			  /* DP |x|/(Pi/4) */
+-    FTOW(t0, fa1, fa1)				  /* k=trunc(|x|/(Pi/4)) */
+-    la.local	t1, L(PIO2J)			  /* base addr of PIO2J table */
+-    addi.w	t0, t0, 1			  /* k+1 */
+-    bstrpick.d	t2, t0, 3, 1			  /* j=n/2 */
+-    alsl.d	t1, t2, t1, 3
+-    fld.d	fa1, t1, 0			  /* j*Pi/2 */
+-    fsub.d	fa0, fa0, fa1			  /* t = |x| - j * Pi/2 */
++	fabs.d		fa0, fa1		/* DP |x| */
++	fld.d		fa1, t4, 56		/* 4/Pi */
++	fmul.d		fa1, fa1, fa0		/* DP |x|/(Pi/4) */
++	FTOW(t0, fa1, fa1)			/* k=trunc(|x|/(Pi/4)) */
++	la.local	t1, L(PIO2J)		/* base addr of PIO2J table */
++	addi.w		t0, t0, 1		/* k+1 */
++	bstrpick.d	t2, t0, 3, 1		/* j=n/2 */
++	alsl.d		t1, t2, t1, 3
++	fld.d		fa1, t1, 0		/* j*Pi/2 */
++	fsub.d		fa0, fa0, fa1		/* t = |x| - j * Pi/2 */
++
+ /* Input: t0=n fa0=t*/
+ /* Input: t0=n fa0=t, t5=sign(x) */
+ L(reduced):
++
+ /* Here if cos(x) calculated using cos(t) polynomial for |t|<Pi/4:
+  * y = t*t; z = y*y;
+  * s = sign(x) * (-1.0)^((n>>2)&1)
+  * result = s * (1.0+t^2*(C0+t^2*(C1+t^2*(C2+t^2*(C3+t^2*C4)))))
+-
+  * Here if cos(x) calculated using sin(t) polynomial for |t|<Pi/4:
+  * y = t*t; z = y*y;
+  * s = sign(x) * (-1.0)^((n>>2)&1)
+@@ -137,277 +142,306 @@ L(reduced):
+ /* load-to-use latency, hardware module usage, integer pipeline & float
+ pipeline */
+ /* cancel branch */
+-    slli.w	t0, t0, 1		/* (n << 1) */
+-    andi	t1, t0, 4		/* (n << 1) & 4 */
+-    alsl.d	t2, t1, t4, 4		/* adjust to DP_C or DP_S */
+-    fld.d	fa3, t2, 32		/* C4 */
+-    andi	t0, t0, 8		/* =====> (n << 1) & 8 */
+-    fmul.d	fa1, fa0, fa0		/* y=x^2 */
+-    xor 	t0, t0, t5		/* (-1.0)^((n>>2)&1) XOR sign(x) */
+-    fld.d	fa4, t2, 16		/* C2 */
+-    fmul.d	fa2, fa1, fa1		/* z=x^4 */
+-    fld.d	fa5, t2, 24		/* C3 */
+-    la.local	t3, L(DP_ONES)		/* =====> DP_ONES */
+-    fld.d	fa6, t2, 8		/* C1 */
+-    fmadd.d	fa4, fa2, fa3, fa4	/* cx = C2+z*C4 */
+-    fld.d	fa3, t2, 0		/* C0 */
+-    fmadd.d	fa5, fa2, fa5, fa6	/* cy = C1+z*C3 */
+-    fld.d	fa6, t3, 0		/* 1.0 */
+-    fmadd.d	fa4, fa2, fa4, fa3	/* cx = C0+z*cx */
+-    add.d	t0, t0, t3		/* =====> addr */
+-    fmadd.d	fa4, fa1, fa5, fa4	/* cx = cx+y*cy */
+-    fld.d	fa2, t0, 0		/* sign */
+-    fmadd.d	fa4, fa4, fa1, fa6	/* 1.0+y*cx */
+-    fmul.d	fa1, fa2, fa4		/* sign * cx */
+-    bnez	t1, L_return
+-    /* t*s, where s = sign(x) * (-1.0)^((n>>2)&1) */
+-    fmul.d	fa1, fa1, fa0
++	slli.w		t0, t0, 1	/* (n << 1) */
++	andi		t1, t0, 4	/* (n << 1) & 4 */
++	alsl.d		t2, t1, t4, 4	/* adjust to DP_C or DP_S */
++	fld.d		fa3, t2, 32	/* C4 */
++	andi		t0, t0, 8	/* =====> (n << 1) & 8 */
++	fmul.d		fa1, fa0, fa0	/* y=x^2 */
++	xor		t0, t0, t5	/* (-1.0)^((n>>2)&1) XOR sign(x) */
++	fld.d		fa4, t2, 16	/* C2 */
++	fmul.d		fa2, fa1, fa1	/* z=x^4 */
++	fld.d		fa5, t2, 24	/* C3 */
++	la.local	t3, L(DP_ONES)	/* =====> DP_ONES */
++	fld.d		fa6, t2, 8	/* C1 */
++	fmadd.d		fa4, fa2, fa3, fa4	/* cx = C2+z*C4 */
++	fld.d		fa3, t2, 0		/* C0 */
++	fmadd.d		fa5, fa2, fa5, fa6	/* cy = C1+z*C3 */
++	fld.d		fa6, t3, 0		/* 1.0 */
++	fmadd.d		fa4, fa2, fa4, fa3	/* cx = C0+z*cx */
++	add.d		t0, t0, t3		/* =====> addr */
++	fmadd.d		fa4, fa1, fa5, fa4	/* cx = cx+y*cy */
++	fld.d		fa2, t0, 0		/* sign */
++	fmadd.d		fa4, fa4, fa1, fa6	/* 1.0+y*cx */
++	fmul.d		fa1, fa2, fa4		/* sign * cx */
++	bnez		t1, L_return
++
++	/* t*s, where s = sign(x) * (-1.0)^((n>>2)&1) */
++	fmul.d		fa1, fa1, fa0
++
+ L_return:
+-    fcvt.s.d	fa0, fa1		/* SP result */
+-    jr		ra
++	fcvt.s.d	fa0, fa1		/* SP result */
++	jr		ra
+ 
+ L(greater_or_equal_9pio4):
++
+ /* Here if |x|>=9*Pi/4 */
+-    li.w	t1, 0x7f800000		/* x is Inf or NaN?	*/
+-    bgeu	t0, t1, L(inf_or_nan)	/* |x| >= Inf branch */
++	li.w		t1, 0x7f800000		/* x is Inf or NaN?	*/
++	bgeu		t0, t1, L(inf_or_nan)	/* |x| >= Inf branch */
++
+ /* Here if finite |x|>=9*Pi/4 */
+-    li.w	t1, 0x4b000000		/* 2^23  */
+-    bgeu	t0, t1, L(greater_or_equal_2p23) /* |x| >= 2^23 branch */
++	li.w		t1, 0x4b000000		/* 2^23  */
++
++	/* |x| >= 2^23 branch */
++	bgeu		t0, t1, L(greater_or_equal_2p23)
++
+ /* Here if 9*Pi/4<=|x|<2^23 */
+-    fabs.d	fa0, fa1		/* DP |x| */
+-    fld.d	fa1, t4, 56
+-    fmul.d	fa1, fa1, fa0		/* |x|/(Pi/4) */
+-    FTOW(t0, fa1, fa1)			/* k=trunc(|x|/(Pi/4)) */
+-    addi.w	t0, t0, 1		/* k+1 */
+-    srli.w	t1, t0, 1		/* x=n/2 */
+-    WTOF(fa1, t1, fa1)			/* DP x */
+-    fld.d	fa2, t4, 104		/* -PIO2HI = high part of -Pi/2 */
+-    fld.d	fa3, t4, 112		/* -PIO2LO = low part of -Pi/2 */
+-    fmadd.d	fa0, fa2, fa1, fa0	/* |x| - x*PIO2HI */
+-    fmadd.d	fa0, fa3, fa1, fa0	/* |x| - x*PIO2HI - x*PIO2LO */
+-    b		L(reduced)
++	fabs.d		fa0, fa1	/* DP |x| */
++	fld.d		fa1, t4, 56
++	fmul.d		fa1, fa1, fa0	/* |x|/(Pi/4) */
++	FTOW(t0, fa1, fa1)		/* k=trunc(|x|/(Pi/4)) */
++	addi.w		t0, t0, 1	/* k+1 */
++	srli.w		t1, t0, 1	/* x=n/2 */
++	WTOF(fa1, t1, fa1)		/* DP x */
++	fld.d		fa2, t4, 104	/* -PIO2HI = high part of -Pi/2 */
++	fld.d		fa3, t4, 112	/* -PIO2LO = low part of -Pi/2 */
++	fmadd.d		fa0, fa2, fa1, fa0 /* |x| - x*PIO2HI */
++	fmadd.d		fa0, fa3, fa1, fa0 /* |x| - x*PIO2HI - x*PIO2LO */
++	b		L(reduced)
+ 
+ L(greater_or_equal_2p23):
++
+ /* Here if finite |x|>=2^23 */
+-    fabs.s	fa5, fa0		/* SP |x| */
++	fabs.s		fa5, fa0	/* SP |x| */
++
+ /* bitpos = (ix>>23) - BIAS_32; */
+ /*TODO???srai.w eb = biased exponent of x */
+-    srli.w	t0, t0, 23
++	srli.w		t0, t0, 23
++
+ /* bitpos = eb - 0x7f + 59, where 0x7f is exponent bias */
+-    addi.w	t0, t0, -124		/* t0 = bitpos */
++	addi.w		t0, t0, -124	/* t0 = bitpos */
++
+ /* t3= j = bitpos/28 */
+ /* x/28 = (x * ((0x100000000 / 28) + 1)) >> 32 */
+-    li.w	t1, 0x924924a
+-    mulh.wu	t0, t1, t0
+-    fcvt.d.s	fa5, fa5		/* Convert to double */
++	li.w		t1, 0x924924a
++	mulh.wu		t0, t1, t0
++	fcvt.d.s	fa5, fa5	/* Convert to double */
++
+ /* TODO: what is the best order ??? */
+-    la.local	t1, L(invpio4_table)	/* t2 */
+-    alsl.d	t1, t0, t1, 3
+-    fld.d	fa0, t1, 0		/* invpio4_table[j] */
+-    fld.d	fa1, t1, 8		/* invpio4_table[j+1] */
+-    fmul.d	fa0, fa0, fa5		/* a = invpio4_table[j]*|x| */
+-    fld.d	fa2, t1, 16		/* invpio4_table[j+2] */
+-    fmul.d	fa1, fa1, fa5		/* b = invpio4_table[j+1]*|x| */
+-    fld.d	fa3, t1, 24		/* invpio4_table[j+3] */
+-    fmul.d	fa2, fa2, fa5		/* c = invpio4_table[j+2]*|x| */
+-    fmul.d	fa3, fa3, fa5		/* d = invpio4_table[j+3]*|x| */
++	la.local	t1, L(invpio4_table)/* t2 */
++	alsl.d		t1, t0, t1, 3
++	fld.d		fa0, t1, 0	/* invpio4_table[j] */
++	fld.d		fa1, t1, 8	/* invpio4_table[j+1] */
++	fmul.d		fa0, fa0, fa5	/* a = invpio4_table[j]*|x| */
++	fld.d		fa2, t1, 16	/* invpio4_table[j+2] */
++	fmul.d		fa1, fa1, fa5	/* b = invpio4_table[j+1]*|x| */
++	fld.d		fa3, t1, 24	/* invpio4_table[j+3] */
++	fmul.d		fa2, fa2, fa5	/* c = invpio4_table[j+2]*|x| */
++	fmul.d		fa3, fa3, fa5	/* d = invpio4_table[j+3]*|x| */
++
+ /* TODO: overflow check*/
+ /*uint64_t l = a; TODO: change the order*/
+-    FTOL(t0, fa0, fa4)
+-    li.w	t1, -8			/* 0xfffffffffffffff8 */
+-    and 	t0, t0, t1		/* l &= ~0x7; */
+-    LTOF(fa4, t0, fa4)			/* DP l*/
+-    fsub.d	fa0, fa0, fa4		/* a -= l; */
+-    fadd.d	fa4, fa0, fa1		/* fa4 double e = a + b; */
++	FTOL(t0, fa0, fa4)
++	li.w		t1, -8		/* 0xfffffffffffffff8 */
++	and 		t0, t0, t1	/* l &= ~0x7; */
++	LTOF(fa4, t0, fa4)		/* DP l*/
++	fsub.d		fa0, fa0, fa4	/* a -= l; */
++	fadd.d		fa4, fa0, fa1	/* fa4 double e = a + b; */
++
+ /* TODO: overflow check*/
+-    FTOL(t0, fa4, fa4)			/* uint64_t l = e */
+-    andi	t2, t0, 1		/* l & 1 TODO: change the order */
+-    LOADFD(fa5, t1, L(DP_ONES))	/* fa5 = 1.0 */
+-    LTOF(fa4, t0, fa4)			/* fa4 DP l */
++	FTOL(t0, fa4, fa4)		/* uint64_t l = e */
++	andi		t2, t0, 1	/* l & 1 TODO: change the order */
++	LOADFD(fa5, t1, L(DP_ONES))	/* fa5 = 1.0 */
++	LTOF(fa4, t0, fa4)		/* fa4 DP l */
++
+ /* critical!!!! the order */
+-    fsub.d	fa0, fa0, fa4
+-    fld.d	fa4, t4, 120		/* PI_4 */
+-    beqz	t2, L_even_integer
++	fsub.d		fa0, fa0, fa4
++	fld.d		fa4, t4, 120	/* PI_4 */
++	beqz		t2, L_even_integer
++
+ /*L_odd_integer:*/
+-    fsub.d	fa0, fa0, fa5
+-    fadd.d	fa0, fa0, fa1
+-    fadd.d	fa2, fa2, fa3
+-    fadd.d	fa0, fa0, fa2
+-    addi.d	t0, t0, 1
+-    fmul.d	fa0, fa0, fa4
+-    b		L(reduced)
++	fsub.d		fa0, fa0, fa5
++	fadd.d		fa0, fa0, fa1
++	fadd.d		fa2, fa2, fa3
++	fadd.d		fa0, fa0, fa2
++	addi.d		t0, t0, 1
++	fmul.d		fa0, fa0, fa4
++	b		L(reduced)
++
+ L_even_integer:
+-    fadd.d	fa0, fa0, fa1
+-    fadd.d	fa2, fa2, fa3
+-    fadd.d	fa0, fa0, fa2
+-    fcmp.sle.d	$fcc0, fa0, fa5
+-    addi.d	t0, t0, 1
+-    bcnez	$fcc0, L_leq_one
++	fadd.d		fa0, fa0, fa1
++	fadd.d		fa2, fa2, fa3
++	fadd.d		fa0, fa0, fa2
++	fcmp.sle.d	$fcc0, fa0, fa5
++	addi.d		t0, t0, 1
++	bcnez		$fcc0, L_leq_one
++
+ /*L_gt_one:*/
+-    fld.d	fa2, t1, 16		/* 2.0 */
+-    addi.d	t0, t0, 1
+-    fsub.d	fa0, fa0, fa2
++	fld.d		fa2, t1, 16		/* 2.0 */
++	addi.d		t0, t0, 1
++	fsub.d		fa0, fa0, fa2
+ L_leq_one:
+-    fmul.d	fa0, fa0, fa4
+-    b		L(reduced)
++	fmul.d		fa0, fa0, fa4
++	b		L(reduced)
+ 
+ L(arg_less_pio4):
++
+ /* Here if |x|<Pi/4 */
+-    li.w	t1, 0x3d000000		/* const 2^-5 */
+-    blt 	t0, t1, L(less_2pn5)	/* |x| < 2^-5 branch */
++	li.w		t1, 0x3d000000		/* const 2^-5 */
++	blt 		t0, t1, L(less_2pn5)	/* |x| < 2^-5 branch */
++
+ /* Here if 2^-5<=|x|<Pi/4 */
+ /*
+  * Chebyshev polynomial of the form:
+  * 1.0+x^2*(C0+x^2*(C1+x^2*(C2+x^2*(C3+x^2*C4)))).
+  */
+-    la.local	t0, L(DP_)		/*DP_ base addr*/
+-    fld.d	fa3, t0, 32		/* S4 */
+-    fmul.d	fa0, fa1, fa1		/* y=x^2 */
+-    fld.d	fa4, t0, 16		/* S2 */
+-    fmul.d	fa2, fa0, fa0		/* z=x^4 */
+-    fld.d	fa5, t0, 24		/* S3 */
+-    fmul.d	fa7, fa0, fa1		/* w=x^3 */
+-    fld.d	fa6, t0, 8		/* S1 */
+-    fmadd.d	fa4, fa2, fa3, fa4	/* sx = S2+z*S4 */
+-    fld.d	fa3, t0, 0		/* S0 */
+-    fmadd.d	fa5, fa5, fa2, fa6	/* sy = S1+z*S3 */
+-    fmadd.d	fa4, fa4, fa2, fa3	/* sx = S0+z*sx */
+-    fmadd.d	fa4, fa0, fa5, fa4	/* sx = sx+y*sy */
+-    fmadd.d	fa0, fa4, fa7, fa1	/* sx = x +w*sx */
+-    fcvt.s.d	fa0, fa0
+-    jr		ra
++	la.local	t0, L(DP_)		/*DP_ base addr*/
++	fld.d		fa3, t0, 32		/* S4 */
++	fmul.d		fa0, fa1, fa1		/* y=x^2 */
++	fld.d		fa4, t0, 16		/* S2 */
++	fmul.d		fa2, fa0, fa0		/* z=x^4 */
++	fld.d		fa5, t0, 24		/* S3 */
++	fmul.d		fa7, fa0, fa1		/* w=x^3 */
++	fld.d		fa6, t0, 8		/* S1 */
++	fmadd.d		fa4, fa2, fa3, fa4	/* sx = S2+z*S4 */
++	fld.d		fa3, t0, 0		/* S0 */
++	fmadd.d		fa5, fa5, fa2, fa6	/* sy = S1+z*S3 */
++	fmadd.d		fa4, fa4, fa2, fa3	/* sx = S0+z*sx */
++	fmadd.d		fa4, fa0, fa5, fa4	/* sx = sx+y*sy */
++	fmadd.d		fa0, fa4, fa7, fa1	/* sx = x +w*sx */
++	fcvt.s.d	fa0, fa0
++	jr		ra
+ 
+ L(less_2pn5):
++
+ /* Here if |x|<2^-5 */
+-    li.w	t1, 0x32000000		/* 2^-27? */
+-    blt 	t0, t1, L(less_2pn27)
++	li.w		t1, 0x32000000		/* 2^-27? */
++	blt 		t0, t1, L(less_2pn27)
++
+ /* Here if 2^-27<=|x|<2^-5 */
+-    fmul.d	fa0, fa1, fa1		/* theta2=x^2 */
+-    la.local	t0, L(DP_)
+-    fld.d	fa2, t0, 48		/* SS_1 */
+-    fmul.d	fa4, fa1, fa0		/* theta3=x^3 */
+-    fld.d	fa3, t0, 40		/* SS_0 */
+-    fmadd.d	fa0, fa0, fa2, fa3	/* sx = SS_0+theta2*SS_1 */
+-    fmadd.d	fa0, fa0, fa4, fa1	/* sx = theta + theta3 * sx */
+-    fcvt.s.d	fa0, fa0
+-    jr		ra
++	fmul.d		fa0, fa1, fa1		/* theta2=x^2 */
++	la.local	t0, L(DP_)
++	fld.d		fa2, t0, 48		/* SS_1 */
++	fmul.d		fa4, fa1, fa0		/* theta3=x^3 */
++	fld.d		fa3, t0, 40		/* SS_0 */
++	fmadd.d		fa0, fa0, fa2, fa3	/* sx = SS_0+theta2*SS_1 */
++	fmadd.d		fa0, fa0, fa4, fa1	/* sx = theta + theta3 * sx */
++	fcvt.s.d	fa0, fa0
++	jr		ra
+ 
+ L(less_2pn27):
++
+ /* Here if |x|<2^-27 */
+-    beqz	t0, L(eq_zero)
+-    la.local	t0, L(DP_ONES)
+-    fld.d	fa2, t0, 24
+-    fnmsub.d	fa0, fa1, fa2, fa1
+-    fcvt.s.d	fa0, fa0
++	beqz		t0, L(eq_zero)
++	la.local	t0, L(DP_ONES)
++	fld.d		fa2, t0, 24
++	fnmsub.d	fa0, fa1, fa2, fa1
++	fcvt.s.d	fa0, fa0
+ L(eq_zero):
+-    jr		ra
++	jr		ra
+ 
+ L(inf_or_nan):
++
+ /* Here if |x| is Inf or NAN */
+-    bne 	t0, t1, L_skip_errno_setting	/* in case of x is NaN */
+-    la.tls.ie	t0, errno
+-    li.w	t1, 0x21
+-    stx.w	t1, t0, tp
++	/* in case of x is NaN */
++	bne 		t0, t1, L_skip_errno_setting
++	la.tls.ie	t0, errno
++	li.w		t1, 0x21
++	stx.w		t1, t0, tp
++
+ L_skip_errno_setting:
++
+ /* Here if |x| is Inf or NAN.  Continued.  */
+-    fsub.s	fa0, fa0, fa0			/* Result is NaN */
+-    jr		ra
++	fsub.s		fa0, fa0, fa0		/* Result is NaN */
++	jr		ra
+ END(SINF)
+ 
+-    .section .rodata
+-    .align 3
+-    .type L(PIO2J), @object
+-    .size L(PIO2J), 48
++	.section .rodata
++	.align		3
++	.type		L(PIO2J), @object
++	.size		L(PIO2J), 48
+ L(PIO2J):			/* Table of j*Pi/2, for j=0,1,..,5 */
+-    .word   0x00000000
+-    .word   0x00000000
+-    .word   0x54442d18
+-    .word   0x3ff921fb
+-    .word   0x54442d18
+-    .word   0x400921fb
+-    .word   0x7f3321d2
+-    .word   0x4012d97c
+-    .word   0x54442d18
+-    .word   0x401921fb
+-    .word   0x2955385e
+-    .word   0x401f6a7a
+-
+-    .align 3
+-    .type L(invpio4_table), @object
+-    .size L(invpio4_table), 64
++	.word	0x00000000
++	.word	0x00000000
++	.word	0x54442d18
++	.word	0x3ff921fb
++	.word	0x54442d18
++	.word	0x400921fb
++	.word	0x7f3321d2
++	.word	0x4012d97c
++	.word	0x54442d18
++	.word	0x401921fb
++	.word	0x2955385e
++	.word	0x401f6a7a
++
++	.align		3
++	.type		L(invpio4_table), @object
++	.size		L(invpio4_table), 64
+ L(invpio4_table):		/* 4/Pi broken into sum of positive DP values */
+-    .word   0x00000000
+-    .word   0x00000000
+-    .word   0x6c000000
+-    .word   0x3ff45f30
+-    .word   0x2a000000
+-    .word   0x3e3c9c88
+-    .word   0xa8000000
+-    .word   0x3c54fe13
+-    .word   0xd0000000
+-    .word   0x3aaf47d4
+-    .word   0x6c000000
+-    .word   0x38fbb81b
+-    .word   0xe0000000
+-    .word   0x3714acc9
+-    .word   0x7c000000
+-    .word   0x3560e410
++	.word	0x00000000
++	.word	0x00000000
++	.word	0x6c000000
++	.word	0x3ff45f30
++	.word	0x2a000000
++	.word	0x3e3c9c88
++	.word	0xa8000000
++	.word	0x3c54fe13
++	.word	0xd0000000
++	.word	0x3aaf47d4
++	.word	0x6c000000
++	.word	0x38fbb81b
++	.word	0xe0000000
++	.word	0x3714acc9
++	.word	0x7c000000
++	.word	0x3560e410
++
+ 
+ /* Coefficients of polynomial
+-    for sin(x)~=x+x^3*DP_SIN2_0+x^5*DP_SIN2_1, |x|<2^-5.  */
++	for sin(x)~=x+x^3*DP_SIN2_0+x^5*DP_SIN2_1, |x|<2^-5.  */
++
+ /* Coefficients of polynomial
+-    for sin(t)~=t+t^3*(S0+t^2*(S1+t^2*(S2+t^2*(S3+t^2*S4)))), |t|<Pi/4.
+-    for cos(t)~=1.0+t^2*(C0+t^2*(C1+t^2*(C2+t^2*(C3+t^2*C4)))), |t|<Pi/4.
++	for sin(t)~=t+t^3*(S0+t^2*(S1+t^2*(S2+t^2*(S3+t^2*S4)))), |t|<Pi/4.
++	for cos(t)~=1.0+t^2*(C0+t^2*(C1+t^2*(C2+t^2*(C3+t^2*C4)))), |t|<Pi/4.
+ */
+-    .align 3
+-    .type L(DP_), @object
+-    .size L(DP_), 128
++	.align		3
++	.type		L(DP_), @object
++	.size		L(DP_), 128
+ L(DP_):
+-    .word   0x55551cd9
+-    .word   0xbfc55555		/* S0 */
+-    .word   0x10c2688b
+-    .word   0x3f811111		/* S1 */
+-    .word   0x8b4bd1f9
+-    .word   0xbf2a019f		/* S2 */
+-    .word   0x64e6b5b4
+-    .word   0x3ec71d72		/* S3 */
+-    .word   0x1674b58a
+-    .word   0xbe5a947e		/* S4 */
+-    .word   0x5543d49d
+-    .word   0xbfc55555		/* SS0 +40 */
+-    .word   0x75cec8c5
+-    .word   0x3f8110f4		/* SS1 +48 */
+-    .word   0x6dc9c883
+-    .word   0x3ff45f30		/* inv_PI_4 */
+-    .word   0xfffe98ae
+-    .word   0xbfdfffff		/* C0 */
+-    .word   0x545c50c7
+-    .word   0x3fa55555		/* C1 */
+-    .word   0x348b6874
+-    .word   0xbf56c16b		/* C2 */
+-    .word   0x9ac43cc0
+-    .word   0x3efa00eb		/* C3 */
+-    .word   0xdd8844d7
+-    .word   0xbe923c97		/* C4 */
+-    .word   0x54400000
+-    .word   0xbff921fb		/* PI_2_hi */
+-    .word   0x1a626332
+-    .word   0xbdd0b461		/* PI_2_lo */
+-    .word   0x54442d18
+-    .word   0x3fe921fb		/* PI_4 */
+-
+-    .align 3
+-    .type L(DP_ONES), @object
+-    .size L(DP_ONES), 32
++	.word	0x55551cd9
++	.word	0xbfc55555		/* S0 */
++	.word	0x10c2688b
++	.word	0x3f811111		/* S1 */
++	.word	0x8b4bd1f9
++	.word	0xbf2a019f		/* S2 */
++	.word	0x64e6b5b4
++	.word	0x3ec71d72		/* S3 */
++	.word	0x1674b58a
++	.word	0xbe5a947e		/* S4 */
++	.word	0x5543d49d
++	.word	0xbfc55555		/* SS0 +40 */
++	.word	0x75cec8c5
++	.word	0x3f8110f4		/* SS1 +48 */
++	.word	0x6dc9c883
++	.word	0x3ff45f30		/* inv_PI_4 */
++	.word	0xfffe98ae
++	.word	0xbfdfffff		/* C0 */
++	.word	0x545c50c7
++	.word	0x3fa55555		/* C1 */
++	.word	0x348b6874
++	.word	0xbf56c16b		/* C2 */
++	.word	0x9ac43cc0
++	.word	0x3efa00eb		/* C3 */
++	.word	0xdd8844d7
++	.word	0xbe923c97		/* C4 */
++	.word	0x54400000
++	.word	0xbff921fb		/* PI_2_hi */
++	.word	0x1a626332
++	.word	0xbdd0b461		/* PI_2_lo */
++	.word	0x54442d18
++	.word	0x3fe921fb		/* PI_4 */
++
++	.align		3
++	.type		L(DP_ONES), @object
++	.size		L(DP_ONES), 32
+ L(DP_ONES):
+-    .word   0x00000000
+-    .word   0x3ff00000		/* +1.0 */
+-    .word   0x00000000
+-    .word   0xbff00000		/* -1.0 */
+-    .word   0x00000000
+-    .word   0x40000000		/* +2.0 */
+-    .word   0x00000000
+-    .word   0x3cd00000		/* 2^(-50) */
++	.word	0x00000000
++	.word	0x3ff00000		/* +1.0 */
++	.word	0x00000000
++	.word	0xbff00000		/* -1.0 */
++	.word	0x00000000
++	.word	0x40000000		/* +2.0 */
++	.word	0x00000000
++	.word	0x3cd00000		/* 2^(-50) */
+ 
+ 
+ libm_alias_float (__sin, sin)
+diff --git a/sysdeps/loongarch/lp64/strchr.S b/sysdeps/loongarch/lp64/strchr.S
+index 5498e85bf7..de02859500 100644
+--- a/sysdeps/loongarch/lp64/strchr.S
++++ b/sysdeps/loongarch/lp64/strchr.S
+@@ -38,106 +38,106 @@
+ #include <sysdep.h>
+ #include <sys/asm.h>
+ 
+-#define L_ADDIU  addi.d
+-#define L_ADDU   add.d
+-#define L_SUBU   sub.d
++#define L_ADDIU	addi.d
++#define L_ADDU	add.d
++#define L_SUBU	sub.d
+ 
+ #define STRCHR  strchr
+ #define MOVN(rd,rs,rt) \
+-    maskeqz t6, rs, rt;\
+-    masknez rd, rd, rt;\
+-    or  rd, rd, t6
++	maskeqz		t6, rs, rt;\
++	masknez		rd, rd, rt;\
++	or		rd, rd, t6
+ 
+ #define MOVN2(rd,rt) \
+-    masknez rd, rd, rt;\
+-    or  rd, rd, rt
++	masknez		rd, rd, rt;\
++	or		rd, rd, rt
+ 
+ 
+ /* char * strchr (const char *s1, int c); */
+ 
+ LEAF(STRCHR)
+-    .align      6
++	.align		6
+ 
+-    li.w	t4, 0x7
+-    lu12i.w     a2, 0x01010
+-    bstrins.d   a1, a1, 15, 8
+-    andi	t0, a0, 0x7
++	li.w		t4, 0x7
++	lu12i.w		a2, 0x01010
++	bstrins.d	a1, a1, 15, 8
++	andi		t0, a0, 0x7
+ 
+-    ori		a2, a2, 0x101
+-    andn	t4, a0, t4
+-    slli.w      t1, t0, 3
++	ori		a2, a2, 0x101
++	andn		t4, a0, t4
++	slli.w		t1, t0, 3
+ 
+-    ld.d	t4, t4, 0
++	ld.d		t4, t4, 0
+ 
+ 
+-    nor		t8, zero, zero
+-    bstrins.d   a1, a1, 31, 16
+-    srl.d       t4, t4, t1
++	nor		t8, zero, zero
++	bstrins.d	a1, a1, 31, 16
++	srl.d		t4, t4, t1
+ 
+-    bstrins.d   a1, a1, 63, 32
+-    bstrins.d   a2, a2, 63, 32
+-    srl.d       a7, t8, t1
++	bstrins.d	a1, a1, 63, 32
++	bstrins.d	a2, a2, 63, 32
++	srl.d		a7, t8, t1
+ 
+-    li.w	t1, 8
+-    nor		t8, a7, zero
+-    slli.d      a3, a2, 7
+-    or		t5, t8, t4
+-    and		t3, a7, a1
++	li.w		t1, 8
++	nor		t8, a7, zero
++	slli.d		a3, a2, 7
++	or		t5, t8, t4
++	and		t3, a7, a1
+ 
+-    sub.w       t1, t1, t0
+-    nor		a3, a3, zero
+-    xor		t2, t5, t3
+-    sub.d       a7, t5, a2
+-    nor		a6, t5, a3
++	sub.w		t1, t1, t0
++	nor		a3, a3, zero
++	xor		t2, t5, t3
++	sub.d		a7, t5, a2
++	nor		a6, t5, a3
+ 
+-    sub.d       a5, t2, a2
+-    nor		a4, t2, a3
++	sub.d		a5, t2, a2
++	nor		a4, t2, a3
+ 
+-    and		a6, a7, a6
+-    and		a5, a5, a4
+-    or		a7, a6, a5
+-    bnez	a7, L(_mc8_a)
++	and		a6, a7, a6
++	and		a5, a5, a4
++	or		a7, a6, a5
++	bnez		a7, L(_mc8_a)
+ 
+-    L_ADDU      a0, a0, t1
++	L_ADDU		a0, a0, t1
+ L(_aloop):
+-    ld.d	t4, a0, 0
+-
+-    xor		t2, t4, a1
+-    sub.d       a7, t4, a2
+-    nor		a6, t4, a3
+-    sub.d       a5, t2, a2
+-
+-    nor		a4, t2, a3
+-    and		a6, a7, a6
+-    and		a5, a5, a4
+-    or		a7, a6, a5
+-    bnez	a7, L(_mc8_a)
+-
+-    ld.d	t4, a0, 8
+-    L_ADDIU     a0, a0, 16
+-    xor		t2, t4, a1
+-    sub.d       a7, t4, a2
+-    nor		a6, t4, a3
+-    sub.d       a5, t2, a2
+-
+-    nor		a4, t2, a3
+-    and		a6, a7, a6
+-    and		a5, a5, a4
+-    or		a7, a6, a5
+-    beqz	a7, L(_aloop)
+-
+-    L_ADDIU     a0, a0, -8
++	ld.d		t4, a0, 0
++
++	xor		t2, t4, a1
++	sub.d		a7, t4, a2
++	nor		a6, t4, a3
++	sub.d		a5, t2, a2
++
++	nor		a4, t2, a3
++	and		a6, a7, a6
++	and		a5, a5, a4
++	or		a7, a6, a5
++	bnez		a7, L(_mc8_a)
++
++	ld.d		t4, a0, 8
++	L_ADDIU	 a0, a0, 16
++	xor		t2, t4, a1
++	sub.d		a7, t4, a2
++	nor		a6, t4, a3
++	sub.d		a5, t2, a2
++
++	nor		a4, t2, a3
++	and		a6, a7, a6
++	and		a5, a5, a4
++	or		a7, a6, a5
++	beqz		a7, L(_aloop)
++
++	L_ADDIU		a0, a0, -8
+ L(_mc8_a):
+ 
+-    ctz.d       t0, a5
+-    ctz.d       t2, a6
++	ctz.d		t0, a5
++	ctz.d		t2, a6
+ 
+-    srli.w      t0, t0, 3
+-    srli.w      t2, t2, 3
+-    sltu	t1, t2, t0
+-    L_ADDU      v0, a0, t0
+-    masknez     v0, v0, t1
+-    jr		ra
++	srli.w		t0, t0, 3
++	srli.w		t2, t2, 3
++	sltu		t1, t2, t0
++	L_ADDU		v0, a0, t0
++	masknez		v0, v0, t1
++	jr		ra
+ END(STRCHR)
+ 
+ #ifndef ANDROID_CHANGES
+diff --git a/sysdeps/loongarch/lp64/strchrnul.S b/sysdeps/loongarch/lp64/strchrnul.S
+index f95768c439..23f91c93dd 100644
+--- a/sysdeps/loongarch/lp64/strchrnul.S
++++ b/sysdeps/loongarch/lp64/strchrnul.S
+@@ -39,120 +39,120 @@
+ #include <sys/asm.h>
+ 
+ 
+-#define L_ADDIU  addi.d
+-#define L_ADDU   add.d
+-#define L_SUBU   sub.d
++#define L_ADDIU	addi.d
++#define L_ADDU	add.d
++#define L_SUBU	sub.d
+ 
+ #define STRCHRNUL   __strchrnul
+ 
+ #define MOVN(rd,rs,rt) \
+-    maskeqz t6, rs, rt;\
+-    masknez rd, rd, rt;\
+-    or  rd, rd, t6
++	maskeqz		t6, rs, rt;\
++	masknez		rd, rd, rt;\
++	or		rd, rd, t6
+ 
+ #define MOVZ(rd,rs,rt) \
+-    masknez t6, rs, rt;\
+-    maskeqz rd, rd, rt;\
+-    or  rd, rd, t6
++	masknez		t6, rs, rt;\
++	maskeqz		rd, rd, rt;\
++	or		rd, rd, t6
+ 
+ 
+ #define MOVN2(rd,rt) \
+-    masknez rd, rd, rt;\
+-    or  rd, rd, rt
++	masknez		rd, rd, rt;\
++	or		rd, rd, rt
+ 
+ /* char * strchrnul (const char *s1, int c); */
+ 
+ LEAF(STRCHRNUL)
+-    .align      6
++	.align		6
+ 
+-    li.w	t4, 0x7
+-    lu12i.w     a2, 0x01010
+-    bstrins.d   a1, a1, 15, 8
+-    andi	t0, a0, 0x7
++	li.w		t4, 0x7
++	lu12i.w		a2, 0x01010
++	bstrins.d	a1, a1, 15, 8
++	andi		t0, a0, 0x7
+ 
+-    ori		a2, a2, 0x101
+-    andn	t4, a0, t4
+-    slli.w      t1, t0, 3
++	ori		a2, a2, 0x101
++	andn		t4, a0, t4
++	slli.w		t1, t0, 3
+ 
+-    /* ldr	 t4, 0(a0) */
+-    ld.d	t4, t4, 0
++	/* ldr		t4, 0(a0) */
++	ld.d		t4, t4, 0
+ 
+ 
+-    nor		t8, zero, zero
+-    bstrins.d   a1, a1, 31, 16
+-    srl.d       t4, t4, t1
++	nor		t8, zero, zero
++	bstrins.d	a1, a1, 31, 16
++	srl.d		t4, t4, t1
+ 
+-    preld       0, a0, 32
+-    bstrins.d   a1, a1, 63, 32
+-    bstrins.d   a2, a2, 63, 32
+-    srl.d       a7, t8, t1
++	preld		0, a0, 32
++	bstrins.d	a1, a1, 63, 32
++	bstrins.d	a2, a2, 63, 32
++	srl.d		a7, t8, t1
+ 
+-    nor		t8, a7, zero
+-    slli.d      a3, a2, 7
+-    or		t5, t8, t4
+-    and		t3, a7, a1
++	nor		t8, a7, zero
++	slli.d		a3, a2, 7
++	or		t5, t8, t4
++	and		t3, a7, a1
+ 
+-    nor		a3, a3, zero
+-    xor		t2, t5, t3
+-    sub.d       a7, t5, a2
+-    nor		a6, t5, a3
++	nor		a3, a3, zero
++	xor		t2, t5, t3
++	sub.d		a7, t5, a2
++	nor		a6, t5, a3
+ 
+-    li.w	t1, 8
+-    sub.d       a5, t2, a2
+-    nor		a4, t2, a3
++	li.w		t1, 8
++	sub.d		a5, t2, a2
++	nor		a4, t2, a3
+ 
+-    and		a6, a7, a6
+-    and		a5, a5, a4
+-    or		a7, a6, a5
+-    bnez	a7, L(_mc8_a)
++	and		a6, a7, a6
++	and		a5, a5, a4
++	or		a7, a6, a5
++	bnez		a7, L(_mc8_a)
+ 
+ 
+-    sub.w       t1, t1, t0
+-    L_ADDU      a0, a0, t1
++	sub.w		t1, t1, t0
++	L_ADDU		a0, a0, t1
+ L(_aloop):
+-    ld.d	t4, a0, 0
++	ld.d		t4, a0, 0
+ 
+-    xor		t2, t4, a1
+-    sub.d       a7, t4, a2
+-    nor		a6, t4, a3
+-    sub.d       a5, t2, a2
++	xor		t2, t4, a1
++	sub.d		a7, t4, a2
++	nor		a6, t4, a3
++	sub.d		a5, t2, a2
+ 
+-    nor		a4, t2, a3
+-    and		a6, a7, a6
+-    and		a5, a5, a4
++	nor		a4, t2, a3
++	and		a6, a7, a6
++	and		a5, a5, a4
+ 
+-    or		a7, a6, a5
+-    bnez	a7, L(_mc8_a)
++	or		a7, a6, a5
++	bnez		a7, L(_mc8_a)
+ 
+-    ld.d	t4, a0, 8
+-    L_ADDIU     a0, a0, 16
++	ld.d		t4, a0, 8
++	L_ADDIU		a0, a0, 16
+ 
+-    xor		t2, t4, a1
+-    sub.d       a7, t4, a2
+-    nor		a6, t4, a3
+-    sub.d       a5, t2, a2
++	xor		t2, t4, a1
++	sub.d		a7, t4, a2
++	nor		a6, t4, a3
++	sub.d		a5, t2, a2
+ 
+-    nor		a4, t2, a3
+-    and		a6, a7, a6
+-    and		a5, a5, a4
++	nor		a4, t2, a3
++	and		a6, a7, a6
++	and		a5, a5, a4
+ 
+-    or		a7, a6, a5
+-    beqz	a7, L(_aloop)
++	or		a7, a6, a5
++	beqz		a7, L(_aloop)
+ 
+-    L_ADDIU     a0, a0, -8
++	L_ADDIU		a0, a0, -8
+ L(_mc8_a):
+ 
+-    ctz.d       t0, a5
+-    ctz.d       t2, a6
++	ctz.d		t0, a5
++	ctz.d		t2, a6
+ 
+-    srli.w      t0, t0, 3
+-    srli.w      t2, t2, 3
+-    slt		t1, t0, t2
++	srli.w		t0, t0, 3
++	srli.w		t2, t2, 3
++	slt		t1, t0, t2
+ 
+-    MOVZ(t0,t2,t1)
++	MOVZ(t0,t2,t1)
+ 
+-    L_ADDU      v0, a0, t0
+-    jr		ra
++	L_ADDU		v0, a0, t0
++	jr		ra
+ END(STRCHRNUL)
+ 
+ #ifndef ANDROID_CHANGES
+diff --git a/sysdeps/loongarch/lp64/strcmp.S b/sysdeps/loongarch/lp64/strcmp.S
+index 0db3bdd844..b59f36f578 100644
+--- a/sysdeps/loongarch/lp64/strcmp.S
++++ b/sysdeps/loongarch/lp64/strcmp.S
+@@ -58,154 +58,151 @@
+ #define REP8_80 0x8080808080808080
+ 
+ /* Parameters and Results */
+-#define src1    a0
+-#define src2    a1
+-#define result  v0
++#define src1	a0
++#define src2	a1
++#define result	v0
+ /* Note: v0 = a0 in lp64 ABI */
+ 
+ 
+ /* Internal variable */
+-#define data1       t0
+-#define data2       t1
+-#define has_nul     t2
+-#define diff	    t3
+-#define syndrome    t4
+-#define zeroones    t5
+-#define sevenf      t6
+-#define pos	    t7
+-#define exchange    t8
+-#define tmp1	    a4
+-#define tmp2	    a5
+-#define tmp3	    a6
+-#define src1_off    a2
+-#define src2_off    a3
+-#define tmp4	    a7
+-
+-/* rd <- if rc then ra else rb
+-    will destroy tmp3
+-*/
++#define data1		t0
++#define data2		t1
++#define has_nul		t2
++#define diff		t3
++#define syndrome	t4
++#define zeroones	t5
++#define sevenf		t6
++#define pos		t7
++#define exchange	t8
++#define tmp1		a4
++#define tmp2		a5
++#define tmp3		a6
++#define src1_off	a2
++#define src2_off	a3
++#define tmp4		a7
++
++/* rd <- if rc then ra else rb will destroy tmp3 */
++
+ #define CONDITIONSEL(rd,rc,ra,rb)\
+-	masknez tmp3, rb, rc;\
+-	maskeqz rd,   ra, rc;\
+-	or      rd,   rd, tmp3
++	masknez		tmp3, rb, rc;\
++	maskeqz		rd,   ra, rc;\
++	or		rd,   rd, tmp3
+ 
+ 
+ 
+ /* int strcmp (const char *s1, const char *s2); */
+ 
+ LEAF(STRCMP)
+-    .align	4
+-
+-    xor		tmp1, src1, src2
+-    lu12i.w     zeroones, 0x01010
+-    lu12i.w     sevenf, 0x7f7f7
+-    andi	src1_off, src1, 0x7
+-    ori		zeroones, zeroones, 0x101
+-    ori		sevenf, sevenf, 0xf7f
+-    andi	tmp1, tmp1, 0x7
+-    bstrins.d   zeroones, zeroones, 63, 32
+-    bstrins.d   sevenf, sevenf, 63, 32
+-    bnez	tmp1, strcmp_misaligned8
+-    bnez	src1_off, strcmp_mutual_align
++	.align		4
++
++	xor		tmp1, src1, src2
++	lu12i.w		zeroones, 0x01010
++	lu12i.w		sevenf, 0x7f7f7
++	andi		src1_off, src1, 0x7
++	ori		zeroones, zeroones, 0x101
++	ori		sevenf, sevenf, 0xf7f
++	andi		tmp1, tmp1, 0x7
++	bstrins.d	zeroones, zeroones, 63, 32
++	bstrins.d	sevenf, sevenf, 63, 32
++	bnez		tmp1, strcmp_misaligned8
++	bnez		src1_off, strcmp_mutual_align
+ strcmp_loop_aligned:
+-    ld.d	data1, src1, 0
+-    addi.d      src1, src1, 8
+-    ld.d	data2, src2, 0
+-    addi.d      src2, src2, 8
++	ld.d		data1, src1, 0
++	addi.d		src1, src1, 8
++	ld.d		data2, src2, 0
++	addi.d		src2, src2, 8
+ strcmp_start_realigned:
+-    sub.d       tmp1, data1, zeroones
+-    or		tmp2, data1, sevenf
+-    xor		diff, data1, data2
+-    andn	has_nul, tmp1, tmp2
+-    or		syndrome, diff, has_nul
+-    beqz	syndrome, strcmp_loop_aligned
++	sub.d		tmp1, data1, zeroones
++	or		tmp2, data1, sevenf
++	xor		diff, data1, data2
++	andn		has_nul, tmp1, tmp2
++	or		syndrome, diff, has_nul
++	beqz		syndrome, strcmp_loop_aligned
+ 
+ strcmp_end:
+-    ctz.d       pos, syndrome
+-    bstrins.d   pos, zero, 2, 0
+-    srl.d       data1, data1, pos
+-    srl.d       data2, data2, pos
+-    andi	data1, data1, 0xff
+-    andi	data2, data2, 0xff
+-    sub.d       result, data1, data2
+-    jr		ra
++	ctz.d		pos, syndrome
++	bstrins.d	pos, zero, 2, 0
++	srl.d		data1, data1, pos
++	srl.d		data2, data2, pos
++	andi		data1, data1, 0xff
++	andi		data2, data2, 0xff
++	sub.d		result, data1, data2
++	jr		ra
+ strcmp_mutual_align:
+-    bstrins.d   src1, zero, 2, 0
+-    bstrins.d   src2, zero, 2, 0
+-    slli.d      tmp1, src1_off,  0x3
+-    ld.d	data1, src1, 0
+-    sub.d       tmp1, zero, tmp1
+-    ld.d	data2, src2, 0
+-    addi.d      src1, src1, 8
+-    addi.d      src2, src2, 8
+-    nor		tmp2, zero, zero
+-    srl.d       tmp2, tmp2, tmp1
+-    or		data1, data1, tmp2
+-    or		data2, data2, tmp2
+-    b		strcmp_start_realigned
++	bstrins.d	src1, zero, 2, 0
++	bstrins.d	src2, zero, 2, 0
++	slli.d		tmp1, src1_off,  0x3
++	ld.d		data1, src1, 0
++	sub.d		tmp1, zero, tmp1
++	ld.d		data2, src2, 0
++	addi.d		src1, src1, 8
++	addi.d		src2, src2, 8
++	nor		tmp2, zero, zero
++	srl.d		tmp2, tmp2, tmp1
++	or		data1, data1, tmp2
++	or		data2, data2, tmp2
++	b		strcmp_start_realigned
+ 
+ strcmp_misaligned8:
+ 
+-/* check
+-    if ((src1 != 0) && ((src2 == 0) || (src1 < src2)))
+-    then exchange(src1,src2)
+-
++/* check if ((src1 != 0) && ((src2 == 0) || (src1 < src2)))
++   then exchange(src1,src2)
+ */
+-    andi	src2_off, src2, 0x7
+-    slt		tmp2, src1_off, src2_off
+-    CONDITIONSEL(tmp2,src2_off,tmp2,tmp1)
+-    maskeqz     exchange, tmp2, src1_off
+-    xor		tmp3, src1, src2
+-    maskeqz     tmp3, tmp3, exchange
+-    xor		src1, src1, tmp3
+-    xor		src2, src2, tmp3
+-
+-    andi	src1_off, src1, 0x7
+-    beqz	src1_off, strcmp_loop_misaligned
++	andi		src2_off, src2, 0x7
++	slt		tmp2, src1_off, src2_off
++	CONDITIONSEL(tmp2,src2_off,tmp2,tmp1)
++	maskeqz		exchange, tmp2, src1_off
++	xor		tmp3, src1, src2
++	maskeqz		tmp3, tmp3, exchange
++	xor		src1, src1, tmp3
++	xor		src2, src2, tmp3
++
++	andi		src1_off, src1, 0x7
++	beqz		src1_off, strcmp_loop_misaligned
+ strcmp_do_misaligned:
+-    ld.bu       data1, src1, 0
+-    ld.bu       data2, src2, 0
+-    xor		tmp3, data1, data2
+-    addi.d      src1, src1, 1
+-    masknez     tmp3, data1, tmp3
+-    addi.d      src2, src2, 1
+-    beqz	tmp3, strcmp_done
+-    andi	src1_off, src1, 0x7
+-    bnez	src1_off, strcmp_do_misaligned
++	ld.bu		data1, src1, 0
++	ld.bu		data2, src2, 0
++	xor		tmp3, data1, data2
++	addi.d		src1, src1, 1
++	masknez		tmp3, data1, tmp3
++	addi.d		src2, src2, 1
++	beqz		tmp3, strcmp_done
++	andi		src1_off, src1, 0x7
++	bnez		src1_off, strcmp_do_misaligned
+ 
+ strcmp_loop_misaligned:
+-    andi	tmp1, src2, 0xff8
+-    xori	tmp1, tmp1, 0xff8
+-    beqz	tmp1, strcmp_do_misaligned
+-    ld.d	data1, src1, 0
+-    ld.d	data2, src2, 0
+-    addi.d      src1, src1, 8
+-    addi.d      src2, src2, 8
+-
+-    sub.d       tmp1, data1, zeroones
+-    or		tmp2, data1, sevenf
+-    xor		diff, data1, data2
+-    andn	has_nul, tmp1, tmp2
+-    or		syndrome, diff, has_nul
+-    beqz	syndrome, strcmp_loop_misaligned
++	andi		tmp1, src2, 0xff8
++	xori		tmp1, tmp1, 0xff8
++	beqz		tmp1, strcmp_do_misaligned
++	ld.d		data1, src1, 0
++	ld.d		data2, src2, 0
++	addi.d		src1, src1, 8
++	addi.d		src2, src2, 8
++
++	sub.d		tmp1, data1, zeroones
++	or		tmp2, data1, sevenf
++	xor		diff, data1, data2
++	andn		has_nul, tmp1, tmp2
++	or		syndrome, diff, has_nul
++	beqz		syndrome, strcmp_loop_misaligned
+ 
+ strcmp_misalign_end:
+-    ctz.d       pos, syndrome
+-    bstrins.d   pos, zero, 2, 0
+-    srl.d       data1, data1, pos
+-    srl.d       data2, data2, pos
+-    andi	data1, data1, 0xff
+-    andi	data2, data2, 0xff
+-    sub.d       tmp1, data1, data2
+-    sub.d       tmp2, data2, data1
+-    CONDITIONSEL(result,exchange,tmp2,tmp1)
+-    jr		ra
++	ctz.d		pos, syndrome
++	bstrins.d	pos, zero, 2, 0
++	srl.d		data1, data1, pos
++	srl.d		data2, data2, pos
++	andi		data1, data1, 0xff
++	andi		data2, data2, 0xff
++	sub.d		tmp1, data1, data2
++	sub.d		tmp2, data2, data1
++	CONDITIONSEL(result,exchange,tmp2,tmp1)
++	jr		ra
+ 
+ strcmp_done:
+-    sub.d       tmp1, data1, data2
+-    sub.d       tmp2, data2, data1
+-    CONDITIONSEL(result,exchange,tmp2,tmp1)
+-    jr		ra
++	sub.d		tmp1, data1, data2
++	sub.d		tmp2, data2, data1
++	CONDITIONSEL(result,exchange,tmp2,tmp1)
++	jr		ra
+ END(STRCMP)
+ #ifndef ANDROID_CHANGES
+ #ifdef _LIBC
+diff --git a/sysdeps/loongarch/lp64/strcpy.S b/sysdeps/loongarch/lp64/strcpy.S
+index e875c3a30f..e75eeb06cf 100644
+--- a/sysdeps/loongarch/lp64/strcpy.S
++++ b/sysdeps/loongarch/lp64/strcpy.S
+@@ -46,148 +46,145 @@
+ #define REP8_80 0x8080808080808080
+ 
+ /* Parameters and Results */
+-#define dest    a0
+-#define src     a1
+-#define result  v0
++#define dest	a0
++#define src	a1
++#define result	v0
+ /* Note: v0 = a0 in lp64 ABI */
+ 
+ 
+ /* Internal variable */
+-#define data	    t0
+-#define data1       t1
+-#define has_nul     t2
+-#define diff	    t3
+-#define syndrome    t4
+-#define zeroones    t5
+-#define sevenf      t6
+-#define pos	    t7
+-#define dest_backup t8
+-#define tmp1	    a4
+-#define tmp2	    a5
+-#define tmp3	    a6
+-#define dest_off    a2
+-#define src_off     a3
+-#define tmp4	    a7
+-
+-/* rd <- if rc then ra else rb
+-    will destroy tmp3
+- */
++#define data		t0
++#define data1		t1
++#define has_nul		t2
++#define diff		t3
++#define syndrome	t4
++#define zeroones	t5
++#define sevenf		t6
++#define pos		t7
++#define dest_backup	t8
++#define tmp1		a4
++#define tmp2		a5
++#define tmp3		a6
++#define dest_off	a2
++#define src_off		a3
++#define tmp4		a7
++
++/* rd <- if rc then ra else rb will destroy tmp3 */
+ #define CONDITIONSEL(rd,rc,ra,rb)\
+-	masknez tmp3, rb, rc;\
+-	maskeqz rd,   ra, rc;\
+-	or      rd,   rd, tmp3
++	masknez		tmp3, rb, rc;\
++	maskeqz		rd,   ra, rc;\
++	or		rd,   rd, tmp3
+ 
+ 
+ 
+ /* int strcpy (const char *s1, const char *s2); */
+-
+ LEAF(STRCPY)
+-    .align	 4
+-
+-    move	 dest_backup, dest
+-    lu12i.w      zeroones, 0x01010
+-    lu12i.w      sevenf, 0x7f7f7
+-    ori	 	 zeroones, zeroones, 0x101
+-    ori	 	 sevenf, sevenf, 0xf7f
+-    bstrins.d    zeroones, zeroones, 63, 32
+-    bstrins.d    sevenf, sevenf, 63, 32
+-    andi	 src_off, src, 0x7
+-    beqz	 src_off, strcpy_loop_aligned_1
+-    b		 strcpy_mutual_align
++	.align		4
++
++	move		dest_backup, dest
++	lu12i.w		zeroones, 0x01010
++	lu12i.w		sevenf, 0x7f7f7
++	ori		zeroones, zeroones, 0x101
++	ori		sevenf, sevenf, 0xf7f
++	bstrins.d	zeroones, zeroones, 63, 32
++	bstrins.d	sevenf, sevenf, 63, 32
++	andi		src_off, src, 0x7
++	beqz		src_off, strcpy_loop_aligned_1
++	b		strcpy_mutual_align
+ strcpy_loop_aligned:
+-    st.d	 data, dest, 0
+-    addi.d       dest, dest, 8
++	st.d		data, dest, 0
++	addi.d		dest, dest, 8
+ strcpy_loop_aligned_1:
+-    ld.d	 data, src, 0
+-    addi.d       src, src, 8
++	ld.d		data, src, 0
++	addi.d		src, src, 8
+ strcpy_start_realigned:
+-    sub.d	 tmp1, data, zeroones
+-    or		 tmp2, data, sevenf
+-    andn	 has_nul, tmp1, tmp2
+-    beqz	 has_nul, strcpy_loop_aligned
++	sub.d		tmp1, data, zeroones
++	or		tmp2, data, sevenf
++	andn		has_nul, tmp1, tmp2
++	beqz		has_nul, strcpy_loop_aligned
+ 
+ strcpy_end:
+ 
++/* 8 4 2 1 */
++	ctz.d		pos, has_nul
++	srli.d		pos, pos, 3
++	addi.d		pos, pos, 1
++
+ /*
+-8 4 2 1
+- */
+-    ctz.d	 pos, has_nul
+-    srli.d       pos, pos, 3
+-    addi.d       pos, pos, 1
+-/*
+-    Do 8/4/2/1 strcpy based on pos value.
+-    pos value is the number of bytes to be copied
+-    the bytes include the final \0 so the max length is 8 and the min length
+-    is 1
++   Do 8/4/2/1 strcpy based on pos value.
++   pos value is the number of bytes to be copied
++   the bytes include the final \0 so the max length is 8 and the min length
++   is 1
+  */
+-
+ strcpy_end_8:
+-    andi	 tmp1, pos, 0x8
+-    beqz	 tmp1, strcpy_end_4
+-    st.d	 data, dest, 0
+-    move	 dest, dest_backup
+-    jr		 ra
++	andi		tmp1, pos, 0x8
++	beqz		tmp1, strcpy_end_4
++	st.d		data, dest, 0
++	move		dest, dest_backup
++	jr		ra
+ strcpy_end_4:
+-    andi	 tmp1, pos, 0x4
+-    beqz	 tmp1, strcpy_end_2
+-    st.w	 data, dest, 0
+-    srli.d	 data, data, 32
+-    addi.d	 dest, dest, 4
++	andi		tmp1, pos, 0x4
++	beqz		tmp1, strcpy_end_2
++	st.w		data, dest, 0
++	srli.d		data, data, 32
++	addi.d		dest, dest, 4
+ strcpy_end_2:
+-    andi	 tmp1, pos, 0x2
+-    beqz	 tmp1, strcpy_end_1
+-    st.h	 data, dest, 0
+-    srli.d	 data, data, 16
+-    addi.d	 dest, dest, 2
++	andi		tmp1, pos, 0x2
++	beqz		tmp1, strcpy_end_1
++	st.h		data, dest, 0
++	srli.d		data, data, 16
++	addi.d		dest, dest, 2
+ strcpy_end_1:
+-    andi	 tmp1, pos, 0x1
+-    beqz	 tmp1, strcpy_end_ret
+-    st.b	 data, dest, 0
++	andi		tmp1, pos, 0x1
++	beqz		tmp1, strcpy_end_ret
++	st.b		data, dest, 0
+ strcpy_end_ret:
+-    move	 result, dest_backup
+-    jr		 ra
+-
++	move		result, dest_backup
++	jr		ra
+ 
+ strcpy_mutual_align:
++
+ /*
+-    Check if around src page bound.
+-    if not go to page cross ok.
+-    if it is, do further check.
+-    use tmp2 to accelerate.
++   Check if around src page bound.
++   if not go to page cross ok.
++   if it is, do further check.
++   use tmp2 to accelerate.
+  */
+-
+-    li.w	 tmp2, 0xff8
+-    andi	 tmp1, src,  0xff8
+-    beq		 tmp1, tmp2, strcpy_page_cross
++	li.w		tmp2, 0xff8
++	andi		tmp1, src,  0xff8
++	beq		tmp1, tmp2, strcpy_page_cross
+ 
+ strcpy_page_cross_ok:
++
+ /*
+-    Load a misaligned double word and check if has \0
+-    If no, do a misaligned double word paste.
+-    If yes, calculate the number of avaliable bytes,
+-    then jump to 4/2/1 end.
++   Load a misaligned double word and check if has \0
++   If no, do a misaligned double word paste.
++   If yes, calculate the number of avaliable bytes,
++   then jump to 4/2/1 end.
+  */
+-    ld.d	 data, src, 0
+-    sub.d	 tmp1, data, zeroones
+-    or		 tmp2, data, sevenf
+-    andn	 has_nul, tmp1, tmp2
+-    bnez	 has_nul, strcpy_end
++	ld.d		data, src, 0
++	sub.d		tmp1, data, zeroones
++	or		tmp2, data, sevenf
++	andn		has_nul, tmp1, tmp2
++	bnez		has_nul, strcpy_end
+ strcpy_mutual_align_finish:
++
+ /*
+    Before jump back to align loop, make dest/src aligned.
+    This will cause a duplicated paste for several bytes between the first
+    double word and the second double word,
+    but should not bring a problem.
+  */
+-    li.w	 tmp1, 8
+-    st.d	 data, dest, 0
+-    sub.d	 tmp1, tmp1, src_off
+-    add.d	 src,  src,  tmp1
+-    add.d	 dest, dest, tmp1
++	li.w		tmp1, 8
++	st.d		data, dest, 0
++	sub.d		tmp1, tmp1, src_off
++	add.d		src,  src,  tmp1
++	add.d		dest, dest, tmp1
+ 
+-    b		 strcpy_loop_aligned_1
++	b		strcpy_loop_aligned_1
+ 
+ strcpy_page_cross:
++
+ /*
+    ld.d from aligned address(src & ~0x7).
+    check if high bytes have \0.
+@@ -205,20 +202,20 @@ strcpy_page_cross:
+    -1 << (64 - src_off * 8) ->  ~(-1 >> (src_off * 8))
+ 
+  */
+-    li.w	 tmp1, 0x7
+-    andn	 tmp3, src,  tmp1
+-    ld.d	 data, tmp3, 0
+-    li.w	 tmp4, -1
+-    slli.d	 tmp2, src_off, 3
+-    srl.d 	 tmp4, tmp4, tmp2
+-    srl.d	 data, data, tmp2
+-    nor		 tmp4, tmp4, zero
+-    or		 data, data, tmp4
+-    sub.d	 tmp1, data, zeroones
+-    or		 tmp2, data, sevenf
+-    andn	 has_nul, tmp1, tmp2
+-    beqz	 has_nul, strcpy_page_cross_ok
+-    b		 strcpy_end
++	li.w		tmp1, 0x7
++	andn		tmp3, src,  tmp1
++	ld.d		data, tmp3, 0
++	li.w		tmp4, -1
++	slli.d		tmp2, src_off, 3
++	srl.d		tmp4, tmp4, tmp2
++	srl.d		data, data, tmp2
++	nor		tmp4, tmp4, zero
++	or		data, data, tmp4
++	sub.d		tmp1, data, zeroones
++	or		tmp2, data, sevenf
++	andn		has_nul, tmp1, tmp2
++	beqz		has_nul, strcpy_page_cross_ok
++	b		strcpy_end
+ END(STRCPY)
+ #ifndef ANDROID_CHANGES
+ #ifdef _LIBC
+diff --git a/sysdeps/loongarch/lp64/strlen.S b/sysdeps/loongarch/lp64/strlen.S
+index 73de4631ea..ec4bad21a6 100644
+--- a/sysdeps/loongarch/lp64/strlen.S
++++ b/sysdeps/loongarch/lp64/strlen.S
+@@ -43,102 +43,104 @@ algorithm:
+ #include <sys/asm.h>
+ 
+ 
+-#define L_ADDIU  addi.d
+-#define L_ADDU   add.d
+-#define L_SUBU   sub.d
++#define L_ADDIU	addi.d
++#define L_ADDU	add.d
++#define L_SUBU	sub.d
+ 
+-#define STRLEN  strlen
+-#define L(x)    x
++#define STRLEN	strlen
++#define L(x)	x
+ 
+ 
+ /* size_t strlen (const char *s1); */
+ 
+-    .text;
+-    .globl  strlen;
+-    .align  5;
+-    cfi_startproc ;
+-    .type   strlen, @function;
++	.text;
++	.globl		strlen;
++	.align		5;
++	cfi_startproc;
++	.type		strlen, @function;
+ strlen:
+ 
+-    /* LEAF(strlen) */
+-    #preld      0, a0, 0
++	/* LEAF(strlen) */
++	#preld		0, a0, 0
+ 
+-    nor		t4, zero, zero
+-    lu12i.w     a2, 0x01010
+-    andi	t5, a0, 0x7
++	nor		t4, zero, zero
++	lu12i.w		a2, 0x01010
++	andi		t5, a0, 0x7
+ 
+-    li.w	t7, 0x7
+-    slli.d      t6, t5, 0x3
+-    andn	t7, a0, t7
+-    ld.d	a1, t7, 0
+-    sub.d       t7, zero, t6
+-    sll.d       t4, t4, t7
+-    maskeqz     t4, t4, t6
+-    srl.d       a1, a1, t6
+-    or		a1, a1, t4
++	li.w		t7, 0x7
++	slli.d		t6, t5, 0x3
++	andn		t7, a0, t7
++	ld.d		a1, t7, 0
++	sub.d		t7, zero, t6
++	sll.d		t4, t4, t7
++	maskeqz		t4, t4, t6
++	srl.d		a1, a1, t6
++	or		a1, a1, t4
+ 
+ 
+-    ori		a2, a2, 0x101
+-    nor		t1, a1, zero
+-    li.w	a4, 8
++	ori		a2, a2, 0x101
++	nor		t1, a1, zero
++	li.w		a4, 8
+ 
+-    #preld      0, a0, 32
+-    bstrins.d   a2, a2, 63, 32
+-    sub.d       a5, a4, t5
+-    move	t5, a0
++	#preld		0, a0, 32
++	bstrins.d	a2, a2, 63, 32
++	sub.d		a5, a4, t5
++	move		t5, a0
+ 
+-    sub.d       t0, a1, a2
+-    slli.d      t4, a2, 7
+-    nor		a3, zero, t4
+-    nor		t1, a1, a3
++	sub.d		t0, a1, a2
++	slli.d		t4, a2, 7
++	nor		a3, zero, t4
++	nor		t1, a1, a3
++
++	and		t0, t0, t1
++	#preld		0, a0, 64
+ 
+-    and		t0, t0, t1
+-    #preld      0, a0, 64
+ /* instead of use bnel with daddu a0, a0, a5 in branch slot */
+-    bnez	t0, strlen_count1
+-    L_ADDU      a0, a0, a5
++
++	bnez		t0, strlen_count1
++	L_ADDU		a0, a0, a5
+ strlen_loop:
+-    ld.d	a1, a0, 0
+-    sub.d       t0, a1, a2
+-    and		t1, t0, t4
+-    bnez	t1, strlen_count_pre
+-    ld.d	a1, a0, 8
+-    sub.d       t0, a1, a2
+-    and		t1, t0, t4
+-    L_ADDIU     a0, a0, 16
+-    beqz	t1, strlen_loop
++	ld.d		a1, a0, 0
++	sub.d		t0, a1, a2
++	and		t1, t0, t4
++	bnez		t1, strlen_count_pre
++	ld.d		a1, a0, 8
++	sub.d		t0, a1, a2
++	and		t1, t0, t4
++	L_ADDIU		a0, a0, 16
++	beqz		t1, strlen_loop
+ strlen_count:
+-    addi.d      a0, a0, -8
++	addi.d		a0, a0, -8
+ strlen_count_pre:
+-    nor		t1, a1, a3
+-    and		t0, t0, t1
+-    beqz	t0, strlen_noascii_start
++	nor		t1, a1, a3
++	and		t0, t0, t1
++	beqz		t0, strlen_noascii_start
+ strlen_count1:
+-    ctz.d       t1, t0
+-    L_SUBU      v0, a0, t5
+-    srli.w      t1, t1, 3
+-    L_ADDU      v0, v0, t1
+-    jr		ra
++	ctz.d		t1, t0
++	L_SUBU		v0, a0, t5
++	srli.w		t1, t1, 3
++	L_ADDU		v0, v0, t1
++	jr		ra
+ strlen_noascii_start:
+-    addi.d      a0, a0, 8
++	addi.d		a0, a0, 8
+ strlen_loop_noascii:
+-    ld.d	a1, a0, 0
+-    sub.d       t0, a1, a2
+-    nor		t1, a1, a3
+-    and		t0, t0, t1
+-    bnez	t0, strlen_count1
+-    ld.d	a1, a0, 8
+-    sub.d       t0, a1, a2
+-    nor		t1, a1, a3
+-    and		t0, t0, t1
+-    L_ADDIU     a0, a0, 16
+-    beqz	t0, strlen_loop_noascii
+-    addi.d      a0, a0, -8
+-    ctz.d       t1, t0
+-    L_SUBU      v0, a0, t5
+-    srli.w      t1, t1, 3
+-    L_ADDU      v0, v0, t1
+-    jr		ra
++	ld.d		a1, a0, 0
++	sub.d		t0, a1, a2
++	nor		t1, a1, a3
++	and		t0, t0, t1
++	bnez		t0, strlen_count1
++	ld.d		a1, a0, 8
++	sub.d		t0, a1, a2
++	nor		t1, a1, a3
++	and		t0, t0, t1
++	L_ADDIU		a0, a0, 16
++	beqz		t0, strlen_loop_noascii
++	addi.d		a0, a0, -8
++	ctz.d		t1, t0
++	L_SUBU		v0, a0, t5
++	srli.w		t1, t1, 3
++	L_ADDU		v0, v0, t1
++	jr		ra
+ END(STRLEN)
+ 
+ #ifndef ANDROID_CHANGES
+diff --git a/sysdeps/loongarch/lp64/strncmp.S b/sysdeps/loongarch/lp64/strncmp.S
+index 80a09d4ac5..e95f5f7a36 100644
+--- a/sysdeps/loongarch/lp64/strncmp.S
++++ b/sysdeps/loongarch/lp64/strncmp.S
+@@ -59,219 +59,219 @@
+ #define REP8_80 0x8080808080808080
+ 
+ /* Parameters and Results */
+-#define src1    a0
+-#define src2    a1
+-#define limit   a2
+-#define result  v0
++#define src1	a0
++#define src2	a1
++#define limit	a2
+ /* Note: v0 = a0 in lp64 ABI */
++#define result	v0
+ 
+ 
+ /* Internal variable */
+-#define data1       t0
+-#define data2       t1
+-#define has_nul     t2
+-#define diff	    t3
+-#define syndrome    t4
+-#define zeroones    t5
+-#define sevenf      t6
+-#define pos	    t7
+-#define exchange    t8
+-#define tmp1	    a5
+-#define tmp2	    a6
+-#define tmp3	    a7
+-#define src1_off    a3
+-#define limit_wd    a4
++#define data1		t0
++#define data2		t1
++#define has_nul		t2
++#define diff		t3
++#define syndrome	t4
++#define zeroones	t5
++#define sevenf		t6
++#define pos		t7
++#define exchange	t8
++#define tmp1		a5
++#define tmp2		a6
++#define tmp3		a7
++#define src1_off	a3
++#define limit_wd	a4
+ 
+ 
+ /* int strncmp (const char *s1, const char *s2); */
+ 
+ LEAF(STRNCMP)
+-    .align	 4
+-    beqz	 limit, strncmp_ret0
+-
+-    xor		 tmp1, src1, src2
+-    lu12i.w	 zeroones, 0x01010
+-    lu12i.w	 sevenf, 0x7f7f7
+-    andi	 src1_off, src1, 0x7
+-    ori		 zeroones, zeroones, 0x101
+-    andi	 tmp1, tmp1, 0x7
+-    ori		 sevenf, sevenf, 0xf7f
+-    bstrins.d	 zeroones, zeroones, 63, 32
+-    bstrins.d	 sevenf, sevenf, 63, 32
+-    bnez	 tmp1, strncmp_misaligned8
+-    bnez	 src1_off, strncmp_mutual_align
+-
+-    addi.d	 limit_wd, limit, -1
+-    srli.d	 limit_wd, limit_wd, 3
++	.align		4
++	beqz		limit, strncmp_ret0
++
++	xor		tmp1, src1, src2
++	lu12i.w		zeroones, 0x01010
++	lu12i.w		sevenf, 0x7f7f7
++	andi		src1_off, src1, 0x7
++	ori		zeroones, zeroones, 0x101
++	andi		tmp1, tmp1, 0x7
++	ori		sevenf, sevenf, 0xf7f
++	bstrins.d	zeroones, zeroones, 63, 32
++	bstrins.d	sevenf, sevenf, 63, 32
++	bnez		tmp1, strncmp_misaligned8
++	bnez		src1_off, strncmp_mutual_align
++
++	addi.d		limit_wd, limit, -1
++	srli.d		limit_wd, limit_wd, 3
+ 
+ strncmp_loop_aligned:
+-    ld.d	 data1, src1, 0
+-    addi.d	 src1, src1, 8
+-    ld.d	 data2, src2, 0
+-    addi.d	 src2, src2, 8
++	ld.d		data1, src1, 0
++	addi.d		src1, src1, 8
++	ld.d		data2, src2, 0
++	addi.d		src2, src2, 8
++
+ strncmp_start_realigned:
+-    addi.d	 limit_wd, limit_wd, -1
+-    sub.d 	 tmp1, data1, zeroones
+-    or		 tmp2, data1, sevenf
+-    xor		 diff, data1, data2
+-    andn	 has_nul, tmp1, tmp2
+-    srli.d	 tmp1, limit_wd, 63
+-    or	  	 syndrome, diff, has_nul
+-    or	  	 tmp2, syndrome, tmp1
+-    beqz	 tmp2, strncmp_loop_aligned
+-
+-    /* if not reach limit */
+-    bge		 limit_wd, zero, strncmp_not_limit
+-    /* if reach limit */
+-    andi	 limit, limit, 0x7
+-    li.w	 tmp1, 0x8
+-    sub.d	 limit, tmp1, limit
+-    slli.d	 limit, limit, 0x3
+-    li.d	 tmp1, -1
+-    srl.d	 tmp1, tmp1, limit
+-    and		 data1, data1, tmp1
+-    and		 data2, data2, tmp1
+-    orn		 syndrome, syndrome, tmp1
++	addi.d		limit_wd, limit_wd, -1
++	sub.d		tmp1, data1, zeroones
++	or		tmp2, data1, sevenf
++	xor		diff, data1, data2
++	andn		has_nul, tmp1, tmp2
++	srli.d		tmp1, limit_wd, 63
++	or		syndrome, diff, has_nul
++	or		tmp2, syndrome, tmp1
++	beqz		tmp2, strncmp_loop_aligned
++
++	/* if not reach limit */
++	bge		limit_wd, zero, strncmp_not_limit
++	/* if reach limit */
++	andi		limit, limit, 0x7
++	li.w		tmp1, 0x8
++	sub.d		limit, tmp1, limit
++	slli.d		limit, limit, 0x3
++	li.d		tmp1, -1
++	srl.d		tmp1, tmp1, limit
++	and		data1, data1, tmp1
++	and		data2, data2, tmp1
++	orn		syndrome, syndrome, tmp1
+ 
+ 
+ strncmp_not_limit:
+-    ctz.d    	 pos, syndrome
+-    bstrins.d	 pos, zero, 2, 0
+-    srl.d    	 data1, data1, pos
+-    srl.d    	 data2, data2, pos
+-    andi	 data1, data1, 0xff
+-    andi	 data2, data2, 0xff
+-    sub.d	 result, data1, data2
+-    jr		 ra
++	ctz.d		pos, syndrome
++	bstrins.d	pos, zero, 2, 0
++	srl.d		data1, data1, pos
++	srl.d		data2, data2, pos
++	andi		data1, data1, 0xff
++	andi		data2, data2, 0xff
++	sub.d		result, data1, data2
++	jr		ra
+ 
+ 
+ 
+ strncmp_mutual_align:
+-    bstrins.d	 src1, zero, 2, 0
+-    bstrins.d	 src2, zero, 2, 0
+-    slli.d   	 tmp1, src1_off,  0x3
+-    ld.d	 data1, src1, 0
+-    ld.d	 data2, src2, 0
+-    addi.d   	 src2, src2, 8
+-    addi.d   	 src1, src1, 8
+-
+-    addi.d	 limit_wd, limit, -1
+-    andi	 tmp3, limit_wd, 0x7
+-    srli.d	 limit_wd, limit_wd, 3
+-    add.d 	 limit, limit, src1_off
+-    add.d 	 tmp3, tmp3, src1_off
+-    srli.d	 tmp3, tmp3, 3
+-    add.d	 limit_wd, limit_wd, tmp3
+-
+-    sub.d	 tmp1, zero, tmp1
+-    nor		 tmp2, zero, zero
+-    srl.d	 tmp2, tmp2, tmp1
+-    or		 data1, data1, tmp2
+-    or		 data2, data2, tmp2
+-    b		 strncmp_start_realigned
++	bstrins.d	src1, zero, 2, 0
++	bstrins.d	src2, zero, 2, 0
++	slli.d		tmp1, src1_off,  0x3
++	ld.d		data1, src1, 0
++	ld.d		data2, src2, 0
++	addi.d		src2, src2, 8
++	addi.d		src1, src1, 8
++
++	addi.d		limit_wd, limit, -1
++	andi		tmp3, limit_wd, 0x7
++	srli.d		limit_wd, limit_wd, 3
++	add.d		limit, limit, src1_off
++	add.d		tmp3, tmp3, src1_off
++	srli.d		tmp3, tmp3, 3
++	add.d		limit_wd, limit_wd, tmp3
++
++	sub.d		tmp1, zero, tmp1
++	nor		tmp2, zero, zero
++	srl.d		tmp2, tmp2, tmp1
++	or		data1, data1, tmp2
++	or		data2, data2, tmp2
++	b		strncmp_start_realigned
+ 
+ strncmp_misaligned8:
++	li.w		tmp1, 0x10
++	bge		limit, tmp1, strncmp_try_words
+ 
+-    li.w	 tmp1, 0x10
+-    bge		 limit, tmp1, strncmp_try_words
+ strncmp_byte_loop:
+-    ld.bu 	 data1, src1, 0
+-    ld.bu 	 data2, src2, 0
+-    addi.d	 limit, limit, -1
+-    xor		 tmp1, data1, data2
+-    masknez      tmp1, data1, tmp1
+-    maskeqz      tmp1, limit, tmp1
+-    beqz	 tmp1, strncmp_done
+-
+-    ld.bu  	 data1, src1, 1
+-    ld.bu  	 data2, src2, 1
+-    addi.d 	 src1, src1, 2
+-    addi.d 	 src2, src2, 2
+-    addi.d 	 limit, limit, -1
+-    xor		 tmp1, data1, data2
+-    masknez	 tmp1, data1, tmp1
+-    maskeqz	 tmp1, limit, tmp1
+-    bnez	 tmp1, strncmp_byte_loop
++	ld.bu		data1, src1, 0
++	ld.bu		data2, src2, 0
++	addi.d		limit, limit, -1
++	xor		tmp1, data1, data2
++	masknez		tmp1, data1, tmp1
++	maskeqz		tmp1, limit, tmp1
++	beqz		tmp1, strncmp_done
++
++	ld.bu		data1, src1, 1
++	ld.bu		data2, src2, 1
++	addi.d		src1, src1, 2
++	addi.d		src2, src2, 2
++	addi.d		limit, limit, -1
++	xor		tmp1, data1, data2
++	masknez		tmp1, data1, tmp1
++	maskeqz		tmp1, limit, tmp1
++	bnez		tmp1, strncmp_byte_loop
+ 
+ 
+ strncmp_done:
+-    sub.d	 result, data1, data2
+-    jr		 ra
++	sub.d		result, data1, data2
++	jr		ra
+ 
+ strncmp_try_words:
+-    srli.d	 limit_wd, limit, 3
+-    beqz	 src1_off, strncmp_do_misaligned
++	srli.d		limit_wd, limit, 3
++	beqz		src1_off, strncmp_do_misaligned
+ 
+-    sub.d 	 src1_off, zero, src1_off
+-    andi	 src1_off, src1_off, 0x7
+-    sub.d 	 limit, limit, src1_off
+-    srli.d	 limit_wd, limit, 0x3
++	sub.d		src1_off, zero, src1_off
++	andi		src1_off, src1_off, 0x7
++	sub.d		limit, limit, src1_off
++	srli.d		limit_wd, limit, 0x3
+ 
+ 
+ strncmp_page_end_loop:
+-    ld.bu  	 data1, src1, 0
+-    ld.bu  	 data2, src2, 0
+-    addi.d 	 src1, src1, 1
+-    addi.d 	 src2, src2, 1
+-    xor		 tmp1, data1, data2
+-    masknez	 tmp1, data1, tmp1
+-    beqz	 tmp1, strncmp_done
+-    andi	 tmp1, src1, 0x7
+-    bnez	 tmp1, strncmp_page_end_loop
++	ld.bu		data1, src1, 0
++	ld.bu		data2, src2, 0
++	addi.d		src1, src1, 1
++	addi.d		src2, src2, 1
++	xor		tmp1, data1, data2
++	masknez		tmp1, data1, tmp1
++	beqz		tmp1, strncmp_done
++	andi		tmp1, src1, 0x7
++	bnez		tmp1, strncmp_page_end_loop
+ strncmp_do_misaligned:
+-    li.w	 src1_off, 0x8
+-    addi.d 	 limit_wd, limit_wd, -1
+-    blt		 limit_wd, zero, strncmp_done_loop
++	li.w		src1_off, 0x8
++	addi.d		limit_wd, limit_wd, -1
++	blt		limit_wd, zero, strncmp_done_loop
+ 
+ strncmp_loop_misaligned:
+-    andi	 tmp2, src2, 0xff8
+-    xori	 tmp2, tmp2, 0xff8
+-    beqz	 tmp2, strncmp_page_end_loop
+-
+-    ld.d	 data1, src1, 0
+-    ld.d	 data2, src2, 0
+-    addi.d 	 src1, src1, 8
+-    addi.d 	 src2, src2, 8
+-    sub.d  	 tmp1, data1, zeroones
+-    or	  	 tmp2, data1, sevenf
+-    xor		 diff, data1, data2
+-    andn	 has_nul, tmp1, tmp2
+-    or	  	 syndrome, diff, has_nul
+-    bnez	 syndrome, strncmp_not_limit
+-    addi.d 	 limit_wd, limit_wd, -1
+-    bge		 limit_wd, zero, strncmp_loop_misaligned
++	andi		tmp2, src2, 0xff8
++	xori		tmp2, tmp2, 0xff8
++	beqz		tmp2, strncmp_page_end_loop
++
++	ld.d		data1, src1, 0
++	ld.d		data2, src2, 0
++	addi.d		src1, src1, 8
++	addi.d		src2, src2, 8
++	sub.d		tmp1, data1, zeroones
++	or		tmp2, data1, sevenf
++	xor		diff, data1, data2
++	andn		has_nul, tmp1, tmp2
++	or		syndrome, diff, has_nul
++	bnez		syndrome, strncmp_not_limit
++	addi.d		limit_wd, limit_wd, -1
++	bge		limit_wd, zero, strncmp_loop_misaligned
+ 
+ strncmp_done_loop:
+-    andi	 limit, limit, 0x7
+-    beqz	 limit, strncmp_not_limit
+-    /* Read the last double word */
+-    /* check if the final part is about to exceed the page */
+-    andi	 tmp1, src2, 0x7
+-    andi	 tmp2, src2, 0xff8
+-    add.d 	 tmp1, tmp1, limit
+-    xori	 tmp2, tmp2, 0xff8
+-    andi	 tmp1, tmp1, 0x8
+-    masknez	 tmp1, tmp1, tmp2
+-    bnez	 tmp1, strncmp_byte_loop
+-    addi.d	 src1, src1, -8
+-    addi.d	 src2, src2, -8
+-    ldx.d 	 data1, src1, limit
+-    ldx.d 	 data2, src2, limit
+-    sub.d 	 tmp1, data1, zeroones
+-    or	  	 tmp2, data1, sevenf
+-    xor		 diff, data1, data2
+-    andn	 has_nul, tmp1, tmp2
+-    or	  	 syndrome, diff, has_nul
+-    bnez	 syndrome, strncmp_not_limit
++	andi		limit, limit, 0x7
++	beqz		limit, strncmp_not_limit
++	/* Read the last double word */
++	/* check if the final part is about to exceed the page */
++	andi		tmp1, src2, 0x7
++	andi		tmp2, src2, 0xff8
++	add.d		tmp1, tmp1, limit
++	xori		tmp2, tmp2, 0xff8
++	andi		tmp1, tmp1, 0x8
++	masknez		tmp1, tmp1, tmp2
++	bnez		tmp1, strncmp_byte_loop
++	addi.d		src1, src1, -8
++	addi.d		src2, src2, -8
++	ldx.d		data1, src1, limit
++	ldx.d		data2, src2, limit
++	sub.d		tmp1, data1, zeroones
++	or		tmp2, data1, sevenf
++	xor		diff, data1, data2
++	andn		has_nul, tmp1, tmp2
++	or		syndrome, diff, has_nul
++	bnez		syndrome, strncmp_not_limit
+ 
+ strncmp_ret0:
+-    move	 result, zero
+-    jr		 ra
+-/* check
+-    if ((src1 != 0) && ((src2 == 0) || (src1 < src2)))
+-    then exchange(src1,src2)
++	move		result, zero
++	jr		ra
+ 
+-*/
++/* check if ((src1 != 0) && ((src2 == 0) || (src1 < src2)))
++   then exchange(src1,src2)
++ */
+ 
+ 
+ END(STRNCMP)
+diff --git a/sysdeps/loongarch/lp64/strnlen.S b/sysdeps/loongarch/lp64/strnlen.S
+index 2bcafa0945..b475938daf 100644
+--- a/sysdeps/loongarch/lp64/strnlen.S
++++ b/sysdeps/loongarch/lp64/strnlen.S
+@@ -44,45 +44,43 @@ algorithm:
+ 
+ 
+ 
+-#define L_ADDIU  addi.d
+-#define L_ADDU   add.d
+-#define L_SUBU   sub.d
++#define L_ADDIU		addi.d
++#define L_ADDU		add.d
++#define L_SUBU		sub.d
+ 
+ #define STRNLEN __strnlen
+-#define L(x)    x
+-/* rd <- if rc then ra else rb
+-    will destroy t6
+- */
++#define L(x)	x
++/* rd <- if rc then ra else rb will destroy t6 */
+ 
+ #define CONDITIONSEL(rd,ra,rb,rc)\
+-	masknez a5, rb, rc;\
+-	maskeqz rd, ra, rc;\
+-	or      rd, rd, a5
++	masknez		a5, rb, rc;\
++	maskeqz		rd, ra, rc;\
++	or		rd, rd, a5
+ 
+ 
+ /* Parameters and Results */
+-#define srcin   a0
+-#define limit   a1
+-#define len     v0
++#define srcin		a0
++#define limit		a1
++#define len		v0
+ 
+ 
+ /* Internal variable */
+-#define data1       t0
+-#define data2       t1
+-#define has_nul1    t2
+-#define has_nul2    t3
+-#define src	    t4
+-#define zeroones    t5
+-#define sevenf      t6
+-#define data2a      t7
+-#define tmp6	    t7
+-#define pos	    t8
+-#define tmp1	    a2
+-#define tmp2	    a3
+-#define tmp3	    a4
+-#define tmp4	    a5
+-#define tmp5	    a6
+-#define limit_wd    a7
++#define data1		t0
++#define data2		t1
++#define has_nul1	t2
++#define has_nul2	t3
++#define src		t4
++#define zeroones	t5
++#define sevenf		t6
++#define data2a		t7
++#define tmp6		t7
++#define pos		t8
++#define tmp1		a2
++#define tmp2		a3
++#define tmp3		a4
++#define tmp4		a5
++#define tmp5		a6
++#define limit_wd	a7
+ 
+ 
+ 
+@@ -90,76 +88,76 @@ algorithm:
+ 
+ LEAF(STRNLEN)
+ 
+-    .align      4
+-    beqz	limit, L(_hit_limit)
+-    lu12i.w     zeroones, 0x01010
+-    lu12i.w     sevenf, 0x7f7f7
+-    ori	 zeroones, zeroones, 0x101
+-    ori	 sevenf, sevenf, 0xf7f
+-    bstrins.d   zeroones, zeroones, 63, 32
+-    bstrins.d   sevenf, sevenf, 63, 32
+-    andi	tmp1, srcin, 15
+-    sub.d       src, srcin, tmp1
+-    bnez	tmp1, L(misaligned)
+-    addi.d      limit_wd, limit, -1
+-    srli.d      limit_wd, limit_wd, 4
++	.align		4
++	beqz		limit, L(_hit_limit)
++	lu12i.w		zeroones, 0x01010
++	lu12i.w		sevenf, 0x7f7f7
++	ori		zeroones, zeroones, 0x101
++	ori		sevenf, sevenf, 0xf7f
++	bstrins.d	zeroones, zeroones, 63, 32
++	bstrins.d	sevenf, sevenf, 63, 32
++	andi		tmp1, srcin, 15
++	sub.d		src, srcin, tmp1
++	bnez		tmp1, L(misaligned)
++	addi.d		limit_wd, limit, -1
++	srli.d		limit_wd, limit_wd, 4
+ L(_loop):
+-    ld.d	data1, src, 0
+-    ld.d	data2, src, 8
+-    addi.d      src, src, 16
++	ld.d		data1, src, 0
++	ld.d		data2, src, 8
++	addi.d		src, src, 16
+ L(_realigned):
+-    sub.d       tmp1, data1, zeroones
+-    or	  	tmp2, data1, sevenf
+-    sub.d       tmp3, data2, zeroones
+-    or	  	tmp4, data2, sevenf
+-    andn	has_nul1, tmp1, tmp2
+-    andn	has_nul2, tmp3, tmp4
+-    addi.d      limit_wd, limit_wd, -1
+-    srli.d      tmp1, limit_wd, 63
+-    or	  	tmp2, has_nul1, has_nul2
+-    or	  	tmp3, tmp1, tmp2
+-    beqz	tmp3, L(_loop)
+-    beqz	tmp2, L(_hit_limit)
+-    sub.d       len, src, srcin
+-    beqz	has_nul1, L(_nul_in_data2)
+-    move	has_nul2, has_nul1
+-    addi.d      len, len, -8
++	sub.d		tmp1, data1, zeroones
++	or		tmp2, data1, sevenf
++	sub.d		tmp3, data2, zeroones
++	or		tmp4, data2, sevenf
++	andn		has_nul1, tmp1, tmp2
++	andn		has_nul2, tmp3, tmp4
++	addi.d		limit_wd, limit_wd, -1
++	srli.d		tmp1, limit_wd, 63
++	or		tmp2, has_nul1, has_nul2
++	or		tmp3, tmp1, tmp2
++	beqz		tmp3, L(_loop)
++	beqz		tmp2, L(_hit_limit)
++	sub.d		len, src, srcin
++	beqz		has_nul1, L(_nul_in_data2)
++	move		has_nul2, has_nul1
++	addi.d		len, len, -8
+ L(_nul_in_data2):
+-    ctz.d       pos, has_nul2
+-    srli.d      pos, pos, 3
+-    addi.d      len, len, -8
+-    add.d       len, len, pos
+-    sltu	tmp1, len, limit
+-    CONDITIONSEL(len,len,limit,tmp1)
+-    jr		ra
++	ctz.d		pos, has_nul2
++	srli.d		pos, pos, 3
++	addi.d		len, len, -8
++	add.d		len, len, pos
++	sltu		tmp1, len, limit
++	CONDITIONSEL(len,len,limit,tmp1)
++	jr		ra
+ 
+ 
+ L(misaligned):
+-    addi.d      limit_wd, limit, -1
+-    sub.d       tmp4, zero, tmp1
+-    andi	tmp3, limit_wd, 15
+-    srli.d      limit_wd, limit_wd, 4
+-    li.d	tmp5, -1
+-    ld.d	data1, src, 0
+-    ld.d	data2, src, 8
+-    addi.d      src, src, 16
+-    slli.d      tmp4, tmp4, 3
+-    add.d       tmp3, tmp3, tmp1
+-    srl.d       tmp2, tmp5, tmp4
+-    srli.d      tmp3, tmp3, 4
+-    add.d       limit_wd, limit_wd, tmp3
+-    or	  	data1, data1, tmp2
+-    or	  	data2a, data2, tmp2
+-    li.w	tmp3, 9
+-    sltu	tmp1, tmp1, tmp3
+-    CONDITIONSEL(data1,data1,tmp5,tmp1)
+-    CONDITIONSEL(data2,data2,data2a,tmp1)
+-    b		L(_realigned)
++	addi.d		limit_wd, limit, -1
++	sub.d		tmp4, zero, tmp1
++	andi		tmp3, limit_wd, 15
++	srli.d		limit_wd, limit_wd, 4
++	li.d		tmp5, -1
++	ld.d		data1, src, 0
++	ld.d		data2, src, 8
++	addi.d		src, src, 16
++	slli.d		tmp4, tmp4, 3
++	add.d		tmp3, tmp3, tmp1
++	srl.d		tmp2, tmp5, tmp4
++	srli.d		tmp3, tmp3, 4
++	add.d		limit_wd, limit_wd, tmp3
++	or		data1, data1, tmp2
++	or		data2a, data2, tmp2
++	li.w		tmp3, 9
++	sltu		tmp1, tmp1, tmp3
++	CONDITIONSEL(data1,data1,tmp5,tmp1)
++	CONDITIONSEL(data2,data2,data2a,tmp1)
++	b		L(_realigned)
+ 
+ 
+ L(_hit_limit):
+-    move	len, limit
+-    jr		ra
++	move		len, limit
++	jr		ra
+ END(STRNLEN)
+ #ifndef ANDROID_CHANGES
+ #ifdef _LIBC
+diff --git a/sysdeps/loongarch/setjmp.S b/sysdeps/loongarch/setjmp.S
+index 278c8f38e2..589a35c11a 100644
+--- a/sysdeps/loongarch/setjmp.S
++++ b/sysdeps/loongarch/setjmp.S
+@@ -20,34 +20,34 @@
+ #include <sys/asm.h>
+ 
+ ENTRY (__sigsetjmp)
+-  REG_S ra, a0, 0*SZREG
+-  REG_S sp, a0, 1*SZREG
+-  REG_S x,  a0, 2*SZREG
+-  REG_S fp, a0, 3*SZREG
+-  REG_S s0, a0, 4*SZREG
+-  REG_S s1, a0, 5*SZREG
+-  REG_S s2, a0, 6*SZREG
+-  REG_S s3, a0, 7*SZREG
+-  REG_S s4, a0, 8*SZREG
+-  REG_S s5, a0, 9*SZREG
+-  REG_S s6, a0, 10*SZREG
+-  REG_S s7, a0, 11*SZREG
+-  REG_S s8, a0, 12*SZREG
++	REG_S ra, a0, 0*SZREG
++	REG_S sp, a0, 1*SZREG
++	REG_S x,  a0, 2*SZREG
++	REG_S fp, a0, 3*SZREG
++	REG_S s0, a0, 4*SZREG
++	REG_S s1, a0, 5*SZREG
++	REG_S s2, a0, 6*SZREG
++	REG_S s3, a0, 7*SZREG
++	REG_S s4, a0, 8*SZREG
++	REG_S s5, a0, 9*SZREG
++	REG_S s6, a0, 10*SZREG
++	REG_S s7, a0, 11*SZREG
++	REG_S s8, a0, 12*SZREG
+ 
+-  FREG_S $f24, a0, 13*SZREG + 0*SZFREG
+-  FREG_S $f25, a0, 13*SZREG + 1*SZFREG
+-  FREG_S $f26, a0, 13*SZREG + 2*SZFREG
+-  FREG_S $f27, a0, 13*SZREG + 3*SZFREG
+-  FREG_S $f28, a0, 13*SZREG + 4*SZFREG
+-  FREG_S $f29, a0, 13*SZREG + 5*SZFREG
+-  FREG_S $f30, a0, 13*SZREG + 6*SZFREG
+-  FREG_S $f31, a0, 13*SZREG + 7*SZFREG
++	FREG_S $f24, a0, 13*SZREG + 0*SZFREG
++	FREG_S $f25, a0, 13*SZREG + 1*SZFREG
++	FREG_S $f26, a0, 13*SZREG + 2*SZFREG
++	FREG_S $f27, a0, 13*SZREG + 3*SZFREG
++	FREG_S $f28, a0, 13*SZREG + 4*SZFREG
++	FREG_S $f29, a0, 13*SZREG + 5*SZFREG
++	FREG_S $f30, a0, 13*SZREG + 6*SZFREG
++	FREG_S $f31, a0, 13*SZREG + 7*SZFREG
+ 
+ #if IS_IN(rtld)
+-  li.w  v0, 0
+-  jirl  zero,ra,0
++	li.w	v0, 0
++	jirl	zero,ra,0
+ #else
+-  b     C_SYMBOL_NAME(__sigjmp_save)
++	b	C_SYMBOL_NAME(__sigjmp_save)
+ #endif
+ END (__sigsetjmp)
+ hidden_def (__sigsetjmp)
+diff --git a/sysdeps/loongarch/start.S b/sysdeps/loongarch/start.S
+index f1a8b03b2f..faea78541f 100644
+--- a/sysdeps/loongarch/start.S
++++ b/sysdeps/loongarch/start.S
+@@ -35,37 +35,38 @@ __libc_start_main (int (*main) (int, char **, char **),
+ 		   void (*fini) (void),
+ 		   void (*rtld_fini) (void),
+ 		   void *stack_end);
+-*/
++ */
+ 
+ ENTRY (ENTRY_POINT)
+-    /* Terminate call stack by noting ra is undefined.  Use a dummy
+-       .cfi_label to force starting the FDE.  */
+-    .cfi_label .Ldummy
+-    cfi_undefined (1)
+-    or      a5, a0, zero /* rtld_fini */
+ 
+-    /* We must get symbol main through GOT table, since main may not be local.
+-       For instance: googletest defines main in dynamic library.  */
+-    la.got  a0, t0, main
++/* Terminate call stack by noting ra is undefined.  Use a dummy
++   .cfi_label to force starting the FDE.  */
++	.cfi_label .Ldummy
++	cfi_undefined (1)
++	or		a5, a0, zero /* rtld_fini */
++
++/* We must get symbol main through GOT table, since main may not be local.
++   For instance: googletest defines main in dynamic library.  */
++	la.got		a0, t0, main
+ #ifdef __loongarch64
+-    ld.d    a1, sp, 0
+-    addi.d  a2, sp, SZREG
++	ld.d		a1, sp, 0
++	addi.d		a2, sp, SZREG
+ #elif defined __loongarch32
+-    ld.w    a1, sp, 0
+-    addi.w  a2, sp, SZREG
++	ld.w		a1, sp, 0
++	addi.w		a2, sp, SZREG
+ #endif
+-    /* Adjust $sp for 16-aligned */
+-    srli.d  sp, sp, 4
+-    slli.d  sp, sp, 4
++	/* Adjust $sp for 16-aligned */
++	srli.d		sp, sp, 4
++	slli.d		sp, sp, 4
+ 
+-    move    a3, zero /* used to be init */
+-    move    a4, zero /* used to be fini */
+-    or      a6, sp, zero /* stack_end */
++	move		a3, zero /* used to be init */
++	move		a4, zero /* used to be fini */
++	or		a6, sp, zero /* stack_end */
+ 
+-    la.got  ra, t0, __libc_start_main
+-    jirl    ra, ra, 0
++	la.got		ra, t0, __libc_start_main
++	jirl		ra, ra, 0
+ 
+-    la.got  ra, t0, abort
+-    jirl    ra, ra, 0
++	la.got		ra, t0, abort
++	jirl		ra, ra, 0
+ END (ENTRY_POINT)
+ 
+diff --git a/sysdeps/unix/sysv/linux/loongarch/clone.S b/sysdeps/unix/sysv/linux/loongarch/clone.S
+index 8b4d57b688..0b5c467bd6 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/clone.S
++++ b/sysdeps/unix/sysv/linux/loongarch/clone.S
+@@ -21,71 +21,72 @@
+ 
+ #include <sys/asm.h>
+ #include <sysdep.h>
+-#define _ERRNO_H    1
++#define _ERRNO_H  1
+ #include <bits/errno.h>
+ #include <tls.h>
+ #include "tcb-offsets.h"
+ 
+ /* int clone(int (*fn)(void *arg), void *child_stack, int flags, void *arg,
+-	     void *parent_tidptr, void *tls, void *child_tidptr) */
++   void *parent_tidptr, void *tls, void *child_tidptr) */
+ 
+ ENTRY (__clone)
+ 
+-    /* Sanity check arguments.  */
+-    beqz    a0, L (invalid) /* No NULL function pointers.  */
+-    beqz    a1, L (invalid) /* No NULL stack pointers.  */
++	/* Sanity check arguments.  */
++	beqz		a0, L (invalid) /* No NULL function pointers.  */
++	beqz		a1, L (invalid) /* No NULL stack pointers.  */
+ 
+-    addi.d  a1, a1, -16 /* Reserve argument save space.  */
+-    st.d    a0, a1, 0   /* Save function pointer.  */
+-    st.d    a3, a1, SZREG   /* Save argument pointer.  */
++	addi.d 		a1, a1, -16 /* Reserve argument save space.  */
++	st.d		a0, a1, 0   /* Save function pointer.  */
++	st.d		a3, a1, SZREG   /* Save argument pointer.  */
+ 
+-    /* The syscall expects the args to be in different slots.  */
+-    or      a0, a2, zero
+-    or      a2, a4, zero
+-    or      a3, a6, zero
+-    or      a4, a5, zero
++	/* The syscall expects the args to be in different slots.  */
++	or		a0, a2, zero
++	or		a2, a4, zero
++	or		a3, a6, zero
++	or		a4, a5, zero
+ 
+-    /* Do the system call.  */
+-    li.d    a7,__NR_clone
+-    syscall 0
++	/* Do the system call.  */
++	li.d		a7,__NR_clone
++	syscall		0
+ 
+-    blt     a0, zero ,L (error)
+-    beqz    a0,L (thread_start)
++	blt		a0, zero ,L (error)
++	beqz		a0,L (thread_start)
+ 
+-    /* Successful return from the parent.  */
+-    ret
++	/* Successful return from the parent.  */
++	ret
+ 
+ L (invalid):
+-    li.d    a0, -EINVAL
+-    /* Something bad happened -- no child created.  */
++	li.d		a0, -EINVAL
++
++	/* Something bad happened -- no child created.  */
+ L (error):
+-    b       __syscall_error
++	b		__syscall_error
+ 
+ END (__clone)
+ 
+ /* Load up the arguments to the function.  Put this block of code in
+    its own function so that we can terminate the stack trace with our
+    debug info.  */
+-
+ ENTRY (__thread_start)
+ L (thread_start):
+-    /* Terminate call stack by noting ra is undefined.  Use a dummy
+-       .cfi_label to force starting the FDE.  */
+-    .cfi_label .Ldummy
+-    cfi_undefined (1)
+ 
+-    /* Restore the arg for user's function.  */
+-    ld.d    a1, sp, 0   /* Function pointer.  */
+-    ld.d    a0, sp, SZREG   /* Argument pointer.  */
++/* Terminate call stack by noting ra is undefined.  Use a dummy
++   .cfi_label to force starting the FDE.  */
++	.cfi_label .Ldummy
++	cfi_undefined (1)
++
++	/* Restore the arg for user's function.  */
++	ld.d		a1, sp, 0   /* Function pointer.  */
++	ld.d		a0, sp, SZREG   /* Argument pointer.  */
+ 
+-    /* Call the user's function.  */
+-    jirl    ra, a1, 0
++	/* Call the user's function.  */
++	jirl		ra, a1, 0
+ 
+-    /* Call exit with the function's return value.  */
+-    li.d    a7, __NR_exit
+-    syscall 0
++	/* Call exit with the function's return value.  */
++	li.d		a7, __NR_exit
++	syscall		0
+ 
+-    END (__thread_start)
++	END (__thread_start)
+ 
+ libc_hidden_def (__clone)
+ weak_alias (__clone, clone)
+diff --git a/sysdeps/unix/sysv/linux/loongarch/getcontext.S b/sysdeps/unix/sysv/linux/loongarch/getcontext.S
+index e502ee4b45..3a64857a42 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/getcontext.S
++++ b/sysdeps/unix/sysv/linux/loongarch/getcontext.S
+@@ -20,53 +20,54 @@
+ 
+ /* int getcontext (ucontext_t *ucp) */
+ 
+-    .text
++	.text
+ LEAF (__getcontext)
+-    SAVE_INT_REG (ra,   1, a0)
+-    SAVE_INT_REG (sp,   3, a0)
+-    SAVE_INT_REG (zero, 4, a0) /* return 0 by overwriting a0.  */
+-    SAVE_INT_REG (x,   21, a0)
+-    SAVE_INT_REG (fp,  22, a0)
+-    SAVE_INT_REG (s0,  23, a0)
+-    SAVE_INT_REG (s1,  24, a0)
+-    SAVE_INT_REG (s2,  25, a0)
+-    SAVE_INT_REG (s3,  26, a0)
+-    SAVE_INT_REG (s4,  27, a0)
+-    SAVE_INT_REG (s5,  28, a0)
+-    SAVE_INT_REG (s6,  29, a0)
+-    SAVE_INT_REG (s7,  30, a0)
+-    SAVE_INT_REG (s8,  31, a0)
+-    st.d    ra, a0, MCONTEXT_PC
++	SAVE_INT_REG (ra,   1, a0)
++	SAVE_INT_REG (sp,   3, a0)
++	SAVE_INT_REG (zero, 4, a0) /* return 0 by overwriting a0.  */
++	SAVE_INT_REG (x,   21, a0)
++	SAVE_INT_REG (fp,  22, a0)
++	SAVE_INT_REG (s0,  23, a0)
++	SAVE_INT_REG (s1,  24, a0)
++	SAVE_INT_REG (s2,  25, a0)
++	SAVE_INT_REG (s3,  26, a0)
++	SAVE_INT_REG (s4,  27, a0)
++	SAVE_INT_REG (s5,  28, a0)
++	SAVE_INT_REG (s6,  29, a0)
++	SAVE_INT_REG (s7,  30, a0)
++	SAVE_INT_REG (s8,  31, a0)
++	st.d		ra, a0, MCONTEXT_PC
+ 
+ #ifndef __loongarch_soft_float
+-    movfcsr2gr a1, $r0
++	movfcsr2gr	a1, $r0
+ 
+-    SAVE_FP_REG (fs0,  24, a0)
+-    SAVE_FP_REG (fs1,  25, a0)
+-    SAVE_FP_REG (fs2,  26, a0)
+-    SAVE_FP_REG (fs3,  27, a0)
+-    SAVE_FP_REG (fs4,  28, a0)
+-    SAVE_FP_REG (fs5,  29, a0)
+-    SAVE_FP_REG (fs6,  30, a0)
+-    SAVE_FP_REG (fs7,  31, a0)
++	SAVE_FP_REG (fs0,  24, a0)
++	SAVE_FP_REG (fs1,  25, a0)
++	SAVE_FP_REG (fs2,  26, a0)
++	SAVE_FP_REG (fs3,  27, a0)
++	SAVE_FP_REG (fs4,  28, a0)
++	SAVE_FP_REG (fs5,  29, a0)
++	SAVE_FP_REG (fs6,  30, a0)
++	SAVE_FP_REG (fs7,  31, a0)
+ 
+-    st.w    a1, a0, MCONTEXT_FCSR
++	st.w		a1, a0, MCONTEXT_FCSR
+ #endif /* __loongarch_soft_float */
+ 
+ /* rt_sigprocmask (SIG_BLOCK, NULL, &ucp->uc_sigmask, _NSIG8) */
+-    li.d    a3, _NSIG8
+-    li.d    a2, UCONTEXT_SIGMASK
+-    add.d   a2, a2, a0
+-    ori     a1, zero,0
+-    li.d    a0, SIG_BLOCK
++	li.d		a3, _NSIG8
++	li.d		a2, UCONTEXT_SIGMASK
++	add.d		a2, a2, a0
++	ori		a1, zero,0
++	li.d		a0, SIG_BLOCK
+ 
+-    li.d    a7, SYS_ify (rt_sigprocmask)
+-    syscall 0
+-    blt a0, zero, 99f
++	li.d		a7, SYS_ify (rt_sigprocmask)
++	syscall		0
++	blt		a0, zero, 99f
+ 
+-    jirl    $r0, $r1, 0
++	jirl		$r0, $r1, 0
+ 
+-99: b       __syscall_error
++99:
++	b		__syscall_error
+ 
+ PSEUDO_END (__getcontext)
+ 
+diff --git a/sysdeps/unix/sysv/linux/loongarch/setcontext.S b/sysdeps/unix/sysv/linux/loongarch/setcontext.S
+index 6efa8aec2b..0070829261 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/setcontext.S
++++ b/sysdeps/unix/sysv/linux/loongarch/setcontext.S
+@@ -27,86 +27,89 @@
+   switches only.  Therefore, it does not have to restore anything
+   other than the PRESERVED state.  */
+ 
+-    .text
++	.text
+ LEAF (__setcontext)
+ 
+-    addi.d  sp, sp, -16
+-    st.d    a0, sp, 0   /* Save ucp to stack */
++	addi.d		sp, sp, -16
++	st.d		a0, sp, 0	/* Save ucp to stack */
++
+ /* rt_sigprocmask (SIG_SETMASK, &ucp->uc_sigmask, NULL, _NSIG8) */
+-    li.d    a3, _NSIG8
+-    li.d    a2, 0
+-    li.d    a1, UCONTEXT_SIGMASK
+-    add.d   a1, a1, a0
+-    li.d    a0, SIG_SETMASK
++	li.d		a3, _NSIG8
++	li.d		a2, 0
++	li.d		a1, UCONTEXT_SIGMASK
++	add.d		a1, a1, a0
++	li.d		a0, SIG_SETMASK
+ 
+-    li.d    a7, SYS_ify (rt_sigprocmask)
+-    syscall 0
++	li.d		a7, SYS_ify (rt_sigprocmask)
++	syscall		0
+ 
+-    blt a0, $r0, 99f
++	blt		a0, $r0, 99f
+ 
+-    ld.d    t0, sp, 0      /* Load ucp to t0 */
+-    cfi_def_cfa (12, 0)
++	ld.d		t0, sp, 0	/* Load ucp to t0 */
++	cfi_def_cfa (12, 0)
+ 
+ #ifndef __loongarch_soft_float
+-    ld.w    t1, t0, MCONTEXT_FCSR
+-
+-    RESTORE_FP_REG(fs0,  24, t0)
+-    RESTORE_FP_REG(fs1,  25, t0)
+-    RESTORE_FP_REG(fs2,  26, t0)
+-    RESTORE_FP_REG(fs3,  27, t0)
+-    RESTORE_FP_REG(fs4,  28, t0)
+-    RESTORE_FP_REG(fs5,  29, t0)
+-    RESTORE_FP_REG(fs6,  30, t0)
+-    RESTORE_FP_REG(fs7,  31, t0)
+-
+-    movgr2fcsr  $r0, t1
++	ld.w		t1, t0, MCONTEXT_FCSR
++
++	RESTORE_FP_REG(fs0,  24, t0)
++	RESTORE_FP_REG(fs1,  25, t0)
++	RESTORE_FP_REG(fs2,  26, t0)
++	RESTORE_FP_REG(fs3,  27, t0)
++	RESTORE_FP_REG(fs4,  28, t0)
++	RESTORE_FP_REG(fs5,  29, t0)
++	RESTORE_FP_REG(fs6,  30, t0)
++	RESTORE_FP_REG(fs7,  31, t0)
++
++	movgr2fcsr	$r0, t1
+ #endif /* __loongarch_soft_float */
+ 
+-    /* Note the contents of argument registers will be random
+-       unless makecontext() has been called.  */
+-    RESTORE_INT_REG(ra,   1, t0)
+-    RESTORE_INT_REG(sp,   3, t0)
+-    RESTORE_INT_REG(a0,   4, t0)
+-    RESTORE_INT_REG(a1,   5, t0)
+-    RESTORE_INT_REG(a2,   6, t0)
+-    RESTORE_INT_REG(a3,   7, t0)
+-    RESTORE_INT_REG(a4,   8, t0)
+-    RESTORE_INT_REG(a5,   9, t0)
+-    RESTORE_INT_REG(a6,  10, t0)
+-    RESTORE_INT_REG(a7,  11, t0)
+-    RESTORE_INT_REG(x,  21, t0)
+-    RESTORE_INT_REG(fp,  22, t0)
+-    RESTORE_INT_REG(s0,  23, t0)
+-    RESTORE_INT_REG(s1,  24, t0)
+-    RESTORE_INT_REG(s2,  25, t0)
+-    RESTORE_INT_REG(s3,  26, t0)
+-    RESTORE_INT_REG(s4,  27, t0)
+-    RESTORE_INT_REG(s5,  28, t0)
+-    RESTORE_INT_REG(s6,  29, t0)
+-    RESTORE_INT_REG(s7,  30, t0)
+-    RESTORE_INT_REG(s8,  31, t0)
+-    ld.d    t1, t0, MCONTEXT_PC
+-    jirl    $r0,t1,0
++/* Note the contents of argument registers will be random
++   unless makecontext() has been called.  */
++	RESTORE_INT_REG(ra,   1, t0)
++	RESTORE_INT_REG(sp,   3, t0)
++	RESTORE_INT_REG(a0,   4, t0)
++	RESTORE_INT_REG(a1,   5, t0)
++	RESTORE_INT_REG(a2,   6, t0)
++	RESTORE_INT_REG(a3,   7, t0)
++	RESTORE_INT_REG(a4,   8, t0)
++	RESTORE_INT_REG(a5,   9, t0)
++	RESTORE_INT_REG(a6,  10, t0)
++	RESTORE_INT_REG(a7,  11, t0)
++	RESTORE_INT_REG(x,   21, t0)
++	RESTORE_INT_REG(fp,  22, t0)
++	RESTORE_INT_REG(s0,  23, t0)
++	RESTORE_INT_REG(s1,  24, t0)
++	RESTORE_INT_REG(s2,  25, t0)
++	RESTORE_INT_REG(s3,  26, t0)
++	RESTORE_INT_REG(s4,  27, t0)
++	RESTORE_INT_REG(s5,  28, t0)
++	RESTORE_INT_REG(s6,  29, t0)
++	RESTORE_INT_REG(s7,  30, t0)
++	RESTORE_INT_REG(s8,  31, t0)
++
++	ld.d		t1, t0, MCONTEXT_PC
++	jirl		$r0,t1,0
+ 
+ 99:
+-    addi.d  sp, sp, 16
+-    b       __syscall_error
++	addi.d		sp, sp, 16
++	b		__syscall_error
+ 
+ PSEUDO_END (__setcontext)
+ weak_alias (__setcontext, setcontext)
+ 
+ LEAF (__start_context)
+ 
+-    /* Terminate call stack by noting ra == 0.  Happily, s0 == 0 here.  */
+-    cfi_register (1, 23)
++	/* Terminate call stack by noting ra == 0.  Happily, s0 == 0 here.  */
++	cfi_register (1, 23)
+ 
+-    /* Call the function passed to makecontext.  */
+-    jirl    $r1,s1,0
++	/* Call the function passed to makecontext.  */
++	jirl		$r1,s1,0
+ 
+-    /* Invoke subsequent context if present, else exit(0).  */
+-    ori     a0, s2, 0
+-    beqz    s2, 1f
+-    bl      __setcontext
+-1:  b       exit
++	/* Invoke subsequent context if present, else exit(0).  */
++	ori		a0, s2, 0
++	beqz		s2, 1f
++	bl		__setcontext
++1:
++	b		exit
+ 
+ PSEUDO_END (__start_context)
+diff --git a/sysdeps/unix/sysv/linux/loongarch/swapcontext.S b/sysdeps/unix/sysv/linux/loongarch/swapcontext.S
+index 3fc7cef9af..1f6e3d815a 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/swapcontext.S
++++ b/sysdeps/unix/sysv/linux/loongarch/swapcontext.S
+@@ -21,101 +21,102 @@
+ /* int swapcontext (ucontext_t *oucp, const ucontext_t *ucp) */
+ 
+ LEAF (__swapcontext)
+-    ori     a2, sp, 0			/* Save sp to a2 */
+-    addi.d  sp, sp, -16
+-    st.d    a1, sp, 0
+-    ori     t0, a1, 0
+-
+-    SAVE_INT_REG (ra,   1, a0)
+-    SAVE_INT_REG (a2,   3, a0)		/* Store sp */
+-    SAVE_INT_REG (zero, 4, a0)		/* return 0 by overwriting a0 */
+-    SAVE_INT_REG (x,	21, a0)
+-    SAVE_INT_REG (fp,  22, a0)
+-    SAVE_INT_REG (s0,  23, a0)
+-    SAVE_INT_REG (s1,  24, a0)
+-    SAVE_INT_REG (s2,  25, a0)
+-    SAVE_INT_REG (s3,  26, a0)
+-    SAVE_INT_REG (s4,  27, a0)
+-    SAVE_INT_REG (s5,  28, a0)
+-    SAVE_INT_REG (s6,  29, a0)
+-    SAVE_INT_REG (s7,  30, a0)
+-    SAVE_INT_REG (s8,  31, a0)
+-    st.d	 ra, a0, MCONTEXT_PC
++	ori		a2, sp, 0		/* Save sp to a2 */
++	addi.d		sp, sp, -16
++	st.d		a1, sp, 0
++	ori		t0, a1, 0
++
++	SAVE_INT_REG (ra,   1, a0)
++	SAVE_INT_REG (a2,   3, a0)		/* Store sp */
++	SAVE_INT_REG (zero, 4, a0)		/* return 0 by overwriting a0 */
++	SAVE_INT_REG (x,   21, a0)
++	SAVE_INT_REG (fp,  22, a0)
++	SAVE_INT_REG (s0,  23, a0)
++	SAVE_INT_REG (s1,  24, a0)
++	SAVE_INT_REG (s2,  25, a0)
++	SAVE_INT_REG (s3,  26, a0)
++	SAVE_INT_REG (s4,  27, a0)
++	SAVE_INT_REG (s5,  28, a0)
++	SAVE_INT_REG (s6,  29, a0)
++	SAVE_INT_REG (s7,  30, a0)
++	SAVE_INT_REG (s8,  31, a0)
++
++	st.d		ra, a0, MCONTEXT_PC
+ #ifndef __loongarch_soft_float
+-    movfcsr2gr  a1, $r0
+-
+-    SAVE_FP_REG (fs0,  24, a0)
+-    SAVE_FP_REG (fs1,  25, a0)
+-    SAVE_FP_REG (fs2,  26, a0)
+-    SAVE_FP_REG (fs3,  27, a0)
+-    SAVE_FP_REG (fs4,  28, a0)
+-    SAVE_FP_REG (fs5,  29, a0)
+-    SAVE_FP_REG (fs6,  30, a0)
+-    SAVE_FP_REG (fs7,  31, a0)
+-
+-    st.w    a1, a0, MCONTEXT_FCSR
++	movfcsr2gr	a1, $r0
++
++	SAVE_FP_REG (fs0,  24, a0)
++	SAVE_FP_REG (fs1,  25, a0)
++	SAVE_FP_REG (fs2,  26, a0)
++	SAVE_FP_REG (fs3,  27, a0)
++	SAVE_FP_REG (fs4,  28, a0)
++	SAVE_FP_REG (fs5,  29, a0)
++	SAVE_FP_REG (fs6,  30, a0)
++	SAVE_FP_REG (fs7,  31, a0)
++
++	st.w		a1, a0, MCONTEXT_FCSR
+ #endif /* __loongarch_soft_float */
+ 
+ /* rt_sigprocmask (SIG_SETMASK, &ucp->uc_sigmask, &oucp->uc_sigmask, _NSIG8) */
+-    li.d    a3, _NSIG8
+-    li.d    a2, UCONTEXT_SIGMASK
+-    add.d   a2, a2, a0
+-    li.d    a1, UCONTEXT_SIGMASK
+-    add.d   a1, a1, t0
+-    li.d    a0, SIG_SETMASK
++	li.d		a3, _NSIG8
++	li.d		a2, UCONTEXT_SIGMASK
++	add.d		a2, a2, a0
++	li.d		a1, UCONTEXT_SIGMASK
++	add.d		a1, a1, t0
++	li.d		a0, SIG_SETMASK
+ 
+-    li.d    a7, SYS_ify (rt_sigprocmask)
+-    syscall 0
++	li.d		a7, SYS_ify (rt_sigprocmask)
++	syscall		0
+ 
+-    blt     a0, zero, 99f
++	blt		a0, zero, 99f
+ 
+ #ifndef __loongarch_soft_float
+-    ld.d    t0, sp, 0       /* Load a1 to t0 */
+-    ld.w    t1, t0, MCONTEXT_FCSR
+-
+-    RESTORE_FP_REG (fs0,  24, t0)
+-    RESTORE_FP_REG (fs1,  25, t0)
+-    RESTORE_FP_REG (fs2,  26, t0)
+-    RESTORE_FP_REG (fs3,  27, t0)
+-    RESTORE_FP_REG (fs4,  28, t0)
+-    RESTORE_FP_REG (fs5,  29, t0)
+-    RESTORE_FP_REG (fs6,  30, t0)
+-    RESTORE_FP_REG (fs7,  31, t0)
+-
+-    movgr2fcsr  $r0, t1
++	ld.d		t0, sp, 0		/* Load a1 to t0 */
++	ld.w		t1, t0, MCONTEXT_FCSR
++
++	RESTORE_FP_REG (fs0,  24, t0)
++	RESTORE_FP_REG (fs1,  25, t0)
++	RESTORE_FP_REG (fs2,  26, t0)
++	RESTORE_FP_REG (fs3,  27, t0)
++	RESTORE_FP_REG (fs4,  28, t0)
++	RESTORE_FP_REG (fs5,  29, t0)
++	RESTORE_FP_REG (fs6,  30, t0)
++	RESTORE_FP_REG (fs7,  31, t0)
++
++	movgr2fcsr	$r0, t1
+ #endif /* __loongarch_soft_float */
+ 
+-    /* Note the contents of argument registers will be random
+-       unless makecontext() has been called.  */
+-    RESTORE_INT_REG (ra,   1, t0)
+-    RESTORE_INT_REG (sp,   3, t0)
+-    RESTORE_INT_REG (a0,   4, t0)
+-    RESTORE_INT_REG (a1,   5, t0)
+-    RESTORE_INT_REG (a2,   6, t0)
+-    RESTORE_INT_REG (a3,   7, t0)
+-    RESTORE_INT_REG (a4,   8, t0)
+-    RESTORE_INT_REG (a5,   9, t0)
+-    RESTORE_INT_REG (a6,  10, t0)
+-    RESTORE_INT_REG (a7,  11, t0)
+-    RESTORE_INT_REG (x,   21, t0)
+-    RESTORE_INT_REG (fp,  22, t0)
+-    RESTORE_INT_REG (s0,  23, t0)
+-    RESTORE_INT_REG (s1,  24, t0)
+-    RESTORE_INT_REG (s2,  25, t0)
+-    RESTORE_INT_REG (s3,  26, t0)
+-    RESTORE_INT_REG (s4,  27, t0)
+-    RESTORE_INT_REG (s5,  28, t0)
+-    RESTORE_INT_REG (s6,  29, t0)
+-    RESTORE_INT_REG (s7,  30, t0)
+-    RESTORE_INT_REG (s8,  31, t0)
+-    ld.d    t1, t0, MCONTEXT_PC
+-
+-    jirl    $r0, t1, 0
++/* Note the contents of argument registers will be random
++   unless makecontext() has been called.  */
++	RESTORE_INT_REG (ra,   1, t0)
++	RESTORE_INT_REG (sp,   3, t0)
++	RESTORE_INT_REG (a0,   4, t0)
++	RESTORE_INT_REG (a1,   5, t0)
++	RESTORE_INT_REG (a2,   6, t0)
++	RESTORE_INT_REG (a3,   7, t0)
++	RESTORE_INT_REG (a4,   8, t0)
++	RESTORE_INT_REG (a5,   9, t0)
++	RESTORE_INT_REG (a6,  10, t0)
++	RESTORE_INT_REG (a7,  11, t0)
++	RESTORE_INT_REG (x,   21, t0)
++	RESTORE_INT_REG (fp,  22, t0)
++	RESTORE_INT_REG (s0,  23, t0)
++	RESTORE_INT_REG (s1,  24, t0)
++	RESTORE_INT_REG (s2,  25, t0)
++	RESTORE_INT_REG (s3,  26, t0)
++	RESTORE_INT_REG (s4,  27, t0)
++	RESTORE_INT_REG (s5,  28, t0)
++	RESTORE_INT_REG (s6,  29, t0)
++	RESTORE_INT_REG (s7,  30, t0)
++	RESTORE_INT_REG (s8,  31, t0)
++
++	ld.d		t1, t0, MCONTEXT_PC
++	jirl		$r0, t1, 0
+ 
+ 
+ 99:
+-    addi.d  sp, sp, 16
+-    b       __syscall_error
++	addi.d		sp, sp, 16
++	b		__syscall_error
+ 
+ PSEUDO_END (__swapcontext)
+ 
+diff --git a/sysdeps/unix/sysv/linux/loongarch/sysdep.S b/sysdeps/unix/sysv/linux/loongarch/sysdep.S
+index ba238db258..865de9b235 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/sysdep.S
++++ b/sysdeps/unix/sysv/linux/loongarch/sysdep.S
+@@ -23,30 +23,31 @@
+ #endif
+ 
+ ENTRY (__syscall_error)
+-    /* Fall through to __syscall_set_errno.  */
++/* Fall through to __syscall_set_errno */
+ END (__syscall_error)
+ 
+ /* Non-standard calling convention: argument in a0, return address in t0,
+-   and clobber only t1.  */
++   and clobber only t1.
++ */
+ ENTRY (__syscall_set_errno)
+-    /* We got here because a0 < 0, but only codes in the range [-4095,-1]
+-      represent errors.  Otherwise, just return the result normally.  */
+-
+-    li.d    t1, -4096
+-    bgeu    t1, a0, L (out)
+-    sub.w   a0, zero, a0
+ 
++/* We got here because a0 < 0, but only codes in the range [-4095, -1]
++   represent errors.	Otherwise, just return the result normally.
++ */
++	li.d		t1, -4096
++	bgeu		t1, a0, L (out)
++	sub.w		a0, zero, a0
+ #if RTLD_PRIVATE_ERRNO
+-    la      t1, rtld_errno
++	la		t1, rtld_errno
+ #elif defined(__PIC__)
+-    la.tls.ie   t1, errno
+-    add.d   t1, tp, t1
++	la.tls.ie	t1, errno
++	add.d		t1, tp, t1
+ #else
+-    la.tls.le   t1, errno
+-    add.d   t1, tp, t1
++	la.tls.le	t1, errno
++	add.d		t1, tp, t1
+ #endif
+-    st.w    a0, t1, 0
+-    li.d    a0, -1
++	st.w		a0, t1, 0
++	li.d		a0, -1
+ L (out):
+-    ret
++	ret
+ END (__syscall_set_errno)
+diff --git a/sysdeps/unix/sysv/linux/loongarch/vfork.S b/sysdeps/unix/sysv/linux/loongarch/vfork.S
+index 43ee24284a..876b5c1b47 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/vfork.S
++++ b/sysdeps/unix/sysv/linux/loongarch/vfork.S
+@@ -17,7 +17,7 @@
+    <https://www.gnu.org/licenses/>.  */
+ 
+ #include <sysdep.h>
+-#define _ERRNO_H    1
++#define _ERRNO_H  1
+ #include <bits/errno.h>
+ 
+ /* Clone the calling process, but without copying the whole address space.
+@@ -27,20 +27,19 @@
+ 
+ ENTRY (__vfork)
+ 
++	li.d	a0, 0x4111 /* CLONE_VM | CLONE_VFORK | SIGCHLD */
++	add.d   a1, zero, sp
+ 
+-    li.d    a0, 0x4111 /* CLONE_VM | CLONE_VFORK | SIGCHLD */
+-    add.d   a1, zero, sp
++	/* Do the system call.  */
++	li.d	a7, __NR_clone
++	syscall	0
+ 
+-    /* Do the system call.  */
+-    li.d    a7, __NR_clone
+-    syscall 0
++	blt	a0, zero ,L (error)
+ 
+-    blt     a0, zero ,L (error)
+-
+-    ret
++	ret
+ 
+ L (error):
+-    b       __syscall_error
++	b	__syscall_error
+ 
+ END (__vfork)
+ 
+-- 
+2.34.0
+
