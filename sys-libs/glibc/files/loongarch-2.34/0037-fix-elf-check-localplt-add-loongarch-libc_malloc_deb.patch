@@ -1,0 +1,46 @@
+From cbc82267e0dc07b89415cd3820b42c99b6b71a94 Mon Sep 17 00:00:00 2001
+From: caiyinyu <caiyinyu@loongson.cn>
+Date: Fri, 29 Oct 2021 15:08:19 +0800
+Subject: [PATCH 37/53] fix elf/check-localplt add loongarch
+ libc_malloc_debug.abilist
+
+---
+ .../loongarch/lp64/libc_malloc_debug.abilist  | 26 +++++++++++++++++++
+ 1 file changed, 26 insertions(+)
+ create mode 100644 sysdeps/unix/sysv/linux/loongarch/lp64/libc_malloc_debug.abilist
+
+diff --git a/sysdeps/unix/sysv/linux/loongarch/lp64/libc_malloc_debug.abilist b/sysdeps/unix/sysv/linux/loongarch/lp64/libc_malloc_debug.abilist
+new file mode 100644
+index 0000000000..65425a03ee
+--- /dev/null
++++ b/sysdeps/unix/sysv/linux/loongarch/lp64/libc_malloc_debug.abilist
+@@ -0,0 +1,26 @@
++GLIBC_2.27 __free_hook D 0x8
++GLIBC_2.27 __malloc_hook D 0x8
++GLIBC_2.27 __memalign_hook D 0x8
++GLIBC_2.27 __realloc_hook D 0x8
++GLIBC_2.27 aligned_alloc F
++GLIBC_2.27 calloc F
++GLIBC_2.27 free F
++GLIBC_2.27 mallinfo F
++GLIBC_2.27 malloc F
++GLIBC_2.27 malloc_info F
++GLIBC_2.27 malloc_stats F
++GLIBC_2.27 malloc_trim F
++GLIBC_2.27 malloc_usable_size F
++GLIBC_2.27 mallopt F
++GLIBC_2.27 mcheck F
++GLIBC_2.27 mcheck_check_all F
++GLIBC_2.27 mcheck_pedantic F
++GLIBC_2.27 memalign F
++GLIBC_2.27 mprobe F
++GLIBC_2.27 mtrace F
++GLIBC_2.27 muntrace F
++GLIBC_2.27 posix_memalign F
++GLIBC_2.27 pvalloc F
++GLIBC_2.27 realloc F
++GLIBC_2.27 valloc F
++GLIBC_2.33 mallinfo2 F
+-- 
+2.34.0
+

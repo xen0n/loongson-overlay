@@ -1,0 +1,1114 @@
+From 619f3d5e85ba9df6320b3da4787f6a9ae2f5e6bc Mon Sep 17 00:00:00 2001
+From: caiyinyu <caiyinyu@loongson.cn>
+Date: Tue, 27 Jul 2021 15:49:52 +0800
+Subject: [PATCH 09/53] LoongArch: Linux Syscall Interface
+
+Contains the Linux system call interface, as well as the definitions of
+a handful of system calls.
+
+        * sysdeps/loongarch/abort-instr.h: New file.
+        * sysdeps/loongarch/hp-timing.h: Likewise.
+        * sysdeps/loongarch/nptl/nptl-sysdep.S: Likewise.
+        * sysdeps/unix/sysv/linux/loongarch/arch-syscall.h: Likewise.
+        * sysdeps/unix/sysv/linux/loongarch/bits/signum.h: Likewise.
+        * sysdeps/unix/sysv/linux/loongarch/clone.S: Likewise.
+        * sysdeps/unix/sysv/linux/loongarch/ipc_priv.h: Likewise.
+        * sysdeps/unix/sysv/linux/loongarch/kernel-features.h: Likewise.
+        * sysdeps/unix/sysv/linux/loongarch/syscall.c: Likewise.
+        * sysdeps/unix/sysv/linux/loongarch/sysdep.S: Likewise.
+        * sysdeps/unix/sysv/linux/loongarch/sysdep.h: Likewise.
+        * sysdeps/unix/sysv/linux/loongarch/vfork.S: Likewise.
+---
+ sysdeps/loongarch/abort-instr.h               |   2 +
+ sysdeps/loongarch/hp-timing.h                 |  42 +++
+ sysdeps/loongarch/nptl/nptl-sysdep.S          |   2 +
+ .../unix/sysv/linux/loongarch/arch-syscall.h  | 296 ++++++++++++++++
+ .../unix/sysv/linux/loongarch/bits/signum.h   |  58 ++++
+ sysdeps/unix/sysv/linux/loongarch/clone.S     |  91 +++++
+ sysdeps/unix/sysv/linux/loongarch/ipc_priv.h  |  22 ++
+ .../sysv/linux/loongarch/kernel-features.h    |  23 ++
+ sysdeps/unix/sysv/linux/loongarch/syscall.c   |  34 ++
+ sysdeps/unix/sysv/linux/loongarch/sysdep.S    |  52 +++
+ sysdeps/unix/sysv/linux/loongarch/sysdep.h    | 320 ++++++++++++++++++
+ sysdeps/unix/sysv/linux/loongarch/vfork.S     |  50 +++
+ 12 files changed, 992 insertions(+)
+ create mode 100644 sysdeps/loongarch/abort-instr.h
+ create mode 100644 sysdeps/loongarch/hp-timing.h
+ create mode 100644 sysdeps/loongarch/nptl/nptl-sysdep.S
+ create mode 100644 sysdeps/unix/sysv/linux/loongarch/arch-syscall.h
+ create mode 100644 sysdeps/unix/sysv/linux/loongarch/bits/signum.h
+ create mode 100644 sysdeps/unix/sysv/linux/loongarch/clone.S
+ create mode 100644 sysdeps/unix/sysv/linux/loongarch/ipc_priv.h
+ create mode 100644 sysdeps/unix/sysv/linux/loongarch/kernel-features.h
+ create mode 100644 sysdeps/unix/sysv/linux/loongarch/syscall.c
+ create mode 100644 sysdeps/unix/sysv/linux/loongarch/sysdep.S
+ create mode 100644 sysdeps/unix/sysv/linux/loongarch/sysdep.h
+ create mode 100644 sysdeps/unix/sysv/linux/loongarch/vfork.S
+
+diff --git a/sysdeps/loongarch/abort-instr.h b/sysdeps/loongarch/abort-instr.h
+new file mode 100644
+index 0000000000..92e22edfea
+--- /dev/null
++++ b/sysdeps/loongarch/abort-instr.h
+@@ -0,0 +1,2 @@
++/* An instruction which should crash any program is a breakpoint.  */
++#define ABORT_INSTRUCTION asm("break 0")
+diff --git a/sysdeps/loongarch/hp-timing.h b/sysdeps/loongarch/hp-timing.h
+new file mode 100644
+index 0000000000..53d39c090e
+--- /dev/null
++++ b/sysdeps/loongarch/hp-timing.h
+@@ -0,0 +1,42 @@
++/* High precision, low overhead timing functions.  Linux/LoongArch version.
++   Copyright (C) 2021 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library; if not, see
++   <https://www.gnu.org/licenses/>.  */
++
++#ifndef _HP_TIMING_H
++#define _HP_TIMING_H 1
++
++/* We always assume having the timestamp register.  */
++#define HP_TIMING_AVAIL (1)
++#define HP_SMALL_TIMING_AVAIL (1)
++
++/* We indeed have inlined functions.  */
++#define HP_TIMING_INLINE (1)
++
++/* We use 64bit values for the times.  */
++typedef unsigned long long int hp_timing_t;
++
++/* Read the cp0 count, this maybe inaccurate.  */
++#define HP_TIMING_NOW(Var) \
++  ({ \
++    unsigned long long int _count; \
++    asm volatile("rdtime.d\t%0,$r0" : "=r"(_count)); \
++    (Var) = _count; \
++  })
++
++#include <hp-timing-common.h>
++
++#endif /* hp-timing.h */
+diff --git a/sysdeps/loongarch/nptl/nptl-sysdep.S b/sysdeps/loongarch/nptl/nptl-sysdep.S
+new file mode 100644
+index 0000000000..3f5c2a364a
+--- /dev/null
++++ b/sysdeps/loongarch/nptl/nptl-sysdep.S
+@@ -0,0 +1,2 @@
++/* Pull in __syscall_error.  */
++#include <sysdep.S>
+diff --git a/sysdeps/unix/sysv/linux/loongarch/arch-syscall.h b/sysdeps/unix/sysv/linux/loongarch/arch-syscall.h
+new file mode 100644
+index 0000000000..01a8d30ed2
+--- /dev/null
++++ b/sysdeps/unix/sysv/linux/loongarch/arch-syscall.h
+@@ -0,0 +1,296 @@
++/* AUTOGENERATED by update-syscall-lists.py.  */
++#define __NR_accept 202
++#define __NR_accept4 242
++#define __NR_acct 89
++#define __NR_add_key 217
++#define __NR_adjtimex 171
++#define __NR_bind 200
++#define __NR_bpf 280
++#define __NR_brk 214
++#define __NR_capget 90
++#define __NR_capset 91
++#define __NR_chdir 49
++#define __NR_chroot 51
++#define __NR_clock_adjtime 266
++#define __NR_clock_getres 114
++#define __NR_clock_gettime 113
++#define __NR_clock_nanosleep 115
++#define __NR_clock_settime 112
++#define __NR_clone 220
++#define __NR_clone3 435
++#define __NR_close 57
++#define __NR_close_range 436
++#define __NR_connect 203
++#define __NR_copy_file_range 285
++#define __NR_delete_module 106
++#define __NR_dup 23
++#define __NR_dup3 24
++#define __NR_epoll_create1 20
++#define __NR_epoll_ctl 21
++#define __NR_epoll_pwait 22
++#define __NR_eventfd2 19
++#define __NR_execve 221
++#define __NR_execveat 281
++#define __NR_exit 93
++#define __NR_exit_group 94
++#define __NR_faccessat 48
++#define __NR_faccessat2 439
++#define __NR_fadvise64 223
++#define __NR_fallocate 47
++#define __NR_fanotify_init 262
++#define __NR_fanotify_mark 263
++#define __NR_fchdir 50
++#define __NR_fchmod 52
++#define __NR_fchmodat 53
++#define __NR_fchown 55
++#define __NR_fchownat 54
++#define __NR_fcntl 25
++#define __NR_fdatasync 83
++#define __NR_fgetxattr 10
++#define __NR_finit_module 273
++#define __NR_flistxattr 13
++#define __NR_flock 32
++#define __NR_fremovexattr 16
++#define __NR_fsconfig 431
++#define __NR_fsetxattr 7
++#define __NR_fsmount 432
++#define __NR_fsopen 430
++#define __NR_fspick 433
++#define __NR_fstat 80
++#define __NR_fstatfs 44
++#define __NR_fsync 82
++#define __NR_ftruncate 46
++#define __NR_futex 98
++#define __NR_get_mempolicy 236
++#define __NR_get_robust_list 100
++#define __NR_getcpu 168
++#define __NR_getcwd 17
++#define __NR_getdents64 61
++#define __NR_getegid 177
++#define __NR_geteuid 175
++#define __NR_getgid 176
++#define __NR_getgroups 158
++#define __NR_getitimer 102
++#define __NR_getpeername 205
++#define __NR_getpgid 155
++#define __NR_getpid 172
++#define __NR_getppid 173
++#define __NR_getpriority 141
++#define __NR_getrandom 278
++#define __NR_getresgid 150
++#define __NR_getresuid 148
++#define __NR_getrlimit 163
++#define __NR_getrusage 165
++#define __NR_getsid 156
++#define __NR_getsockname 204
++#define __NR_getsockopt 209
++#define __NR_gettid 178
++#define __NR_gettimeofday 169
++#define __NR_getuid 174
++#define __NR_getxattr 8
++#define __NR_init_module 105
++#define __NR_inotify_add_watch 27
++#define __NR_inotify_init1 26
++#define __NR_inotify_rm_watch 28
++#define __NR_io_cancel 3
++#define __NR_io_destroy 1
++#define __NR_io_getevents 4
++#define __NR_io_pgetevents 292
++#define __NR_io_setup 0
++#define __NR_io_submit 2
++#define __NR_io_uring_enter 426
++#define __NR_io_uring_register 427
++#define __NR_io_uring_setup 425
++#define __NR_ioctl 29
++#define __NR_ioprio_get 31
++#define __NR_ioprio_set 30
++#define __NR_kcmp 272
++#define __NR_kexec_file_load 294
++#define __NR_kexec_load 104
++#define __NR_keyctl 219
++#define __NR_kill 129
++#define __NR_lgetxattr 9
++#define __NR_linkat 37
++#define __NR_listen 201
++#define __NR_listxattr 11
++#define __NR_llistxattr 12
++#define __NR_lookup_dcookie 18
++#define __NR_lremovexattr 15
++#define __NR_lseek 62
++#define __NR_lsetxattr 6
++#define __NR_madvise 233
++#define __NR_mbind 235
++#define __NR_membarrier 283
++#define __NR_memfd_create 279
++#define __NR_migrate_pages 238
++#define __NR_mincore 232
++#define __NR_mkdirat 34
++#define __NR_mknodat 33
++#define __NR_mlock 228
++#define __NR_mlock2 284
++#define __NR_mlockall 230
++#define __NR_mmap 222
++#define __NR_mount 40
++#define __NR_move_mount 429
++#define __NR_move_pages 239
++#define __NR_mprotect 226
++#define __NR_mq_getsetattr 185
++#define __NR_mq_notify 184
++#define __NR_mq_open 180
++#define __NR_mq_timedreceive 183
++#define __NR_mq_timedsend 182
++#define __NR_mq_unlink 181
++#define __NR_mremap 216
++#define __NR_msgctl 187
++#define __NR_msgget 186
++#define __NR_msgrcv 188
++#define __NR_msgsnd 189
++#define __NR_msync 227
++#define __NR_munlock 229
++#define __NR_munlockall 231
++#define __NR_munmap 215
++#define __NR_name_to_handle_at 264
++#define __NR_nanosleep 101
++#define __NR_newfstatat 79
++#define __NR_nfsservctl 42
++#define __NR_open_by_handle_at 265
++#define __NR_open_tree 428
++#define __NR_openat 56
++#define __NR_openat2 437
++#define __NR_perf_event_open 241
++#define __NR_personality 92
++#define __NR_pidfd_getfd 438
++#define __NR_pidfd_open 434
++#define __NR_pidfd_send_signal 424
++#define __NR_pipe2 59
++#define __NR_pivot_root 41
++#define __NR_pkey_alloc 289
++#define __NR_pkey_free 290
++#define __NR_pkey_mprotect 288
++#define __NR_ppoll 73
++#define __NR_prctl 167
++#define __NR_pread64 67
++#define __NR_preadv 69
++#define __NR_preadv2 286
++#define __NR_prlimit64 261
++#define __NR_process_madvise 440
++#define __NR_process_vm_readv 270
++#define __NR_process_vm_writev 271
++#define __NR_pselect6 72
++#define __NR_ptrace 117
++#define __NR_pwrite64 68
++#define __NR_pwritev 70
++#define __NR_pwritev2 287
++#define __NR_quotactl 60
++#define __NR_read 63
++#define __NR_readahead 213
++#define __NR_readlinkat 78
++#define __NR_readv 65
++#define __NR_reboot 142
++#define __NR_recvfrom 207
++#define __NR_recvmmsg 243
++#define __NR_recvmsg 212
++#define __NR_remap_file_pages 234
++#define __NR_removexattr 14
++#define __NR_renameat2 276
++#define __NR_request_key 218
++#define __NR_restart_syscall 128
++#define __NR_rseq 293
++#define __NR_rt_sigaction 134
++#define __NR_rt_sigpending 136
++#define __NR_rt_sigprocmask 135
++#define __NR_rt_sigqueueinfo 138
++#define __NR_rt_sigreturn 139
++#define __NR_rt_sigsuspend 133
++#define __NR_rt_sigtimedwait 137
++#define __NR_rt_tgsigqueueinfo 240
++#define __NR_sched_get_priority_max 125
++#define __NR_sched_get_priority_min 126
++#define __NR_sched_getaffinity 123
++#define __NR_sched_getattr 275
++#define __NR_sched_getparam 121
++#define __NR_sched_getscheduler 120
++#define __NR_sched_rr_get_interval 127
++#define __NR_sched_setaffinity 122
++#define __NR_sched_setattr 274
++#define __NR_sched_setparam 118
++#define __NR_sched_setscheduler 119
++#define __NR_sched_yield 124
++#define __NR_seccomp 277
++#define __NR_semctl 191
++#define __NR_semget 190
++#define __NR_semop 193
++#define __NR_semtimedop 192
++#define __NR_sendfile 71
++#define __NR_sendmmsg 269
++#define __NR_sendmsg 211
++#define __NR_sendto 206
++#define __NR_set_mempolicy 237
++#define __NR_set_robust_list 99
++#define __NR_set_tid_address 96
++#define __NR_setdomainname 162
++#define __NR_setfsgid 152
++#define __NR_setfsuid 151
++#define __NR_setgid 144
++#define __NR_setgroups 159
++#define __NR_sethostname 161
++#define __NR_setitimer 103
++#define __NR_setns 268
++#define __NR_setpgid 154
++#define __NR_setpriority 140
++#define __NR_setregid 143
++#define __NR_setresgid 149
++#define __NR_setresuid 147
++#define __NR_setreuid 145
++#define __NR_setrlimit 164
++#define __NR_setsid 157
++#define __NR_setsockopt 208
++#define __NR_settimeofday 170
++#define __NR_setuid 146
++#define __NR_setxattr 5
++#define __NR_shmat 196
++#define __NR_shmctl 195
++#define __NR_shmdt 197
++#define __NR_shmget 194
++#define __NR_shutdown 210
++#define __NR_sigaltstack 132
++#define __NR_signalfd4 74
++#define __NR_socket 198
++#define __NR_socketpair 199
++#define __NR_splice 76
++#define __NR_statfs 43
++#define __NR_statx 291
++#define __NR_swapoff 225
++#define __NR_swapon 224
++#define __NR_symlinkat 36
++#define __NR_sync 81
++#define __NR_sync_file_range 84
++#define __NR_syncfs 267
++#define __NR_sysinfo 179
++#define __NR_syslog 116
++#define __NR_tee 77
++#define __NR_tgkill 131
++#define __NR_timer_create 107
++#define __NR_timer_delete 111
++#define __NR_timer_getoverrun 109
++#define __NR_timer_gettime 108
++#define __NR_timer_settime 110
++#define __NR_timerfd_create 85
++#define __NR_timerfd_gettime 87
++#define __NR_timerfd_settime 86
++#define __NR_times 153
++#define __NR_tkill 130
++#define __NR_truncate 45
++#define __NR_umask 166
++#define __NR_umount2 39
++#define __NR_uname 160
++#define __NR_unlinkat 35
++#define __NR_unshare 97
++#define __NR_userfaultfd 282
++#define __NR_utimensat 88
++#define __NR_vhangup 58
++#define __NR_vmsplice 75
++#define __NR_wait4 260
++#define __NR_waitid 95
++#define __NR_write 64
++#define __NR_writev 66
+diff --git a/sysdeps/unix/sysv/linux/loongarch/bits/signum.h b/sysdeps/unix/sysv/linux/loongarch/bits/signum.h
+new file mode 100644
+index 0000000000..111759778b
+--- /dev/null
++++ b/sysdeps/unix/sysv/linux/loongarch/bits/signum.h
+@@ -0,0 +1,58 @@
++/* Signal number definitions.  Linux version.
++   Copyright (C) 2021 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library; if not, see
++   <https://www.gnu.org/licenses/>.  */
++
++#ifndef _BITS_SIGNUM_H
++#define _BITS_SIGNUM_H 1
++
++#ifndef _SIGNAL_H
++#error "Never include <bits/signum.h> directly; use <signal.h> instead."
++#endif
++
++#include <bits/signum-generic.h>
++
++/* Adjustments and additions to the signal number constants for
++   most Linux systems.  */
++
++#define SIGSTKFLT 16 /* Stack fault (obsolete).  */
++#define SIGPWR 30    /* Power failure imminent.  */
++
++#undef SIGBUS
++#define SIGBUS 7
++#undef SIGUSR1
++#define SIGUSR1 10
++#undef SIGUSR2
++#define SIGUSR2 12
++#undef SIGCHLD
++#define SIGCHLD 17
++#undef SIGCONT
++#define SIGCONT 18
++#undef SIGSTOP
++#define SIGSTOP 19
++#undef SIGTSTP
++#define SIGTSTP 20
++#undef SIGURG
++#define SIGURG 23
++#undef SIGPOLL
++#define SIGPOLL 29
++#undef SIGSYS
++#define SIGSYS 31
++
++#undef __SIGRTMAX
++#define __SIGRTMAX 64
++
++#endif /* <signal.h> included.  */
+diff --git a/sysdeps/unix/sysv/linux/loongarch/clone.S b/sysdeps/unix/sysv/linux/loongarch/clone.S
+new file mode 100644
+index 0000000000..8b4d57b688
+--- /dev/null
++++ b/sysdeps/unix/sysv/linux/loongarch/clone.S
+@@ -0,0 +1,91 @@
++/* Copyright (C) 2021 Free Software Foundation, Inc.
++
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library.  If not, see
++   <https://www.gnu.org/licenses/>.  */
++
++/* clone() is even more special than fork() as it mucks with stacks
++   and invokes a function in the right context after its all over.  */
++
++#include <sys/asm.h>
++#include <sysdep.h>
++#define _ERRNO_H    1
++#include <bits/errno.h>
++#include <tls.h>
++#include "tcb-offsets.h"
++
++/* int clone(int (*fn)(void *arg), void *child_stack, int flags, void *arg,
++	     void *parent_tidptr, void *tls, void *child_tidptr) */
++
++ENTRY (__clone)
++
++    /* Sanity check arguments.  */
++    beqz    a0, L (invalid) /* No NULL function pointers.  */
++    beqz    a1, L (invalid) /* No NULL stack pointers.  */
++
++    addi.d  a1, a1, -16 /* Reserve argument save space.  */
++    st.d    a0, a1, 0   /* Save function pointer.  */
++    st.d    a3, a1, SZREG   /* Save argument pointer.  */
++
++    /* The syscall expects the args to be in different slots.  */
++    or      a0, a2, zero
++    or      a2, a4, zero
++    or      a3, a6, zero
++    or      a4, a5, zero
++
++    /* Do the system call.  */
++    li.d    a7,__NR_clone
++    syscall 0
++
++    blt     a0, zero ,L (error)
++    beqz    a0,L (thread_start)
++
++    /* Successful return from the parent.  */
++    ret
++
++L (invalid):
++    li.d    a0, -EINVAL
++    /* Something bad happened -- no child created.  */
++L (error):
++    b       __syscall_error
++
++END (__clone)
++
++/* Load up the arguments to the function.  Put this block of code in
++   its own function so that we can terminate the stack trace with our
++   debug info.  */
++
++ENTRY (__thread_start)
++L (thread_start):
++    /* Terminate call stack by noting ra is undefined.  Use a dummy
++       .cfi_label to force starting the FDE.  */
++    .cfi_label .Ldummy
++    cfi_undefined (1)
++
++    /* Restore the arg for user's function.  */
++    ld.d    a1, sp, 0   /* Function pointer.  */
++    ld.d    a0, sp, SZREG   /* Argument pointer.  */
++
++    /* Call the user's function.  */
++    jirl    ra, a1, 0
++
++    /* Call exit with the function's return value.  */
++    li.d    a7, __NR_exit
++    syscall 0
++
++    END (__thread_start)
++
++libc_hidden_def (__clone)
++weak_alias (__clone, clone)
+diff --git a/sysdeps/unix/sysv/linux/loongarch/ipc_priv.h b/sysdeps/unix/sysv/linux/loongarch/ipc_priv.h
+new file mode 100644
+index 0000000000..bcb58fceec
+--- /dev/null
++++ b/sysdeps/unix/sysv/linux/loongarch/ipc_priv.h
+@@ -0,0 +1,22 @@
++/* Old SysV permission definition for Linux.  LoongArch version.
++   Copyright (C) 2021 Loongson Technology, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library; if not, see
++   <https://www.gnu.org/licenses/>.  */
++
++#include <sys/ipc.h> /* For __key_t  */
++
++#define __IPC_64 0x0
++#include <sysdeps/unix/sysv/linux/ipc_priv.h>
+diff --git a/sysdeps/unix/sysv/linux/loongarch/kernel-features.h b/sysdeps/unix/sysv/linux/loongarch/kernel-features.h
+new file mode 100644
+index 0000000000..cda3a6d56c
+--- /dev/null
++++ b/sysdeps/unix/sysv/linux/loongarch/kernel-features.h
+@@ -0,0 +1,23 @@
++/* Copyright (C) 2021 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library; if not, see
++   <https://www.gnu.org/licenses/>.  */
++
++#include_next <kernel-features.h>
++
++/* No support for PI mutexes or robust futexes before 4.20.  */
++#if __LINUX_KERNEL_VERSION < 0x041400
++#undef __ASSUME_SET_ROBUST_LIST
++#endif
+diff --git a/sysdeps/unix/sysv/linux/loongarch/syscall.c b/sysdeps/unix/sysv/linux/loongarch/syscall.c
+new file mode 100644
+index 0000000000..3e4a6063aa
+--- /dev/null
++++ b/sysdeps/unix/sysv/linux/loongarch/syscall.c
+@@ -0,0 +1,34 @@
++/* Copyright (C) 2021 Free Software Foundation, Inc.
++
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library.  If not, see
++   <https://www.gnu.org/licenses/>.  */
++
++#include <sysdep.h>
++
++long int
++syscall (long int syscall_number, long int arg1, long int arg2, long int arg3,
++	 long int arg4, long int arg5, long int arg6, long int arg7)
++{
++  long int ret;
++
++  ret = INTERNAL_SYSCALL_NCS (syscall_number, 7, arg1, arg2, arg3, arg4, arg5,
++			      arg6, arg7);
++
++  if (INTERNAL_SYSCALL_ERROR_P (ret))
++    return __syscall_error (ret);
++
++  return ret;
++}
+diff --git a/sysdeps/unix/sysv/linux/loongarch/sysdep.S b/sysdeps/unix/sysv/linux/loongarch/sysdep.S
+new file mode 100644
+index 0000000000..ba238db258
+--- /dev/null
++++ b/sysdeps/unix/sysv/linux/loongarch/sysdep.S
+@@ -0,0 +1,52 @@
++/* syscall error handlers
++   Copyright (C) 2021 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library.  If not, see
++   <https://www.gnu.org/licenses/>.  */
++
++#include <sysdep.h>
++
++#if IS_IN (libc)
++# define errno __libc_errno
++#endif
++
++ENTRY (__syscall_error)
++    /* Fall through to __syscall_set_errno.  */
++END (__syscall_error)
++
++/* Non-standard calling convention: argument in a0, return address in t0,
++   and clobber only t1.  */
++ENTRY (__syscall_set_errno)
++    /* We got here because a0 < 0, but only codes in the range [-4095,-1]
++      represent errors.  Otherwise, just return the result normally.  */
++
++    li.d    t1, -4096
++    bgeu    t1, a0, L (out)
++    sub.w   a0, zero, a0
++
++#if RTLD_PRIVATE_ERRNO
++    la      t1, rtld_errno
++#elif defined(__PIC__)
++    la.tls.ie   t1, errno
++    add.d   t1, tp, t1
++#else
++    la.tls.le   t1, errno
++    add.d   t1, tp, t1
++#endif
++    st.w    a0, t1, 0
++    li.d    a0, -1
++L (out):
++    ret
++END (__syscall_set_errno)
+diff --git a/sysdeps/unix/sysv/linux/loongarch/sysdep.h b/sysdeps/unix/sysv/linux/loongarch/sysdep.h
+new file mode 100644
+index 0000000000..5d205d71ea
+--- /dev/null
++++ b/sysdeps/unix/sysv/linux/loongarch/sysdep.h
+@@ -0,0 +1,320 @@
++/* Copyright (C) 2021 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   Contributed by Loongson Technology Corporation Limited.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library.  If not, see
++   <https://www.gnu.org/licenses/>.  */
++
++#ifndef _LINUX_LOONGARCH_SYSDEP_H
++#define _LINUX_LOONGARCH_SYSDEP_H 1
++
++#include <sysdeps/unix/sysv/linux/generic/sysdep.h>
++#include <tls.h>
++
++#ifdef __ASSEMBLER__
++
++#include <sys/asm.h>
++#define ret jirl zero, ra, 0
++#define L(label) .L##label
++
++/* Performs a system call, handling errors by setting errno.  Linux indicates
++   errors by setting a0 to a value between -1 and -4095.  */
++#undef PSEUDO
++#define PSEUDO(name, syscall_name, args) \
++  ENTRY (name); \
++  li.d a7, SYS_ify (syscall_name); \
++  syscall 0; \
++  li.d a7, -4096; \
++  bltu a7, a0, .Lsyscall_error##name;
++
++#undef PSEUDO_END
++#define PSEUDO_END(sym) \
++  SYSCALL_ERROR_HANDLER (sym); \
++  ret; \
++  END (sym);
++
++#if !IS_IN(libc)
++#if RTLD_PRIVATE_ERRNO
++
++#define SYSCALL_ERROR_HANDLER(name) \
++  .Lsyscall_error##name : la t0, rtld_errno; \
++  sub.w a0, zero, a0; \
++  st.w a0, t0, 0; \
++  li.d a0, -1;
++
++#else
++
++#define SYSCALL_ERROR_HANDLER(name) \
++  .Lsyscall_error##name : la.tls.ie t0, errno; \
++  add.d t0, tp, t0; \
++  sub.w a0, zero, a0; \
++  st.w a0, t0, 0; \
++  li.d a0, -1;
++
++#endif
++#else
++
++#define SYSCALL_ERROR_HANDLER(name) .Lsyscall_error##name : b __syscall_error;
++
++#endif
++
++/* Performs a system call, not setting errno.  */
++#undef PSEUDO_NEORRNO
++#define PSEUDO_NOERRNO(name, syscall_name, args) \
++  ENTRY (name); \
++  li.d a7, SYS_ify (syscall_name); \
++  syscall 0;
++
++#undef PSEUDO_END_NOERRNO
++#define PSEUDO_END_NOERRNO(name) END (name);
++
++#undef ret_NOERRNO
++#define ret_NOERRNO ret
++
++/* Perfroms a system call, returning the error code.  */
++#undef PSEUDO_ERRVAL
++#define PSEUDO_ERRVAL(name, syscall_name, args) \
++  PSEUDO_NOERRNO (name, syscall_name, args); \
++  slli.d a0, a0, 32; \
++  srai.d a0, a0, 32; /* sign_ext */ \
++  sub.d a0, zero, a0;
++
++#undef PSEUDO_END_ERRVAL
++#define PSEUDO_END_ERRVAL(name) END (name);
++
++#undef ret_ERRVAL
++#define ret_ERRVAL ret
++
++#endif /* __ASSEMBLER__ */
++
++/* In order to get __set_errno() definition in INLINE_SYSCALL.  */
++#ifndef __ASSEMBLER__
++#include <errno.h>
++#endif
++
++#include <sysdeps/unix/sysdep.h>
++
++#undef SYS_ify
++#define SYS_ify(syscall_name) __NR_##syscall_name
++
++#ifndef __ASSEMBLER__
++
++#define VDSO_NAME "LINUX_2.6"
++#define VDSO_HASH 61765110
++
++/* List of system calls which are supported as vsyscalls.  */
++#define HAVE_CLOCK_GETRES64_VSYSCALL "__vdso_clock_getres"
++#define HAVE_CLOCK_GETTIME64_VSYSCALL "__vdso_clock_gettime"
++#define HAVE_GETTIMEOFDAY_VSYSCALL "__vdso_gettimeofday"
++#define HAVE_GETCPU_VSYSCALL "__vdso_getcpu"
++
++#define INTERNAL_SYSCALL(name, nr, args...) \
++  internal_syscall##nr (SYS_ify (name), args)
++
++#define INTERNAL_SYSCALL_NCS(number, nr, args...) \
++  internal_syscall##nr (number, args)
++
++#define internal_syscall0(number, dummy...) \
++  ({ \
++    long int _sys_result; \
++\
++    { \
++      register long int __a7 asm("$a7") = number; \
++      register long int __a0 asm("$a0"); \
++      __asm__ volatile("syscall	0\n\t" \
++		       : "=r"(__a0) \
++		       : "r"(__a7) \
++		       : __SYSCALL_CLOBBERS); \
++      _sys_result = __a0; \
++    } \
++    _sys_result; \
++  })
++
++#define internal_syscall1(number, arg0) \
++  ({ \
++    long int _sys_result; \
++\
++    { \
++      long int _arg0 = (long int) (arg0); \
++      register long int __a7 asm("$a7") = number; \
++      register long int __a0 asm("$a0") = _arg0; \
++      __asm__ volatile("syscall	0\n\t" \
++		       : "+r"(__a0) \
++		       : "r"(__a7) \
++		       : __SYSCALL_CLOBBERS); \
++      _sys_result = __a0; \
++    } \
++    _sys_result; \
++  })
++
++#define internal_syscall2(number, arg0, arg1) \
++  ({ \
++    long int _sys_result; \
++\
++    { \
++      long int _arg0 = (long int) (arg0); \
++      long int _arg1 = (long int) (arg1); \
++      register long int __a7 asm("$a7") = number; \
++      register long int __a0 asm("$a0") = _arg0; \
++      register long int __a1 asm("$a1") = _arg1; \
++      __asm__ volatile("syscall	0\n\t" \
++		       : "+r"(__a0) \
++		       : "r"(__a7), "r"(__a1) \
++		       : __SYSCALL_CLOBBERS); \
++      _sys_result = __a0; \
++    } \
++    _sys_result; \
++  })
++
++#define internal_syscall3(number, arg0, arg1, arg2) \
++  ({ \
++    long int _sys_result; \
++\
++    { \
++      long int _arg0 = (long int) (arg0); \
++      long int _arg1 = (long int) (arg1); \
++      long int _arg2 = (long int) (arg2); \
++      register long int __a7 asm("$a7") = number; \
++      register long int __a0 asm("$a0") = _arg0; \
++      register long int __a1 asm("$a1") = _arg1; \
++      register long int __a2 asm("$a2") = _arg2; \
++      __asm__ volatile("syscall	0\n\t" \
++		       : "+r"(__a0) \
++		       : "r"(__a7), "r"(__a1), "r"(__a2) \
++		       : __SYSCALL_CLOBBERS); \
++      _sys_result = __a0; \
++    } \
++    _sys_result; \
++  })
++
++#define internal_syscall4(number, arg0, arg1, arg2, arg3) \
++  ({ \
++    long int _sys_result; \
++\
++    { \
++      long int _arg0 = (long int) (arg0); \
++      long int _arg1 = (long int) (arg1); \
++      long int _arg2 = (long int) (arg2); \
++      long int _arg3 = (long int) (arg3); \
++      register long int __a7 asm("$a7") = number; \
++      register long int __a0 asm("$a0") = _arg0; \
++      register long int __a1 asm("$a1") = _arg1; \
++      register long int __a2 asm("$a2") = _arg2; \
++      register long int __a3 asm("$a3") = _arg3; \
++      __asm__ volatile("syscall	0\n\t" \
++		       : "+r"(__a0) \
++		       : "r"(__a7), "r"(__a1), "r"(__a2), "r"(__a3) \
++		       : __SYSCALL_CLOBBERS); \
++      _sys_result = __a0; \
++    } \
++    _sys_result; \
++  })
++
++#define internal_syscall5(number, arg0, arg1, arg2, arg3, arg4) \
++  ({ \
++    long int _sys_result; \
++\
++    { \
++      long int _arg0 = (long int) (arg0); \
++      long int _arg1 = (long int) (arg1); \
++      long int _arg2 = (long int) (arg2); \
++      long int _arg3 = (long int) (arg3); \
++      long int _arg4 = (long int) (arg4); \
++      register long int __a7 asm("$a7") = number; \
++      register long int __a0 asm("$a0") = _arg0; \
++      register long int __a1 asm("$a1") = _arg1; \
++      register long int __a2 asm("$a2") = _arg2; \
++      register long int __a3 asm("$a3") = _arg3; \
++      register long int __a4 asm("$a4") = _arg4; \
++      __asm__ volatile("syscall	0\n\t" \
++		       : "+r"(__a0) \
++		       : "r"(__a7), "r"(__a1), "r"(__a2), \
++			 "r"(__a3), "r"(__a4) \
++		       : __SYSCALL_CLOBBERS); \
++      _sys_result = __a0; \
++    } \
++    _sys_result; \
++  })
++
++#define internal_syscall6(number, arg0, arg1, arg2, arg3, arg4, arg5) \
++  ({ \
++    long int _sys_result; \
++\
++    { \
++      long int _arg0 = (long int) (arg0); \
++      long int _arg1 = (long int) (arg1); \
++      long int _arg2 = (long int) (arg2); \
++      long int _arg3 = (long int) (arg3); \
++      long int _arg4 = (long int) (arg4); \
++      long int _arg5 = (long int) (arg5); \
++      register long int __a7 asm("$a7") = number; \
++      register long int __a0 asm("$a0") = _arg0; \
++      register long int __a1 asm("$a1") = _arg1; \
++      register long int __a2 asm("$a2") = _arg2; \
++      register long int __a3 asm("$a3") = _arg3; \
++      register long int __a4 asm("$a4") = _arg4; \
++      register long int __a5 asm("$a5") = _arg5; \
++      __asm__ volatile("syscall	0\n\t" \
++		       : "+r"(__a0) \
++		       : "r"(__a7), "r"(__a1), "r"(__a2), "r"(__a3), \
++			 "r"(__a4), "r"(__a5) \
++		       : __SYSCALL_CLOBBERS); \
++      _sys_result = __a0; \
++    } \
++    _sys_result; \
++  })
++
++#define internal_syscall7(number, arg0, arg1, arg2, arg3, arg4, arg5, arg6) \
++  ({ \
++    long int _sys_result; \
++\
++    { \
++      long int _arg0 = (long int) (arg0); \
++      long int _arg1 = (long int) (arg1); \
++      long int _arg2 = (long int) (arg2); \
++      long int _arg3 = (long int) (arg3); \
++      long int _arg4 = (long int) (arg4); \
++      long int _arg5 = (long int) (arg5); \
++      long int _arg6 = (long int) (arg6); \
++      register long int __a7 asm("$a7") = number; \
++      register long int __a0 asm("$a0") = _arg0; \
++      register long int __a1 asm("$a1") = _arg1; \
++      register long int __a2 asm("$a2") = _arg2; \
++      register long int __a3 asm("$a3") = _arg3; \
++      register long int __a4 asm("$a4") = _arg4; \
++      register long int __a5 asm("$a5") = _arg5; \
++      register long int __a6 asm("$a6") = _arg6; \
++      __asm__ volatile("syscall	0\n\t" \
++		       : "+r"(__a0) \
++		       : "r"(__a7), "r"(__a1), "r"(__a2), "r"(__a3), \
++			 "r"(__a4), "r"(__a5), "r"(__a6) \
++		       : __SYSCALL_CLOBBERS); \
++      _sys_result = __a0; \
++    } \
++    _sys_result; \
++  })
++
++#define __SYSCALL_CLOBBERS \
++  "$t0", "$t1", "$t2", "$t3", "$t4", "$t5", "$t6", "$t7", "$t8", "memory"
++
++extern long int __syscall_error (long int neg_errno);
++
++#endif /* ! __ASSEMBLER__ */
++
++/* Pointer mangling is not supported.  */
++#define PTR_MANGLE(var) (void) (var)
++#define PTR_DEMANGLE(var) (void) (var)
++
++#endif /* linux/loongarch/sysdep.h */
+diff --git a/sysdeps/unix/sysv/linux/loongarch/vfork.S b/sysdeps/unix/sysv/linux/loongarch/vfork.S
+new file mode 100644
+index 0000000000..43ee24284a
+--- /dev/null
++++ b/sysdeps/unix/sysv/linux/loongarch/vfork.S
+@@ -0,0 +1,50 @@
++/* Copyright (C) 2021 Free Software Foundation, Inc.
++
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public License as
++   published by the Free Software Foundation; either version 2.1 of the
++   License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library; if not, see
++   <https://www.gnu.org/licenses/>.  */
++
++#include <sysdep.h>
++#define _ERRNO_H    1
++#include <bits/errno.h>
++
++/* Clone the calling process, but without copying the whole address space.
++   The calling process is suspended until the new process exits or is
++   replaced by a call to `execve'.  Return -1 for errors, 0 to the new process,
++   and the process ID of the new process to the old process.  */
++
++ENTRY (__vfork)
++
++
++    li.d    a0, 0x4111 /* CLONE_VM | CLONE_VFORK | SIGCHLD */
++    add.d   a1, zero, sp
++
++    /* Do the system call.  */
++    li.d    a7, __NR_clone
++    syscall 0
++
++    blt     a0, zero ,L (error)
++
++    ret
++
++L (error):
++    b       __syscall_error
++
++END (__vfork)
++
++libc_hidden_def (__vfork)
++
++weak_alias (__vfork, vfork)
++strong_alias (__vfork, __libc_vfork)
+-- 
+2.34.0
+

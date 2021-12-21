@@ -1,0 +1,39 @@
+From d13688afd412167595bf80679fba1393910e453b Mon Sep 17 00:00:00 2001
+From: Chenghua Xu <xuchenghua@loongson.cn>
+Date: Sun, 15 Aug 2021 10:38:57 -0400
+Subject: [PATCH 18/53] Correct some comment.
+
+---
+ sysdeps/loongarch/dl-tls.h    | 2 +-
+ sysdeps/loongarch/hp-timing.h | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/sysdeps/loongarch/dl-tls.h b/sysdeps/loongarch/dl-tls.h
+index 82316dc847..9f9ac39c9c 100644
+--- a/sysdeps/loongarch/dl-tls.h
++++ b/sysdeps/loongarch/dl-tls.h
+@@ -26,7 +26,7 @@ typedef struct
+ /* The thread pointer points to the first static TLS block.  */
+ #define TLS_TP_OFFSET 0
+ 
+-/* Dynamic thread vector pointers point 0x800 past the start of each
++/* Dynamic thread vector pointers point to the start of each
+    TLS block.  */
+ #define TLS_DTV_OFFSET 0
+ 
+diff --git a/sysdeps/loongarch/hp-timing.h b/sysdeps/loongarch/hp-timing.h
+index 53d39c090e..4ea64d61a6 100644
+--- a/sysdeps/loongarch/hp-timing.h
++++ b/sysdeps/loongarch/hp-timing.h
+@@ -29,7 +29,7 @@
+ /* We use 64bit values for the times.  */
+ typedef unsigned long long int hp_timing_t;
+ 
+-/* Read the cp0 count, this maybe inaccurate.  */
++/* Read the stable counter.  */
+ #define HP_TIMING_NOW(Var) \
+   ({ \
+     unsigned long long int _count; \
+-- 
+2.34.0
+

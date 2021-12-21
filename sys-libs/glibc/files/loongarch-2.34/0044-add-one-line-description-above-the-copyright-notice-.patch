@@ -1,0 +1,800 @@
+From 7e455e3893afc0f03e0ea38e0415a5dbe0c5a244 Mon Sep 17 00:00:00 2001
+From: caiyinyu <caiyinyu@loongson.cn>
+Date: Sun, 28 Nov 2021 17:59:08 +0800
+Subject: [PATCH 44/53] add one-line description above the copyright notice and
+ delete "Contributed by"
+
+---
+ sysdeps/loongarch/__longjmp.S                               | 2 +-
+ sysdeps/loongarch/bits/fenv.h                               | 2 +-
+ sysdeps/loongarch/bits/link.h                               | 6 +++---
+ sysdeps/loongarch/bits/setjmp.h                             | 2 +-
+ sysdeps/loongarch/bits/wordsize.h                           | 2 +-
+ sysdeps/loongarch/dl-irel.h                                 | 6 +++---
+ sysdeps/loongarch/dl-machine.h                              | 4 ++--
+ sysdeps/loongarch/dl-tls.h                                  | 2 +-
+ sysdeps/loongarch/dl-trampoline.S                           | 2 +-
+ sysdeps/loongarch/fpu/e_sqrt.c                              | 3 ++-
+ sysdeps/loongarch/fpu/e_sqrtf.c                             | 3 ++-
+ sysdeps/loongarch/fpu/fegetmode.c                           | 2 +-
+ sysdeps/loongarch/fpu/fenv_libc.h                           | 3 ++-
+ sysdeps/loongarch/fpu/fesetexcept.c                         | 2 +-
+ sysdeps/loongarch/fpu/fesetmode.c                           | 2 +-
+ sysdeps/loongarch/fpu/s_cosf.S                              | 4 ++--
+ sysdeps/loongarch/fpu/s_sinf.S                              | 4 ++--
+ sysdeps/loongarch/fpu_control.h                             | 2 +-
+ sysdeps/loongarch/gccframe.h                                | 2 +-
+ sysdeps/loongarch/hp-timing.h                               | 2 +-
+ sysdeps/loongarch/jmpbuf-offsets.h                          | 2 +-
+ sysdeps/loongarch/jmpbuf-unwind.h                           | 3 ++-
+ sysdeps/loongarch/ldsodefs.h                                | 1 -
+ sysdeps/loongarch/libc-tls.c                                | 2 +-
+ sysdeps/loongarch/lp64/memcpy.S                             | 4 ++--
+ sysdeps/loongarch/lp64/memmove.S                            | 4 ++--
+ sysdeps/loongarch/lp64/memset.S                             | 4 ++--
+ sysdeps/loongarch/lp64/strchr.S                             | 4 ++--
+ sysdeps/loongarch/lp64/strchrnul.S                          | 4 ++--
+ sysdeps/loongarch/lp64/strcmp.S                             | 4 ++--
+ sysdeps/loongarch/lp64/strcpy.S                             | 4 ++--
+ sysdeps/loongarch/lp64/strlen.S                             | 4 ++--
+ sysdeps/loongarch/lp64/strncmp.S                            | 4 ++--
+ sysdeps/loongarch/lp64/strnlen.S                            | 4 ++--
+ sysdeps/loongarch/math_private.h                            | 2 +-
+ sysdeps/loongarch/memusage.h                                | 2 +-
+ sysdeps/loongarch/nptl/bits/pthreadtypes-arch.h             | 2 +-
+ sysdeps/loongarch/nptl/bits/semaphore.h                     | 3 ++-
+ sysdeps/loongarch/nptl/pthreaddef.h                         | 2 +-
+ sysdeps/loongarch/nptl/tls.h                                | 2 +-
+ sysdeps/loongarch/sfp-machine.h                             | 1 -
+ sysdeps/loongarch/start.S                                   | 1 -
+ sysdeps/loongarch/sys/asm.h                                 | 5 ++---
+ sysdeps/loongarch/sys/regdef.h                              | 4 ++--
+ sysdeps/loongarch/tst-audit.h                               | 2 +-
+ sysdeps/unix/sysv/linux/loongarch/atomic-machine.h          | 2 +-
+ sysdeps/unix/sysv/linux/loongarch/bits/mman.h               | 2 +-
+ sysdeps/unix/sysv/linux/loongarch/bits/sigcontext.h         | 3 ++-
+ sysdeps/unix/sysv/linux/loongarch/clone.S                   | 3 ++-
+ sysdeps/unix/sysv/linux/loongarch/clone3.S                  | 3 ++-
+ sysdeps/unix/sysv/linux/loongarch/dl-static.c               | 3 ++-
+ sysdeps/unix/sysv/linux/loongarch/ipc_priv.h                | 2 +-
+ sysdeps/unix/sysv/linux/loongarch/ldconfig.h                | 2 +-
+ sysdeps/unix/sysv/linux/loongarch/ldsodefs.h                | 3 ++-
+ sysdeps/unix/sysv/linux/loongarch/lp64/fpu/jmp_buf-macros.h | 3 ++-
+ sysdeps/unix/sysv/linux/loongarch/makecontext.c             | 3 ++-
+ sysdeps/unix/sysv/linux/loongarch/sigcontextinfo.h          | 3 ++-
+ sysdeps/unix/sysv/linux/loongarch/sys/procfs.h              | 3 ++-
+ sysdeps/unix/sysv/linux/loongarch/sys/ucontext.h            | 3 ++-
+ sysdeps/unix/sysv/linux/loongarch/sys/user.h                | 3 ++-
+ sysdeps/unix/sysv/linux/loongarch/syscall.c                 | 3 ++-
+ sysdeps/unix/sysv/linux/loongarch/sysdep.h                  | 5 ++---
+ sysdeps/unix/sysv/linux/loongarch/vfork.S                   | 3 ++-
+ 63 files changed, 98 insertions(+), 85 deletions(-)
+
+diff --git a/sysdeps/loongarch/__longjmp.S b/sysdeps/loongarch/__longjmp.S
+index 45868b4be5..5cc1bc7860 100644
+--- a/sysdeps/loongarch/__longjmp.S
++++ b/sysdeps/loongarch/__longjmp.S
+@@ -1,4 +1,4 @@
+-/* longjmp, LoongArch version.
++/* longjmp.
+    Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+diff --git a/sysdeps/loongarch/bits/fenv.h b/sysdeps/loongarch/bits/fenv.h
+index 943fc008ec..35433becd1 100644
+--- a/sysdeps/loongarch/bits/fenv.h
++++ b/sysdeps/loongarch/bits/fenv.h
+@@ -1,4 +1,4 @@
+-/* Floating point environment, LoongArch version.
++/* Floating point environment.
+    Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+diff --git a/sysdeps/loongarch/bits/link.h b/sysdeps/loongarch/bits/link.h
+index 0e5fb2aaab..3f2834d34d 100644
+--- a/sysdeps/loongarch/bits/link.h
++++ b/sysdeps/loongarch/bits/link.h
+@@ -1,6 +1,6 @@
+-/* Machine-specific declarations for dynamic linker interface.  LoongArch
+-   version.  Copyright (C) 2021 Free Software Foundation, Inc.  This
+-   file is part of the GNU C Library.
++/* Machine-specific declarations for dynamic linker interface.
++   Copyright (C) 2021 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
+ 
+    The GNU C Library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+diff --git a/sysdeps/loongarch/bits/setjmp.h b/sysdeps/loongarch/bits/setjmp.h
+index 5ac1caee56..b098ac6f86 100644
+--- a/sysdeps/loongarch/bits/setjmp.h
++++ b/sysdeps/loongarch/bits/setjmp.h
+@@ -1,4 +1,4 @@
+-/* Define the machine-dependent type `jmp_buf'.  LoongArch version.
++/* Define the machine-dependent type `jmp_buf'.
+    Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+diff --git a/sysdeps/loongarch/bits/wordsize.h b/sysdeps/loongarch/bits/wordsize.h
+index e12709cc65..0a83454b08 100644
+--- a/sysdeps/loongarch/bits/wordsize.h
++++ b/sysdeps/loongarch/bits/wordsize.h
+@@ -1,4 +1,4 @@
+-/* Determine the wordsize from the preprocessor defines.  LoongArch version
++/* Determine the wordsize from the preprocessor defines.
+    Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+diff --git a/sysdeps/loongarch/dl-irel.h b/sysdeps/loongarch/dl-irel.h
+index 852f6505b5..9fd106a308 100644
+--- a/sysdeps/loongarch/dl-irel.h
++++ b/sysdeps/loongarch/dl-irel.h
+@@ -1,6 +1,6 @@
+-/* Machine-dependent ELF indirect relocation inline functions.  LoongArch
+-   version.  Copyright (C) 2021 Free Software Foundation, Inc.  This
+-   file is part of the GNU C Library.
++/* Machine-dependent ELF indirect relocation inline functions.
++   Copyright (C) 2021 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
+ 
+    The GNU C Library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+diff --git a/sysdeps/loongarch/dl-machine.h b/sysdeps/loongarch/dl-machine.h
+index 823a9f9f27..9063c3e1f5 100644
+--- a/sysdeps/loongarch/dl-machine.h
++++ b/sysdeps/loongarch/dl-machine.h
+@@ -1,5 +1,5 @@
+-/* Machine-dependent ELF dynamic relocation inline functions.  LoongArch
+-   version.  Copyright (C) 2021 Free Software Foundation, Inc.
++/* Machine-dependent ELF dynamic relocation inline functions.
++   Copyright (C) 2021 Free Software Foundation, Inc.
+ 
+    This file is part of the GNU C Library.
+ 
+diff --git a/sysdeps/loongarch/dl-tls.h b/sysdeps/loongarch/dl-tls.h
+index 9f9ac39c9c..ee7d78a3e9 100644
+--- a/sysdeps/loongarch/dl-tls.h
++++ b/sysdeps/loongarch/dl-tls.h
+@@ -1,4 +1,4 @@
+-/* Thread-local storage handling in the ELF dynamic linker.  LoongArch version.
++/* Thread-local storage handling in the ELF dynamic linker.
+    Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+diff --git a/sysdeps/loongarch/dl-trampoline.S b/sysdeps/loongarch/dl-trampoline.S
+index dcc8f50429..84b1fa1f5e 100644
+--- a/sysdeps/loongarch/dl-trampoline.S
++++ b/sysdeps/loongarch/dl-trampoline.S
+@@ -1,4 +1,4 @@
+-/* PLT trampolines.  LoongArch version.
++/* PLT trampolines.
+    Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+diff --git a/sysdeps/loongarch/fpu/e_sqrt.c b/sysdeps/loongarch/fpu/e_sqrt.c
+index 992e719e43..352e1cd30f 100644
+--- a/sysdeps/loongarch/fpu/e_sqrt.c
++++ b/sysdeps/loongarch/fpu/e_sqrt.c
+@@ -1,4 +1,5 @@
+-/* Copyright (C) 2021 Free Software Foundation, Inc.
++/* Double-precision floating point square root.
++   Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+    The GNU C Library is free software; you can redistribute it and/or
+diff --git a/sysdeps/loongarch/fpu/e_sqrtf.c b/sysdeps/loongarch/fpu/e_sqrtf.c
+index 52954db072..950156e9f8 100644
+--- a/sysdeps/loongarch/fpu/e_sqrtf.c
++++ b/sysdeps/loongarch/fpu/e_sqrtf.c
+@@ -1,4 +1,5 @@
+-/* Copyright (C) 2021 Free Software Foundation, Inc.
++/* Single-precision floating point square root.
++   Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+    The GNU C Library is free software; you can redistribute it and/or
+diff --git a/sysdeps/loongarch/fpu/fegetmode.c b/sysdeps/loongarch/fpu/fegetmode.c
+index 9e4751f0e8..f39c4c31a2 100644
+--- a/sysdeps/loongarch/fpu/fegetmode.c
++++ b/sysdeps/loongarch/fpu/fegetmode.c
+@@ -1,4 +1,4 @@
+-/* Store current floating-point control modes.  LoongArch version.
++/* Store current floating-point control modes.
+    Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+diff --git a/sysdeps/loongarch/fpu/fenv_libc.h b/sysdeps/loongarch/fpu/fenv_libc.h
+index b229469632..60eedc93c2 100644
+--- a/sysdeps/loongarch/fpu/fenv_libc.h
++++ b/sysdeps/loongarch/fpu/fenv_libc.h
+@@ -1,4 +1,5 @@
+-/* Copyright (C) 2021 Free Software Foundation, Inc.
++/* Internal libc stuff for floating point environment routines.
++   Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+    The GNU C Library is free software; you can redistribute it and/or
+diff --git a/sysdeps/loongarch/fpu/fesetexcept.c b/sysdeps/loongarch/fpu/fesetexcept.c
+index e1e5527372..63c65e8f80 100644
+--- a/sysdeps/loongarch/fpu/fesetexcept.c
++++ b/sysdeps/loongarch/fpu/fesetexcept.c
+@@ -1,4 +1,4 @@
+-/* Set given exception flags.  LoongArch version.
++/* Set given exception flags.
+    Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+diff --git a/sysdeps/loongarch/fpu/fesetmode.c b/sysdeps/loongarch/fpu/fesetmode.c
+index f7ce867301..8948876a0f 100644
+--- a/sysdeps/loongarch/fpu/fesetmode.c
++++ b/sysdeps/loongarch/fpu/fesetmode.c
+@@ -1,4 +1,4 @@
+-/* Install given floating-point control modes.  LoongArch version.
++/* Install given floating-point control modes.
+    Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+diff --git a/sysdeps/loongarch/fpu/s_cosf.S b/sysdeps/loongarch/fpu/s_cosf.S
+index 40d0795168..be1c112141 100644
+--- a/sysdeps/loongarch/fpu/s_cosf.S
++++ b/sysdeps/loongarch/fpu/s_cosf.S
+@@ -1,7 +1,7 @@
+-/* Copyright (C) 2021 Free Software Foundation, Inc.
++/* Assembly implementation of cos.
++   Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+-   Contributed by Loongson Technology Corporation Limited.
+ 
+    The GNU C Library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+diff --git a/sysdeps/loongarch/fpu/s_sinf.S b/sysdeps/loongarch/fpu/s_sinf.S
+index 3f06f46ff9..dd5e4c7950 100644
+--- a/sysdeps/loongarch/fpu/s_sinf.S
++++ b/sysdeps/loongarch/fpu/s_sinf.S
+@@ -1,7 +1,7 @@
+-/* Copyright (C) 2021 Free Software Foundation, Inc.
++/* Assembly implementation of sin.
++   Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+-   Contributed by Loongson Technology Corporation Limited.
+ 
+    The GNU C Library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+diff --git a/sysdeps/loongarch/fpu_control.h b/sysdeps/loongarch/fpu_control.h
+index 34288ded87..d26e27ab84 100644
+--- a/sysdeps/loongarch/fpu_control.h
++++ b/sysdeps/loongarch/fpu_control.h
+@@ -1,4 +1,4 @@
+-/* FPU control word bits.  LoongArch version.
++/* FPU control word bits.
+    Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+diff --git a/sysdeps/loongarch/gccframe.h b/sysdeps/loongarch/gccframe.h
+index 01d381e0b3..19996f3ce3 100644
+--- a/sysdeps/loongarch/gccframe.h
++++ b/sysdeps/loongarch/gccframe.h
+@@ -1,4 +1,4 @@
+-/* Definition of object in frame unwind info.  LoongArch version.
++/* Definition of object in frame unwind info.
+    Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+diff --git a/sysdeps/loongarch/hp-timing.h b/sysdeps/loongarch/hp-timing.h
+index 4ea64d61a6..7b36a539f1 100644
+--- a/sysdeps/loongarch/hp-timing.h
++++ b/sysdeps/loongarch/hp-timing.h
+@@ -1,4 +1,4 @@
+-/* High precision, low overhead timing functions.  Linux/LoongArch version.
++/* High precision, low overhead timing functions.
+    Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+diff --git a/sysdeps/loongarch/jmpbuf-offsets.h b/sysdeps/loongarch/jmpbuf-offsets.h
+index d70e9f0b7e..4df42dfa84 100644
+--- a/sysdeps/loongarch/jmpbuf-offsets.h
++++ b/sysdeps/loongarch/jmpbuf-offsets.h
+@@ -1,4 +1,4 @@
+-/* Private macros for accessing __jmp_buf contents.  LoongArch version.
++/* Private macros for accessing __jmp_buf contents.
+    Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+diff --git a/sysdeps/loongarch/jmpbuf-unwind.h b/sysdeps/loongarch/jmpbuf-unwind.h
+index 2810853cf6..a37bef1de7 100644
+--- a/sysdeps/loongarch/jmpbuf-unwind.h
++++ b/sysdeps/loongarch/jmpbuf-unwind.h
+@@ -1,4 +1,5 @@
+-/* Copyright (C) 2021 Free Software Foundation, Inc.
++/* Examine __jmp_buf for unwinding frames.
++   Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+    The GNU C Library is free software; you can redistribute it and/or
+diff --git a/sysdeps/loongarch/ldsodefs.h b/sysdeps/loongarch/ldsodefs.h
+index 0fd3bbd2c7..9f690bb76d 100644
+--- a/sysdeps/loongarch/ldsodefs.h
++++ b/sysdeps/loongarch/ldsodefs.h
+@@ -1,5 +1,4 @@
+ /* Run-time dynamic linker data structures for loaded ELF shared objects.
+-   LoongArch version.
+    Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+diff --git a/sysdeps/loongarch/libc-tls.c b/sysdeps/loongarch/libc-tls.c
+index d935ebe6f7..32e303ecd3 100644
+--- a/sysdeps/loongarch/libc-tls.c
++++ b/sysdeps/loongarch/libc-tls.c
+@@ -1,4 +1,4 @@
+-/* Thread-local storage handling in the ELF dynamic linker.  LoongArch version.
++/* Thread-local storage handling in the ELF dynamic linker.
+    Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+diff --git a/sysdeps/loongarch/lp64/memcpy.S b/sysdeps/loongarch/lp64/memcpy.S
+index cb4a406e11..a821e11236 100644
+--- a/sysdeps/loongarch/lp64/memcpy.S
++++ b/sysdeps/loongarch/lp64/memcpy.S
+@@ -1,7 +1,7 @@
+-/* Copyright (C) 2021 Free Software Foundation, Inc.
++/* Assembly implementation of memcpy.
++   Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+-   Contributed by Loongson Technology Corporation Limited.
+ 
+    The GNU C Library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+diff --git a/sysdeps/loongarch/lp64/memmove.S b/sysdeps/loongarch/lp64/memmove.S
+index 0d35062f1b..def1696219 100644
+--- a/sysdeps/loongarch/lp64/memmove.S
++++ b/sysdeps/loongarch/lp64/memmove.S
+@@ -1,7 +1,7 @@
+-/* Copyright (C) 2021 Free Software Foundation, Inc.
++/* Assembly implementation of memmove.
++   Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+-   Contributed by Loongson Technology Corporation Limited.
+ 
+    The GNU C Library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+diff --git a/sysdeps/loongarch/lp64/memset.S b/sysdeps/loongarch/lp64/memset.S
+index 341de8c6c4..7540c036e5 100644
+--- a/sysdeps/loongarch/lp64/memset.S
++++ b/sysdeps/loongarch/lp64/memset.S
+@@ -1,7 +1,7 @@
+-/* Copyright (C) 2021 Free Software Foundation, Inc.
++/* Assembly implementation of memset.
++   Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+-   Contributed by Loongson Technology Corporation Limited.
+ 
+    The GNU C Library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+diff --git a/sysdeps/loongarch/lp64/strchr.S b/sysdeps/loongarch/lp64/strchr.S
+index de02859500..8c19dc4703 100644
+--- a/sysdeps/loongarch/lp64/strchr.S
++++ b/sysdeps/loongarch/lp64/strchr.S
+@@ -1,8 +1,8 @@
+-/* Copyright (C) 2021 Free Software Foundation, Inc.
++/* Assembly implementation of strchr.
++   Copyright (C) 2021 Free Software Foundation, Inc.
+ 
+    This file is part of the GNU C Library.
+ 
+-   Contributed by Loongson Technology Corporation Limited.
+ 
+    The GNU C Library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+diff --git a/sysdeps/loongarch/lp64/strchrnul.S b/sysdeps/loongarch/lp64/strchrnul.S
+index 23f91c93dd..adbd84eaf6 100644
+--- a/sysdeps/loongarch/lp64/strchrnul.S
++++ b/sysdeps/loongarch/lp64/strchrnul.S
+@@ -1,7 +1,7 @@
+-/* Copyright (C) 2021 Free Software Foundation, Inc.
++/* Assembly implementation of strchrnul.
++   Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+-   Contributed by Loongson Technology Corporation Limited.
+ 
+    The GNU C Library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+diff --git a/sysdeps/loongarch/lp64/strcmp.S b/sysdeps/loongarch/lp64/strcmp.S
+index b59f36f578..2e0c0a3730 100644
+--- a/sysdeps/loongarch/lp64/strcmp.S
++++ b/sysdeps/loongarch/lp64/strcmp.S
+@@ -1,7 +1,7 @@
+-/* Copyright (C) 2021 Free Software Foundation, Inc.
++/* Assembly implementation of strcmp.
++   Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+-   Contributed by Loongson Technology Corporation Limited.
+ 
+    The GNU C Library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+diff --git a/sysdeps/loongarch/lp64/strcpy.S b/sysdeps/loongarch/lp64/strcpy.S
+index e75eeb06cf..e827728ae1 100644
+--- a/sysdeps/loongarch/lp64/strcpy.S
++++ b/sysdeps/loongarch/lp64/strcpy.S
+@@ -1,7 +1,7 @@
+-/* Copyright (C) 2021 Free Software Foundation, Inc.
++/* Assembly implementation of strcpy.
++   Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+-   Contributed by Loongson Technology Corporation Limited.
+ 
+    The GNU C Library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+diff --git a/sysdeps/loongarch/lp64/strlen.S b/sysdeps/loongarch/lp64/strlen.S
+index ec4bad21a6..9080b08467 100644
+--- a/sysdeps/loongarch/lp64/strlen.S
++++ b/sysdeps/loongarch/lp64/strlen.S
+@@ -1,7 +1,7 @@
+-/* Copyright (C) 2021 Free Software Foundation, Inc.
++/* Assembly implementation of strlen.
++   Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+-   Contributed by Loongson Technology Corporation Limited.
+ 
+    The GNU C Library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+diff --git a/sysdeps/loongarch/lp64/strncmp.S b/sysdeps/loongarch/lp64/strncmp.S
+index e95f5f7a36..95e51f7185 100644
+--- a/sysdeps/loongarch/lp64/strncmp.S
++++ b/sysdeps/loongarch/lp64/strncmp.S
+@@ -1,7 +1,7 @@
+-/* Copyright (C) 2021 Free Software Foundation, Inc.
++/* Assembly implementation of strncmp.
++   Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+-   Contributed by Loongson Technology Corporation Limited.
+ 
+    The GNU C Library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+diff --git a/sysdeps/loongarch/lp64/strnlen.S b/sysdeps/loongarch/lp64/strnlen.S
+index b475938daf..07430a5e58 100644
+--- a/sysdeps/loongarch/lp64/strnlen.S
++++ b/sysdeps/loongarch/lp64/strnlen.S
+@@ -1,7 +1,7 @@
+-/* Copyright (C) 2021 Free Software Foundation, Inc.
++/* Assembly implementation of strnlen.
++   Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+-   Contributed by Loongson Technology Corporation Limited.
+ 
+    The GNU C Library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+diff --git a/sysdeps/loongarch/math_private.h b/sysdeps/loongarch/math_private.h
+index 9463f653d0..5665624b23 100644
+--- a/sysdeps/loongarch/math_private.h
++++ b/sysdeps/loongarch/math_private.h
+@@ -1,4 +1,4 @@
+-/* Internal math stuff.  LoongArch version.
++/* Internal math stuff.
+    Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+diff --git a/sysdeps/loongarch/memusage.h b/sysdeps/loongarch/memusage.h
+index c79d0ecb82..bdf24bb276 100644
+--- a/sysdeps/loongarch/memusage.h
++++ b/sysdeps/loongarch/memusage.h
+@@ -1,4 +1,4 @@
+-/* Machine-specific definitions for memory usage profiling, LoongArch version.
++/* Machine-specific definitions for memory usage profiling.
+    Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+diff --git a/sysdeps/loongarch/nptl/bits/pthreadtypes-arch.h b/sysdeps/loongarch/nptl/bits/pthreadtypes-arch.h
+index d697fff735..e57f122a98 100644
+--- a/sysdeps/loongarch/nptl/bits/pthreadtypes-arch.h
++++ b/sysdeps/loongarch/nptl/bits/pthreadtypes-arch.h
+@@ -1,4 +1,4 @@
+-/* Machine-specific pthread type layouts.  LoongArch version.
++/* Machine-specific pthread type layouts.
+    Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+diff --git a/sysdeps/loongarch/nptl/bits/semaphore.h b/sysdeps/loongarch/nptl/bits/semaphore.h
+index 5b70e06324..510f3b0e9a 100644
+--- a/sysdeps/loongarch/nptl/bits/semaphore.h
++++ b/sysdeps/loongarch/nptl/bits/semaphore.h
+@@ -1,4 +1,5 @@
+-/* Copyright (C) 2021 Free Software Foundation, Inc.
++/* POSIX semaphore type layout
++   Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+    The GNU C Library is free software; you can redistribute it and/or
+diff --git a/sysdeps/loongarch/nptl/pthreaddef.h b/sysdeps/loongarch/nptl/pthreaddef.h
+index 954b184f5c..bf3b2471e0 100644
+--- a/sysdeps/loongarch/nptl/pthreaddef.h
++++ b/sysdeps/loongarch/nptl/pthreaddef.h
+@@ -1,4 +1,4 @@
+-/* pthread machine parameter definitions,  LoongArch version.
++/* pthread machine parameter definitions.
+    Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+diff --git a/sysdeps/loongarch/nptl/tls.h b/sysdeps/loongarch/nptl/tls.h
+index f475986cf7..cbf0307e21 100644
+--- a/sysdeps/loongarch/nptl/tls.h
++++ b/sysdeps/loongarch/nptl/tls.h
+@@ -1,4 +1,4 @@
+-/* Definition for thread-local data handling.  NPTL/LoongArch version.
++/* Definition for thread-local data handling.
+    Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+diff --git a/sysdeps/loongarch/sfp-machine.h b/sysdeps/loongarch/sfp-machine.h
+index 5382db381b..61f11dd011 100644
+--- a/sysdeps/loongarch/sfp-machine.h
++++ b/sysdeps/loongarch/sfp-machine.h
+@@ -2,7 +2,6 @@
+    Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+-   Contributed by Loongson Technology Corporation Limited.
+ 
+    The GNU C Library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+diff --git a/sysdeps/loongarch/start.S b/sysdeps/loongarch/start.S
+index afe190739d..9ecfb5e2be 100644
+--- a/sysdeps/loongarch/start.S
++++ b/sysdeps/loongarch/start.S
+@@ -2,7 +2,6 @@
+    Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+-   Contributed by Loongson Technology Corporation Limited.
+ 
+    The GNU C Library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+diff --git a/sysdeps/loongarch/sys/asm.h b/sysdeps/loongarch/sys/asm.h
+index 678829437d..1133f76157 100644
+--- a/sysdeps/loongarch/sys/asm.h
++++ b/sysdeps/loongarch/sys/asm.h
+@@ -1,8 +1,7 @@
+-/* Copyright (C) 2021 Free Software Foundation, Inc.
++/* Miscellaneous macros.
++   Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+-   Contributed by Loongson Technology Corporation Limited.
+-
+    The GNU C Library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+diff --git a/sysdeps/loongarch/sys/regdef.h b/sysdeps/loongarch/sys/regdef.h
+index d7889adbf1..f53447db62 100644
+--- a/sysdeps/loongarch/sys/regdef.h
++++ b/sysdeps/loongarch/sys/regdef.h
+@@ -1,7 +1,7 @@
+-/* Copyright (C) 2021 Free Software Foundation, Inc.
++/* Register Macro definitions
++   Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+-   Contributed by Loongson Technology Corporation Limited.
+ 
+    The GNU C Library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+diff --git a/sysdeps/loongarch/tst-audit.h b/sysdeps/loongarch/tst-audit.h
+index 725efc8690..de120d8aae 100644
+--- a/sysdeps/loongarch/tst-audit.h
++++ b/sysdeps/loongarch/tst-audit.h
+@@ -1,4 +1,4 @@
+-/* Definitions for testing PLT entry/exit auditing.  LoongArch version.
++/* Definitions for testing PLT entry/exit auditing.
+    Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+diff --git a/sysdeps/unix/sysv/linux/loongarch/atomic-machine.h b/sysdeps/unix/sysv/linux/loongarch/atomic-machine.h
+index 0304e1469b..dbae608ee5 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/atomic-machine.h
++++ b/sysdeps/unix/sysv/linux/loongarch/atomic-machine.h
+@@ -1,4 +1,4 @@
+-/* Atomic operations.  LoongArch version.
++/* Atomic operations.
+    Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+diff --git a/sysdeps/unix/sysv/linux/loongarch/bits/mman.h b/sysdeps/unix/sysv/linux/loongarch/bits/mman.h
+index de718e69ec..1f2f76fc8a 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/bits/mman.h
++++ b/sysdeps/unix/sysv/linux/loongarch/bits/mman.h
+@@ -1,4 +1,4 @@
+-/* Definitions for POSIX memory map interface.  Linux/LoongArch version.
++/* Definitions for POSIX memory map interface.
+    Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+diff --git a/sysdeps/unix/sysv/linux/loongarch/bits/sigcontext.h b/sysdeps/unix/sysv/linux/loongarch/bits/sigcontext.h
+index 124bda8f15..d852c08aac 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/bits/sigcontext.h
++++ b/sysdeps/unix/sysv/linux/loongarch/bits/sigcontext.h
+@@ -1,4 +1,5 @@
+-/* Copyright (C) 2021 Free Software Foundation, Inc.
++/* Machine-dependent signal context structure for Linux.
++   Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+    The GNU C Library is free software; you can redistribute it and/or
+diff --git a/sysdeps/unix/sysv/linux/loongarch/clone.S b/sysdeps/unix/sysv/linux/loongarch/clone.S
+index 2fd1a0d5dc..d2bed24440 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/clone.S
++++ b/sysdeps/unix/sysv/linux/loongarch/clone.S
+@@ -1,4 +1,5 @@
+-/* Copyright (C) 2021 Free Software Foundation, Inc.
++/* The clone syscall wrapper.
++   Copyright (C) 2021 Free Software Foundation, Inc.
+ 
+    This file is part of the GNU C Library.
+ 
+diff --git a/sysdeps/unix/sysv/linux/loongarch/clone3.S b/sysdeps/unix/sysv/linux/loongarch/clone3.S
+index fa1abd2779..5eaaa5462e 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/clone3.S
++++ b/sysdeps/unix/sysv/linux/loongarch/clone3.S
+@@ -1,4 +1,5 @@
+-/* Copyright (C) 2021 Free Software Foundation, Inc.
++/* The clone3 syscall wrapper.
++   Copyright (C) 2021 Free Software Foundation, Inc.
+ 
+    This file is part of the GNU C Library.
+ 
+diff --git a/sysdeps/unix/sysv/linux/loongarch/dl-static.c b/sysdeps/unix/sysv/linux/loongarch/dl-static.c
+index 49d359a682..b9a7b2a61f 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/dl-static.c
++++ b/sysdeps/unix/sysv/linux/loongarch/dl-static.c
+@@ -1,4 +1,5 @@
+-/* Copyright (C) 2021 Free Software Foundation, Inc.
++/* dl_static_init for loongarch.
++   Copyright (C) 2021 Free Software Foundation, Inc.
+ 
+    This file is part of the GNU C Library.
+ 
+diff --git a/sysdeps/unix/sysv/linux/loongarch/ipc_priv.h b/sysdeps/unix/sysv/linux/loongarch/ipc_priv.h
+index bcb58fceec..dde8fa6989 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/ipc_priv.h
++++ b/sysdeps/unix/sysv/linux/loongarch/ipc_priv.h
+@@ -1,4 +1,4 @@
+-/* Old SysV permission definition for Linux.  LoongArch version.
++/* Old SysV permission definition for Linux.
+    Copyright (C) 2021 Loongson Technology, Inc.
+    This file is part of the GNU C Library.
+ 
+diff --git a/sysdeps/unix/sysv/linux/loongarch/ldconfig.h b/sysdeps/unix/sysv/linux/loongarch/ldconfig.h
+index e0a31c4b4c..c84d929edb 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/ldconfig.h
++++ b/sysdeps/unix/sysv/linux/loongarch/ldconfig.h
+@@ -1,4 +1,4 @@
+-/* ldconfig default paths and libraries.  Linux/LoongArch version.
++/* ldconfig default paths and libraries.
+    Copyright (C) 2001-2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+diff --git a/sysdeps/unix/sysv/linux/loongarch/ldsodefs.h b/sysdeps/unix/sysv/linux/loongarch/ldsodefs.h
+index 137b0801c0..680baf2edc 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/ldsodefs.h
++++ b/sysdeps/unix/sysv/linux/loongarch/ldsodefs.h
+@@ -1,4 +1,5 @@
+-/* Copyright (C) 2021 Free Software Foundation, Inc.
++/* Run-time dynamic linker data structures for loaded ELF shared objects.
++   Copyright (C) 2021 Free Software Foundation, Inc.
+ 
+    This file is part of the GNU C Library.
+ 
+diff --git a/sysdeps/unix/sysv/linux/loongarch/lp64/fpu/jmp_buf-macros.h b/sysdeps/unix/sysv/linux/loongarch/lp64/fpu/jmp_buf-macros.h
+index b1422273c5..a02865b4a5 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/lp64/fpu/jmp_buf-macros.h
++++ b/sysdeps/unix/sysv/linux/loongarch/lp64/fpu/jmp_buf-macros.h
+@@ -1,4 +1,5 @@
+-/* Copyright (C) 2021 Free Software Foundation, Inc.
++/* jump buffer constants for LoongArch.
++   Copyright (C) 2021 Free Software Foundation, Inc.
+ 
+    This file is part of the GNU C Library.
+ 
+diff --git a/sysdeps/unix/sysv/linux/loongarch/makecontext.c b/sysdeps/unix/sysv/linux/loongarch/makecontext.c
+index 36c84ef3c6..1ad8807517 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/makecontext.c
++++ b/sysdeps/unix/sysv/linux/loongarch/makecontext.c
+@@ -1,4 +1,5 @@
+-/* Copyright (C) 2021 Free Software Foundation, Inc.
++/* Create new context.
++   Copyright (C) 2021 Free Software Foundation, Inc.
+ 
+    This file is part of the GNU C Library.
+ 
+diff --git a/sysdeps/unix/sysv/linux/loongarch/sigcontextinfo.h b/sysdeps/unix/sysv/linux/loongarch/sigcontextinfo.h
+index c593dc0c52..8b31839cf9 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/sigcontextinfo.h
++++ b/sysdeps/unix/sysv/linux/loongarch/sigcontextinfo.h
+@@ -1,4 +1,5 @@
+-/* Copyright (C) 2021 Free Software Foundation, Inc.
++/* LoongArch definitions for signal handling calling conventions.
++   Copyright (C) 2021 Free Software Foundation, Inc.
+ 
+    This file is part of the GNU C Library.
+ 
+diff --git a/sysdeps/unix/sysv/linux/loongarch/sys/procfs.h b/sysdeps/unix/sysv/linux/loongarch/sys/procfs.h
+index 72c3376148..7fe24dd8a1 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/sys/procfs.h
++++ b/sysdeps/unix/sysv/linux/loongarch/sys/procfs.h
+@@ -1,4 +1,5 @@
+-/* Copyright (C) 2021 Free Software Foundation, Inc.
++/* Types for registers for sys/procfs.h.
++   Copyright (C) 2021 Free Software Foundation, Inc.
+ 
+    This file is part of the GNU C Library.
+ 
+diff --git a/sysdeps/unix/sysv/linux/loongarch/sys/ucontext.h b/sysdeps/unix/sysv/linux/loongarch/sys/ucontext.h
+index 6eb8ac21e4..fb1ac2ac8a 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/sys/ucontext.h
++++ b/sysdeps/unix/sysv/linux/loongarch/sys/ucontext.h
+@@ -1,4 +1,5 @@
+-/* Copyright (C) 2021 Free Software Foundation, Inc.
++/* struct ucontext definition.
++   Copyright (C) 2021 Free Software Foundation, Inc.
+ 
+    This file is part of the GNU C Library.
+ 
+diff --git a/sysdeps/unix/sysv/linux/loongarch/sys/user.h b/sysdeps/unix/sysv/linux/loongarch/sys/user.h
+index a0bc549bf9..4a55990e55 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/sys/user.h
++++ b/sysdeps/unix/sysv/linux/loongarch/sys/user.h
+@@ -1,4 +1,5 @@
+-/* Copyright (C) 2021 Free Software Foundation, Inc.
++/* struct user_regs_struct definition for LoongArch.
++   Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+    The GNU C Library is free software; you can redistribute it and/or
+diff --git a/sysdeps/unix/sysv/linux/loongarch/syscall.c b/sysdeps/unix/sysv/linux/loongarch/syscall.c
+index 3e4a6063aa..d0067bc2d0 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/syscall.c
++++ b/sysdeps/unix/sysv/linux/loongarch/syscall.c
+@@ -1,4 +1,5 @@
+-/* Copyright (C) 2021 Free Software Foundation, Inc.
++/* system call interface.
++   Copyright (C) 2021 Free Software Foundation, Inc.
+ 
+    This file is part of the GNU C Library.
+ 
+diff --git a/sysdeps/unix/sysv/linux/loongarch/sysdep.h b/sysdeps/unix/sysv/linux/loongarch/sysdep.h
+index a3a722e999..ec98870a74 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/sysdep.h
++++ b/sysdeps/unix/sysv/linux/loongarch/sysdep.h
+@@ -1,8 +1,7 @@
+-/* Copyright (C) 2021 Free Software Foundation, Inc.
++/* Assembly macros for LoongArch.
++   Copyright (C) 2021 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+-   Contributed by Loongson Technology Corporation Limited.
+-
+    The GNU C Library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+diff --git a/sysdeps/unix/sysv/linux/loongarch/vfork.S b/sysdeps/unix/sysv/linux/loongarch/vfork.S
+index 876b5c1b47..585f98eef7 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/vfork.S
++++ b/sysdeps/unix/sysv/linux/loongarch/vfork.S
+@@ -1,4 +1,5 @@
+-/* Copyright (C) 2021 Free Software Foundation, Inc.
++/* vfork for Linux.
++   Copyright (C) 2021 Free Software Foundation, Inc.
+ 
+    This file is part of the GNU C Library.
+ 
+-- 
+2.34.0
+

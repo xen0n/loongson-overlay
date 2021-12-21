@@ -1,0 +1,28 @@
+From 6c25137288672254be861220bfbbad8bf715df12 Mon Sep 17 00:00:00 2001
+From: caiyinyu <caiyinyu@loongson.cn>
+Date: Wed, 15 Dec 2021 09:23:56 +0800
+Subject: [PATCH 52/53] delete DL_RO_DYN_SECTION in
+ sysdeps/loongarch/ldsodefs.h
+
+---
+ sysdeps/loongarch/ldsodefs.h | 4 ----
+ 1 file changed, 4 deletions(-)
+
+diff --git a/sysdeps/loongarch/ldsodefs.h b/sysdeps/loongarch/ldsodefs.h
+index 9f690bb76d..ec91f64096 100644
+--- a/sysdeps/loongarch/ldsodefs.h
++++ b/sysdeps/loongarch/ldsodefs.h
+@@ -36,10 +36,6 @@ struct La_loongarch_retval;
+ 		uintptr_t *, uintptr_t *, const struct La_loongarch_regs *, \
+ 		struct La_loongarch_retval *, const char *);
+ 
+-/* The LoongArch ABI specifies that the dynamic section has to be read-only.  */
+-
+-#define DL_RO_DYN_SECTION 1
+-
+ #include_next <ldsodefs.h>
+ 
+ #endif
+-- 
+2.34.0
+
