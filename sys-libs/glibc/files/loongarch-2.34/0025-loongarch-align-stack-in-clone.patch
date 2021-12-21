@@ -1,7 +1,7 @@
 From 042b9d5fbf0db8e3578ad235666f8c3c3a3c77e2 Mon Sep 17 00:00:00 2001
 From: Xi Ruoyao <xry111@mengyan1223.wang>
 Date: Tue, 24 Aug 2021 03:54:23 +0800
-Subject: [PATCH 25/53] loongarch: align stack in clone
+Subject: [PATCH 25/54] loongarch: align stack in clone
 
 The ELF ABI document of LoongArch is not completed yet, but by reading
 GCC code it seems LoongArch prefers 16-byte aligned stack for LP64 and

@@ -1,7 +1,7 @@
 From 4e1a7c9698771d3f9752cbcb3909ad0271700024 Mon Sep 17 00:00:00 2001
 From: Xi Ruoyao <xry111@mengyan1223.wang>
 Date: Wed, 29 Sep 2021 20:03:21 +0800
-Subject: [PATCH 29/53] loongarch: s_cosf: use bstrpick.w to avoid a 32-bit imm
+Subject: [PATCH 29/54] loongarch: s_cosf: use bstrpick.w to avoid a 32-bit imm
  load
 
 Reduce two instructions.

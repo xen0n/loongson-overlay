@@ -1,7 +1,7 @@
 From 2b05a013a142033ce0c061c45c0f6b039c69d249 Mon Sep 17 00:00:00 2001
 From: caiyinyu <caiyinyu@loongson.cn>
 Date: Mon, 29 Nov 2021 10:51:51 +0800
-Subject: [PATCH 45/53] update scripts/build-many-glibcs.py
+Subject: [PATCH 45/54] update scripts/build-many-glibcs.py
 
 ---
  scripts/build-many-glibcs.py | 5 +++++

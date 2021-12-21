@@ -1,7 +1,7 @@
 From 77f42a8df3c6c93272f054dbaa3d139cfe4a97ea Mon Sep 17 00:00:00 2001
 From: Xi Ruoyao <xry111@mengyan1223.wang>
 Date: Fri, 27 Aug 2021 11:49:44 +0800
-Subject: [PATCH 26/53] loongarch: Declare femode_t for C2X
+Subject: [PATCH 26/54] loongarch: Declare femode_t for C2X
 
 C2X adds interfaces from TS 18661-1 including femode_t [1], so it should
 be unconditionally visible in C2X.  In commit 0175c9e9be5f a new macro

@@ -1,7 +1,7 @@
 From 187f03addf863cb2b086effdbcd832342846005e Mon Sep 17 00:00:00 2001
 From: caiyinyu <caiyinyu@loongson.cn>
 Date: Tue, 27 Jul 2021 15:14:34 +0800
-Subject: [PATCH 04/53] LoongArch: Add relocations and ELF flags to elf.h
+Subject: [PATCH 04/54] LoongArch: Add relocations and ELF flags to elf.h
 
         * elf/elf.h (EM_LOONGARCH): New define.
         (EF_LARCH_ABI): Likewise.

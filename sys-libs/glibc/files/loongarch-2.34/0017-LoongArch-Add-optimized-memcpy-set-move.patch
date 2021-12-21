@@ -1,7 +1,7 @@
 From 100511a5d3151906fb91b7a61f9c0af7795a7706 Mon Sep 17 00:00:00 2001
 From: caiyinyu <caiyinyu@loongson.cn>
 Date: Tue, 27 Jul 2021 16:24:00 +0800
-Subject: [PATCH 17/53] LoongArch: Add optimized memcpy/set/move
+Subject: [PATCH 17/54] LoongArch: Add optimized memcpy/set/move
 
         * sysdeps/loongarch/lp64/memcpy.S: New file.
         * sysdeps/loongarch/lp64/memmove.S: Likewise.

@@ -1,7 +1,7 @@
 From 0c88ddbc7eed14443356b041b520338bf7e09bcb Mon Sep 17 00:00:00 2001
 From: caiyinyu <caiyinyu@loongson.cn>
 Date: Fri, 10 Dec 2021 09:07:58 +0800
-Subject: [PATCH 50/53] update abilist
+Subject: [PATCH 50/54] update abilist
 
 ---
  .../unix/sysv/linux/loongarch/lp64/ld.abilist |   10 +-

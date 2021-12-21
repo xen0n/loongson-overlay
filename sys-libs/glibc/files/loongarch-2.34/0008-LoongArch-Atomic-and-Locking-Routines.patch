@@ -1,7 +1,7 @@
 From 699cea09e0c3886c1eaa8363ebabb2bdb128989b Mon Sep 17 00:00:00 2001
 From: caiyinyu <caiyinyu@loongson.cn>
 Date: Tue, 27 Jul 2021 15:47:07 +0800
-Subject: [PATCH 08/53] LoongArch: Atomic and Locking Routines
+Subject: [PATCH 08/54] LoongArch: Atomic and Locking Routines
 
 This patch implements various atomic and locking routines on LoongArch.
 

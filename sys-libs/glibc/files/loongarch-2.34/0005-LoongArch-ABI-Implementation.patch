@@ -1,7 +1,7 @@
 From d7756174be3f2ca423c09ef4c6ec247f1791e7e0 Mon Sep 17 00:00:00 2001
 From: caiyinyu <caiyinyu@loongson.cn>
 Date: Tue, 27 Jul 2021 15:29:12 +0800
-Subject: [PATCH 05/53] LoongArch: ABI Implementation
+Subject: [PATCH 05/54] LoongArch: ABI Implementation
 
 This is meant to contain all the LoongArch code that needs to explicitly
 name registers or manage in-memory structure layout.  This does not

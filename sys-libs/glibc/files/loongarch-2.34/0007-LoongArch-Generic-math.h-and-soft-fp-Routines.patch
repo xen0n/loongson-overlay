@@ -1,7 +1,7 @@
 From ce4f5ecb1756c2cf48222d7e1276881aa8d57d16 Mon Sep 17 00:00:00 2001
 From: caiyinyu <caiyinyu@loongson.cn>
 Date: Tue, 27 Jul 2021 15:43:50 +0800
-Subject: [PATCH 07/53] LoongArch: Generic <math.h> and soft-fp Routines
+Subject: [PATCH 07/54] LoongArch: Generic <math.h> and soft-fp Routines
 
 This patch contains the miscellaneous math routines and headers we have
 implemented for LoongArch.  This includes things from <math.h> that aren't

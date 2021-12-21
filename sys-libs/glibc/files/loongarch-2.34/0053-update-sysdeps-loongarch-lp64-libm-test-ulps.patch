@@ -1,7 +1,7 @@
 From 0a4e8a5fbd1cd9600475df88921fc1acc47e1c49 Mon Sep 17 00:00:00 2001
 From: caiyinyu <caiyinyu@loongson.cn>
 Date: Wed, 15 Dec 2021 11:35:52 +0800
-Subject: [PATCH 53/53] update sysdeps/loongarch/lp64/libm-test-ulps
+Subject: [PATCH 53/54] update sysdeps/loongarch/lp64/libm-test-ulps
 
 ---
  sysdeps/loongarch/lp64/libm-test-ulps | 4 ++--

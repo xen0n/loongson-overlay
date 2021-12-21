@@ -1,7 +1,7 @@
 From 9ce6f4c398baf5e3ae0b6c0e679ec3c128ff5b05 Mon Sep 17 00:00:00 2001
 From: caiyinyu <caiyinyu@loongson.cn>
 Date: Mon, 13 Dec 2021 21:05:34 +0800
-Subject: [PATCH 51/53] delete sysdeps/unix/sysv/linux/loongarch/Versions
+Subject: [PATCH 51/54] delete sysdeps/unix/sysv/linux/loongarch/Versions
 
 ---
  sysdeps/unix/sysv/linux/loongarch/Versions | 41 ----------------------

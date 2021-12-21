@@ -1,7 +1,7 @@
 From cea563f4e6e5889aefee18acf12ae7ec235c5efc Mon Sep 17 00:00:00 2001
 From: caiyinyu <caiyinyu@loongson.cn>
 Date: Sun, 28 Nov 2021 17:36:58 +0800
-Subject: [PATCH 42/53] set arch_minimum_kernel and delete
+Subject: [PATCH 42/54] set arch_minimum_kernel and delete
  sysdeps/unix/sysv/linux/loongarch/kernel-features.h
 
 ---

@@ -1,7 +1,7 @@
 From 0673be6ba27b4e804ed6b40989e2ea56cf2ad75d Mon Sep 17 00:00:00 2001
 From: caiyinyu <caiyinyu@loongson.cn>
 Date: Mon, 15 Nov 2021 09:54:36 +0800
-Subject: [PATCH 40/53] change ld.so name to suit with this system
+Subject: [PATCH 40/54] change ld.so name to suit with this system
 
 ---
  config.h.in                                   |  6 +++

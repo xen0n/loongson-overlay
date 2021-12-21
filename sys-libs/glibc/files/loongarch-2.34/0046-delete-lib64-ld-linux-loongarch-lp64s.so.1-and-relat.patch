@@ -1,7 +1,7 @@
 From bdf9891cd7c373837fc9649e6823f143609640a0 Mon Sep 17 00:00:00 2001
 From: caiyinyu <caiyinyu@loongson.cn>
 Date: Mon, 29 Nov 2021 15:22:30 +0800
-Subject: [PATCH 46/53] delete /lib64/ld-linux-loongarch-lp64s.so.1 and related
+Subject: [PATCH 46/54] delete /lib64/ld-linux-loongarch-lp64s.so.1 and related
  code
 
 ---

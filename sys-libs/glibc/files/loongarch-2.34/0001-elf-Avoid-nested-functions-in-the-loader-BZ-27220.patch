@@ -1,7 +1,7 @@
 From 80f8c8786d9cb452046db377297589e310e2c3ca Mon Sep 17 00:00:00 2001
 From: Fangrui Song <maskray@google.com>
 Date: Thu, 7 Oct 2021 11:55:02 -0700
-Subject: [PATCH 01/53] elf: Avoid nested functions in the loader [BZ #27220]
+Subject: [PATCH 01/54] elf: Avoid nested functions in the loader [BZ #27220]
 
 dynamic-link.h is included more than once in some elf/ files (rtld.c,
 dl-conflict.c, dl-reloc.c, dl-reloc-static-pie.c) and uses GCC nested

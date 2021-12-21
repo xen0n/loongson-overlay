@@ -1,7 +1,7 @@
 From 73f386c2a21e5f79c171622075ee57e746e70c2d Mon Sep 17 00:00:00 2001
 From: Adhemerval Zanella <adhemerval.zanella@linaro.org>
 Date: Mon, 11 Oct 2021 16:01:49 -0300
-Subject: [PATCH 02/53] elf: Fix elf_get_dynamic_info definition
+Subject: [PATCH 02/54] elf: Fix elf_get_dynamic_info definition
 
 Before to 490e6c62aa31a8a ('elf: Avoid nested functions in the loader
 [BZ #27220]'), elf_get_dynamic_info() was defined twice on rtld.c: on

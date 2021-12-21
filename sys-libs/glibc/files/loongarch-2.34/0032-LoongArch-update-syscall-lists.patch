@@ -1,7 +1,7 @@
 From b417a0a42f8aa0c5af4f3e314eecc7722997c2fe Mon Sep 17 00:00:00 2001
 From: caiyinyu <caiyinyu@loongson.cn>
 Date: Thu, 9 Dec 2021 19:29:47 +0800
-Subject: [PATCH 32/53] LoongArch: update syscall lists
+Subject: [PATCH 32/54] LoongArch: update syscall lists
 
 ---
  sysdeps/unix/sysv/linux/loongarch/arch-syscall.h | 9 +++++++--

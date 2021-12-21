@@ -1,7 +1,7 @@
 From b88b7d6f981a4759209104e38d6b06494b6e649e Mon Sep 17 00:00:00 2001
 From: caiyinyu <caiyinyu@loongson.cn>
 Date: Fri, 10 Dec 2021 09:05:31 +0800
-Subject: [PATCH 49/53] fix build bug rebasing to new commit
+Subject: [PATCH 49/54] fix build bug rebasing to new commit
  409a73581687914ac0555f6a468469578f97e70f
 
 ---

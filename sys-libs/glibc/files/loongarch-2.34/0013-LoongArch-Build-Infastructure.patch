@@ -1,7 +1,7 @@
 From 1fb65df6de61e081ba5423e1ad545db8ca620fc4 Mon Sep 17 00:00:00 2001
 From: caiyinyu <caiyinyu@loongson.cn>
 Date: Tue, 27 Jul 2021 16:02:40 +0800
-Subject: [PATCH 13/53] LoongArch: Build Infastructure
+Subject: [PATCH 13/54] LoongArch: Build Infastructure
 
         * scripts/config.guess: Modified
         * scripts/config.sub: Likewise
