@@ -1,7 +1,7 @@
-From a75f80d8cf798ca45253defc99bc38725f1754a4 Mon Sep 17 00:00:00 2001
+From e0157b9536a85da37ecf874569dcca4f0c785d55 Mon Sep 17 00:00:00 2001
 From: caiyinyu <caiyinyu@loongson.cn>
 Date: Mon, 29 Nov 2021 16:36:17 +0800
-Subject: [PATCH 44/46] set default symbol version to GLIBC_2.35
+Subject: [PATCH 44/51] set default symbol version to GLIBC_2.35
 
 ---
  sysdeps/unix/sysv/linux/loongarch/shlib-versions | 2 +-

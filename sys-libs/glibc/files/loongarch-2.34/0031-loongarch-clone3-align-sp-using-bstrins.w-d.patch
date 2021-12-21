@@ -1,7 +1,7 @@
-From fc2f927e802be5f4262f493e14679e21d5c09b44 Mon Sep 17 00:00:00 2001
+From b1cd87462fcedc28a67cbc2889d285edcffaf65c Mon Sep 17 00:00:00 2001
 From: caiyinyu <caiyinyu@loongson.cn>
 Date: Thu, 28 Oct 2021 19:19:44 +0800
-Subject: [PATCH 31/46] loongarch clone3 align sp using bstrins.w/d
+Subject: [PATCH 31/51] loongarch clone3 align sp using bstrins.w/d
 
 ---
  sysdeps/unix/sysv/linux/loongarch/clone3.S | 5 ++---

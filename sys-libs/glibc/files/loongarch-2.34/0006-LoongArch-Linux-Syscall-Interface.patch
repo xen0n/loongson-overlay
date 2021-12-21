@@ -1,7 +1,7 @@
-From 1a1cacc7b22bcd77f6a422d167099f9e90d3aea4 Mon Sep 17 00:00:00 2001
+From c967f8f82c0a78a59f8dfd240d69bfcf98efdfc5 Mon Sep 17 00:00:00 2001
 From: caiyinyu <caiyinyu@loongson.cn>
 Date: Tue, 27 Jul 2021 15:49:52 +0800
-Subject: [PATCH 06/46] LoongArch: Linux Syscall Interface
+Subject: [PATCH 06/51] LoongArch: Linux Syscall Interface
 
 Contains the Linux system call interface, as well as the definitions of
 a handful of system calls.

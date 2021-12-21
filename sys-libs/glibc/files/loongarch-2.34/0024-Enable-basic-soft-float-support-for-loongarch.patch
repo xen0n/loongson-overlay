@@ -1,7 +1,7 @@
-From ba678a62b892a0eb1364d229d16967dcd71bbcf1 Mon Sep 17 00:00:00 2001
+From 55c6339cc81c08ad48e65b598a9d8a526b423389 Mon Sep 17 00:00:00 2001
 From: Yang Yujie <yangyujie@loongson.cn>
 Date: Wed, 8 Sep 2021 16:29:53 +0800
-Subject: [PATCH 24/46] Enable basic soft-float support for loongarch.
+Subject: [PATCH 24/51] Enable basic soft-float support for loongarch.
 
 ---
  sysdeps/loongarch/__longjmp.S                 |  2 +

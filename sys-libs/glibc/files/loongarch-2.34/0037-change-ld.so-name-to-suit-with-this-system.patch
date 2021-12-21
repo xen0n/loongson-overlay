@@ -1,7 +1,7 @@
-From b75d1aaac759217f3a7579268c59d042cf15aac6 Mon Sep 17 00:00:00 2001
+From 34d622a2994f96ce43b908ea9f78c7fe5f9574e3 Mon Sep 17 00:00:00 2001
 From: caiyinyu <caiyinyu@loongson.cn>
 Date: Mon, 15 Nov 2021 09:54:36 +0800
-Subject: [PATCH 37/46] change ld.so name to suit with this system
+Subject: [PATCH 37/51] change ld.so name to suit with this system
 
 ---
  config.h.in                                   |  6 +++
@@ -15,7 +15,7 @@ Subject: [PATCH 37/46] change ld.so name to suit with this system
  create mode 100644 sysdeps/unix/sysv/linux/loongarch/ldconfig.h
 
 diff --git a/config.h.in b/config.h.in
-index 0a6f57b006..bb456cf7fd 100644
+index 2f5124684e..00068c5d92 100644
 --- a/config.h.in
 +++ b/config.h.in
 @@ -135,6 +135,12 @@

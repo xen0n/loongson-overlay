@@ -1,7 +1,7 @@
-From c83dcb65d1260de118e074afd5b94d965bebbe7e Mon Sep 17 00:00:00 2001
+From 9ecb30547cbdc4e4a4ad235908409fcdfd620ff2 Mon Sep 17 00:00:00 2001
 From: caiyinyu <caiyinyu@loongson.cn>
 Date: Tue, 27 Jul 2021 15:59:12 +0800
-Subject: [PATCH 08/46] LoongArch: Linux Startup and Dynamic Loading Code
+Subject: [PATCH 08/51] LoongArch: Linux Startup and Dynamic Loading Code
 
 This contains the Linux-specific code for loading programs on LoongArch.
 

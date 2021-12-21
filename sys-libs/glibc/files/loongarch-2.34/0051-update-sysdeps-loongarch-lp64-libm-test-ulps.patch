@@ -1,0 +1,34 @@
+From 77905f67773fd9e41a8f23cf8ba4bcb96157f775 Mon Sep 17 00:00:00 2001
+From: caiyinyu <caiyinyu@loongson.cn>
+Date: Wed, 15 Dec 2021 11:35:52 +0800
+Subject: [PATCH 51/51] update sysdeps/loongarch/lp64/libm-test-ulps
+
+---
+ sysdeps/loongarch/lp64/libm-test-ulps | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/sysdeps/loongarch/lp64/libm-test-ulps b/sysdeps/loongarch/lp64/libm-test-ulps
+index 31c02d7159..d0dfd076f2 100644
+--- a/sysdeps/loongarch/lp64/libm-test-ulps
++++ b/sysdeps/loongarch/lp64/libm-test-ulps
+@@ -587,7 +587,7 @@ ldouble: 3
+ 
+ Function: Real part of "clog10_towardzero":
+ double: 5
+-float: 5
++float: 6
+ ldouble: 4
+ 
+ Function: Imaginary part of "clog10_towardzero":
+@@ -1077,7 +1077,7 @@ ldouble: 9
+ 
+ Function: "j0_upward":
+ double: 9
+-float: 8
++float: 9
+ ldouble: 7
+ 
+ Function: "j1":
+-- 
+2.34.0
+

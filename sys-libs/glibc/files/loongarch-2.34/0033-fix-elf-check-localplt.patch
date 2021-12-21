@@ -1,7 +1,7 @@
-From 5d44edb6ae6d9551feff8e5ec23470875df54805 Mon Sep 17 00:00:00 2001
+From a2d8e9de5ea70c43b62e73e8ecb522f43d1650ae Mon Sep 17 00:00:00 2001
 From: caiyinyu <caiyinyu@loongson.cn>
 Date: Wed, 13 Oct 2021 16:32:59 +0800
-Subject: [PATCH 33/46] fix elf/check-localplt
+Subject: [PATCH 33/51] fix elf/check-localplt
 
 Reference:
 

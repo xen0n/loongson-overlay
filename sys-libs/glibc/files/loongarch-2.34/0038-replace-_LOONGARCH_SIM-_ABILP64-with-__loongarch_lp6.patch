@@ -1,7 +1,7 @@
-From b70ca83d045fda0458666956a9273e41a341be25 Mon Sep 17 00:00:00 2001
+From 1962bbcd32b94936b672828ab4d0bacfaf68bd48 Mon Sep 17 00:00:00 2001
 From: caiyinyu <caiyinyu@loongson.cn>
 Date: Fri, 26 Nov 2021 17:59:32 +0800
-Subject: [PATCH 38/46] replace _LOONGARCH_SIM, _ABILP64 with __loongarch_lp64
+Subject: [PATCH 38/51] replace _LOONGARCH_SIM, _ABILP64 with __loongarch_lp64
 
 ---
  sysdeps/loongarch/Makefile                      | 2 +-

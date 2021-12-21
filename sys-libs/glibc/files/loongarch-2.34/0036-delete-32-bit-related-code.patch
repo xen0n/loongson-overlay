@@ -1,7 +1,7 @@
-From 6e2cef608beffdb30f673570a075149a20d62da5 Mon Sep 17 00:00:00 2001
+From 1b53ec3bcbd274792f93c3c68ae78ba804ba82e6 Mon Sep 17 00:00:00 2001
 From: caiyinyu <caiyinyu@loongson.cn>
 Date: Fri, 26 Nov 2021 16:34:49 +0800
-Subject: [PATCH 36/46] delete 32-bit related code
+Subject: [PATCH 36/51] delete 32-bit related code
 
 ---
  sysdeps/loongarch/Makefile                 |  3 +--

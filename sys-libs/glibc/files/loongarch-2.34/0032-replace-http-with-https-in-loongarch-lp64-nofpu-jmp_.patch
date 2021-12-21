@@ -1,7 +1,7 @@
-From 6d6260305195792cc06f8d5b661a1970ccc83261 Mon Sep 17 00:00:00 2001
+From f50fceed10c8108eb71558b037ea959bced264cd Mon Sep 17 00:00:00 2001
 From: caiyinyu <caiyinyu@loongson.cn>
 Date: Thu, 28 Oct 2021 19:22:57 +0800
-Subject: [PATCH 32/46] replace http with https in
+Subject: [PATCH 32/51] replace http with https in
  loongarch/lp64/nofpu/jmp_buf-macros.h
 
 ---

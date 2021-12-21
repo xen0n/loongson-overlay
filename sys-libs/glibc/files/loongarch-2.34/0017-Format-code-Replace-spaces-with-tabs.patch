@@ -1,7 +1,7 @@
-From 691069a0326d256947acbb3e02fdc0b655ae5947 Mon Sep 17 00:00:00 2001
+From 46d9a51692cc605e6965a99a1fe771f6dedfb9a4 Mon Sep 17 00:00:00 2001
 From: caiyinyu <caiyinyu@loongson.cn>
 Date: Mon, 16 Aug 2021 20:00:48 +0800
-Subject: [PATCH 17/46] Format code: Replace spaces with tabs.
+Subject: [PATCH 17/51] Format code: Replace spaces with tabs.
 
 ---
  elf/elf.h                                     |   2 +-

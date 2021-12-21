@@ -1,7 +1,7 @@
-From 2cec8968a44eab299d22bb7519e2c01fdf6be524 Mon Sep 17 00:00:00 2001
+From 2306da00bb190cc346931606251188da577c696c Mon Sep 17 00:00:00 2001
 From: caiyinyu <caiyinyu@loongson.cn>
 Date: Fri, 29 Oct 2021 15:08:19 +0800
-Subject: [PATCH 34/46] fix elf/check-localplt     add loongarch
+Subject: [PATCH 34/51] fix elf/check-localplt add loongarch
  libc_malloc_debug.abilist
 
 ---

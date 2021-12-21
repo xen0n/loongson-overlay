@@ -1,9 +1,7 @@
-From e73b5832cd5cd92e1a52c9253ebeb774e2d40208 Mon Sep 17 00:00:00 2001
+From e55ae6d9c38fa59f11c5802af608da78dd9a4dde Mon Sep 17 00:00:00 2001
 From: caiyinyu <caiyinyu@loongson.cn>
-Date: Tue, 26 Oct 2021 19:48:39 +0800
-Subject: [PATCH 29/46] LoongArch: update syscall lists 
- sysdeps/unix/sysv/linux/loongarch/arch-syscall.h 
- sysdeps/unix/sysv/linux/syscall-names.list
+Date: Thu, 9 Dec 2021 19:29:47 +0800
+Subject: [PATCH 29/51] LoongArch: update syscall lists
 
 ---
  sysdeps/unix/sysv/linux/loongarch/arch-syscall.h | 9 +++++++--

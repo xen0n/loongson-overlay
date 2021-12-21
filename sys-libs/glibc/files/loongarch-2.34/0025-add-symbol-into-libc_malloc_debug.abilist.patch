@@ -1,7 +1,7 @@
-From 3da13b89bbd1630b0ae1d1609e42c127eb8ece8f Mon Sep 17 00:00:00 2001
+From bf67b2852fdebd4859ffd137e2f422ae4218fe31 Mon Sep 17 00:00:00 2001
 From: caiyinyu <caiyinyu@loongson.cn>
 Date: Tue, 7 Sep 2021 15:35:27 +0000
-Subject: [PATCH 25/46] add symbol into libc_malloc_debug.abilist
+Subject: [PATCH 25/51] add symbol into libc_malloc_debug.abilist
 
 ---
  sysdeps/generic/libc_malloc_debug.abilist | 26 +++++++++++++++++++++++

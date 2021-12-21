@@ -1,7 +1,7 @@
-From 2a2e37cf218af1c7f49263820eb0165758c11987 Mon Sep 17 00:00:00 2001
+From e882df1019b3fb5c3070729e53cb866835b3a5ec Mon Sep 17 00:00:00 2001
 From: Xi Ruoyao <xry111@mengyan1223.wang>
 Date: Wed, 29 Sep 2021 20:04:56 +0800
-Subject: [PATCH 27/46] loongarch: clone: use bstrins for aligning the stack
+Subject: [PATCH 27/51] loongarch: clone: use bstrins for aligning the stack
 
 Reduce one instruction.
 ---

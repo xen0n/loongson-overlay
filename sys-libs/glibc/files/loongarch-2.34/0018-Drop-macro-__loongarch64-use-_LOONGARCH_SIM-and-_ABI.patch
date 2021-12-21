@@ -1,7 +1,7 @@
-From 44ec023c0bbbac0097beab53dc4093907869f6d9 Mon Sep 17 00:00:00 2001
+From 841a7efb999b6d20d0f24df68a1ebbef204b4d9c Mon Sep 17 00:00:00 2001
 From: caiyinyu <caiyinyu@loongson.cn>
 Date: Tue, 17 Aug 2021 11:33:57 +0800
-Subject: [PATCH 18/46] Drop macro __loongarch64, use _LOONGARCH_SIM and
+Subject: [PATCH 18/51] Drop macro __loongarch64, use _LOONGARCH_SIM and
  _ABILP64/32.
 
 ---

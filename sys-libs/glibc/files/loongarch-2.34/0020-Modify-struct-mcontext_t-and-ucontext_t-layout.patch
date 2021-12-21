@@ -1,7 +1,7 @@
-From cfdad400b81c2ab13c15be550af0b1ffac6ffdf0 Mon Sep 17 00:00:00 2001
+From f685513e216d4a8fab9c7febfa02d44f6488f598 Mon Sep 17 00:00:00 2001
 From: huangpei <huangpei@loongson.cn>
 Date: Thu, 19 Aug 2021 10:23:53 +0800
-Subject: [PATCH 20/46] Modify struct mcontext_t and ucontext_t layout
+Subject: [PATCH 20/51] Modify struct mcontext_t and ucontext_t layout
 
 ---
  sysdeps/unix/sysv/linux/loongarch/sys/ucontext.h | 6 ++----

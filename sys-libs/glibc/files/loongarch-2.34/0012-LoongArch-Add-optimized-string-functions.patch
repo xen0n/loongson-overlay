@@ -1,7 +1,7 @@
-From b42164cd9e3fedf9e69e450c342b472ac179b2db Mon Sep 17 00:00:00 2001
+From 81e1f97afee2963d28731104482632caa75abff9 Mon Sep 17 00:00:00 2001
 From: caiyinyu <caiyinyu@loongson.cn>
 Date: Tue, 27 Jul 2021 16:18:43 +0800
-Subject: [PATCH 12/46] LoongArch: Add optimized string functions
+Subject: [PATCH 12/51] LoongArch: Add optimized string functions
 
         * sysdeps/loongarch/lp64/strchr.S: New file.
         * sysdeps/loongarch/lp64/strchrnul.S: Likewise.

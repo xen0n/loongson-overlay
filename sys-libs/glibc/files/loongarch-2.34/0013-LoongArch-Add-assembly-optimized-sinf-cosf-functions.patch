@@ -1,7 +1,7 @@
-From 5e0ae9428d8a803ba209f097f7689de7a4f3e260 Mon Sep 17 00:00:00 2001
+From 1ac22e18d26d6051e99187e767cd4fb2932da799 Mon Sep 17 00:00:00 2001
 From: caiyinyu <caiyinyu@loongson.cn>
 Date: Tue, 27 Jul 2021 16:21:01 +0800
-Subject: [PATCH 13/46] LoongArch: Add assembly optimized sinf cosf functions.
+Subject: [PATCH 13/51] LoongArch: Add assembly optimized sinf cosf functions.
 
         * sysdeps/loongarch/lp64/s_cosf.S: New file.
         * sysdeps/loongarch/lp64/s_sinf.S: Likewise.

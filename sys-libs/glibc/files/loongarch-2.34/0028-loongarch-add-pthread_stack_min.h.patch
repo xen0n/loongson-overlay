@@ -1,7 +1,7 @@
-From 64f0808caf344ac098bd6186d7aeaed5aab0e882 Mon Sep 17 00:00:00 2001
+From 50bc3059a5116a063c4d9a083d68e184ad055ace Mon Sep 17 00:00:00 2001
 From: Xi Ruoyao <xry111@mengyan1223.wang>
 Date: Thu, 30 Sep 2021 08:58:48 +0800
-Subject: [PATCH 28/46] loongarch: add pthread_stack_min.h
+Subject: [PATCH 28/51] loongarch: add pthread_stack_min.h
 
 The default value of PTHREAD_STACK_MIN is 16 KB.  LoongArch supports
 64-KB pages, so we'll need twice the page size, i. e. 128 KB.

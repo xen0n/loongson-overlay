@@ -1,7 +1,7 @@
-From 567f28559579499218069d1ba3c2af0e720706e8 Mon Sep 17 00:00:00 2001
+From 33aca32631a1eb8406472d23cc65092524442085 Mon Sep 17 00:00:00 2001
 From: caiyinyu <caiyinyu@loongson.cn>
 Date: Thu, 25 Nov 2021 11:09:21 +0800
-Subject: [PATCH 35/46] fix FAIL: nptl/tst-cancelx21
+Subject: [PATCH 35/51] fix FAIL: nptl/tst-cancelx21
 
 ---
  .../unix/sysv/linux/loongarch/bits/sigstack.h | 32 +++++++++++++++++++

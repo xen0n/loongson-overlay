@@ -1,7 +1,7 @@
-From fd39cadd11e45a0104330434e78431dd68fe3acc Mon Sep 17 00:00:00 2001
+From 302ad7521a16130a9279dedb48918e2ec02d1f2e Mon Sep 17 00:00:00 2001
 From: caiyinyu <caiyinyu@loongson.cn>
 Date: Sat, 21 Aug 2021 16:53:42 +0800
-Subject: [PATCH 21/46] Fix bug: setjmp/tst-setjmp-fp (ld.so cannot exit
+Subject: [PATCH 21/51] Fix bug: setjmp/tst-setjmp-fp (ld.so cannot exit
  normally)
 
 ---

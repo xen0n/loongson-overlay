@@ -1,7 +1,7 @@
-From a05f2036942ce4738d47344fef993590b8bcb9df Mon Sep 17 00:00:00 2001
+From af57b11df221ee43ab74fb88b138815b62b64a08 Mon Sep 17 00:00:00 2001
 From: Chenghua Xu <xuchenghua@loongson.cn>
 Date: Sun, 15 Aug 2021 10:40:59 -0400
-Subject: [PATCH 16/46] Adjust EM_NUM to 259.
+Subject: [PATCH 16/51] Adjust EM_NUM to 259.
 
 ---
  elf/elf.h | 2 +-

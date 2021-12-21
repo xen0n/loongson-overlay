@@ -1,7 +1,7 @@
-From c8e2dd6f2d5ef82061155e6e265c5cb4e82d341e Mon Sep 17 00:00:00 2001
+From d446e2eec3eaa0a6adc1c8982128e81c6822a52d Mon Sep 17 00:00:00 2001
 From: caiyinyu <caiyinyu@loongson.cn>
 Date: Tue, 27 Jul 2021 15:36:00 +0800
-Subject: [PATCH 03/46] LoongArch: Thread-Local Storage Support
+Subject: [PATCH 03/51] LoongArch: Thread-Local Storage Support
 
 This patch implements TLS support for LoongArch.  We support all four
 standard TLS addressing modes (LE, IE, LD, and GD) when running on
