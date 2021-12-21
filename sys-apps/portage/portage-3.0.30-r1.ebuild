@@ -48,7 +48,7 @@ RDEPEND="
 		>=app-admin/eselect-1.2
 		rsync-verify? (
 			>=app-portage/gemato-14.5[${PYTHON_USEDEP}]
-			>=app-crypt/openpgp-keys-gentoo-release-20180706
+			>=sec-keys/openpgp-keys-gentoo-release-20180706
 			>=app-crypt/gnupg-2.2.4-r2[ssl(-)]
 		)
 	)
@@ -81,7 +81,8 @@ pkg_pretend() {
 
 python_prepare_all() {
 	local PATCHES=(
-		"${FILESDIR}"/0001-multilib_category.py-recognize-LoongArch-ABIs.patch
+		"${FILESDIR}/3.0.30-revert-default-enable-soname-dependencies.patch"
+		"${FILESDIR}/0001-multilib_category.py-recognize-LoongArch-ABIs.patch"
 	)
 
 	distutils-r1_python_prepare_all
