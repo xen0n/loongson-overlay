@@ -17,8 +17,8 @@ index bcbf95156..fec1fd7c6 100644
  if COND_loongarch64
 -  CFLAGS_PLATFORM += -fno-strict-aliasing -march=loongarch -mabi=lp64 -fno-plt -Wa,-mla-global-with-pcrel
 -  CPPFLAGS_PLATFORM = -fno-strict-aliasing -march=loongarch -mabi=lp64 -fno-plt -Wa,-mla-global-with-pcrel
-+  CFLAGS_PLATFORM += -fno-strict-aliasing -mabi=lp64 -fno-plt -Wa,-mla-global-with-pcrel
-+  CPPFLAGS_PLATFORM = -fno-strict-aliasing -mabi=lp64 -fno-plt -Wa,-mla-global-with-pcrel
++  CFLAGS_PLATFORM += -fno-strict-aliasing -mabi=lp64s -fno-plt -Wa,-mla-global-with-pcrel
++  CPPFLAGS_PLATFORM = -fno-strict-aliasing -mabi=lp64s -fno-plt -Wa,-mla-global-with-pcrel
  endif
  
  # Other options
