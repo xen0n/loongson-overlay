@@ -117,6 +117,7 @@
 <dev-perl/Capture-Tiny-9999 **
 <dev-perl/Class-Inspector-9999 **
 <dev-perl/Config-AutoConf-9999 **
+<dev-perl/Devel-CheckLib-9999 **
 <dev-perl/Digest-HMAC-9999 **
 <dev-perl/Error-9999 **
 <dev-perl/Exporter-Tiny-9999 **
@@ -266,6 +267,7 @@ virtual/os-headers **
 virtual/package-manager **
 virtual/pager **
 virtual/perl-Carp **
+virtual/perl-CPAN **
 virtual/perl-CPAN-Meta **
 virtual/perl-CPAN-Meta-YAML **
 virtual/perl-Data-Dumper **
