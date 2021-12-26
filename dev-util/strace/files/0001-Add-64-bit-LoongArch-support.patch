@@ -1,4 +1,4 @@
-From 55f8cfdec7e5592372296ac7b7264ec12c2a1bcf Mon Sep 17 00:00:00 2001
+From 4f3d9388497d4dbf7b5c7b56e766b2983da9d786 Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <git@xen0n.name>
 Date: Tue, 10 Aug 2021 00:11:17 +0800
 Subject: [PATCH] Add 64-bit LoongArch support
@@ -13,7 +13,8 @@ support the host type "loongarch64".
 
 * NEWS: Mention this.
 * configure.ac [$host_cpu == loongarch64]: Define LOONGARCH64.
-* src/linux/loongarch64/arch_regs.c: New file.
+* src/linux/loongarch64/arch_defs_.h: New file.
+* src/linux/loongarch64/arch_regs.c: Likewise.
 * src/linux/loongarch64/get_error.c: Likewise.
 * src/linux/loongarch64/get_scno.c: Likewise.
 * src/linux/loongarch64/get_syscall_args.c: Likewise.
@@ -29,6 +30,7 @@ support the host type "loongarch64".
  NEWS                                     |  1 +
  configure.ac                             |  5 ++++
  src/Makefile.am                          | 10 ++++++++
+ src/linux/loongarch64/arch_defs_.h       |  8 +++++++
  src/linux/loongarch64/arch_regs.c        | 11 +++++++++
  src/linux/loongarch64/get_error.c        | 19 ++++++++++++++++
  src/linux/loongarch64/get_scno.c         | 14 ++++++++++++
@@ -40,7 +42,8 @@ support the host type "loongarch64".
  src/linux/loongarch64/set_scno.c         | 15 ++++++++++++
  src/linux/loongarch64/syscallent.h       |  8 +++++++
  src/xlat/elf_em.in                       |  1 +
- 14 files changed, 154 insertions(+)
+ 15 files changed, 162 insertions(+)
+ create mode 100644 src/linux/loongarch64/arch_defs_.h
  create mode 100644 src/linux/loongarch64/arch_regs.c
  create mode 100644 src/linux/loongarch64/get_error.c
  create mode 100644 src/linux/loongarch64/get_scno.c
@@ -53,17 +56,17 @@ support the host type "loongarch64".
  create mode 100644 src/linux/loongarch64/syscallent.h
 
 diff --git a/NEWS b/NEWS
-index def026ca8..6bb3f9646 100644
+index def026ca8..476fa32d8 100644
 --- a/NEWS
 +++ b/NEWS
-@@ -33,6 +33,7 @@ Noteworthy changes in release 5.15 (2021-12-01)
-     FAN_REPORT_*, IORING_*, MOVE_MOUNT_*, MPOL_*, PACKET_*, RTM_*, SO_*,
-     and XFRM_MSG_* constants.
-   * Updated lists of ioctl commands from Linux 5.15.
-+  * Added 64-bit LoongArch architecture support.
+@@ -2,6 +2,7 @@ Noteworthy changes in release 5.15 (2021-12-01)
+ ===============================================
  
- * Bug fixes
-   * Fixed printing of struct bpf_prog_info.map_ids array.
+ * Improvements
++  * Added 64-bit LoongArch architecture support.
+   * Implemented --strings-in-hex=non-ascii-chars option for using hexadecimal
+     numbers instead of octal ones in escape sequences in the output strings.
+   * Implemented --decode-pids=comm option (and its alias -Y) for printing
 diff --git a/configure.ac b/configure.ac
 index 8bd21d26b..7940557c1 100644
 --- a/configure.ac
@@ -101,9 +104,23 @@ index 6ef99ba8e..5af9d87cb 100644
  	linux/m68k/arch_defs_.h		\
  	linux/m68k/arch_regs.c		\
  	linux/m68k/arch_rt_sigframe.c	\
+diff --git a/src/linux/loongarch64/arch_defs_.h b/src/linux/loongarch64/arch_defs_.h
+new file mode 100644
+index 000000000..328ad89da
+--- /dev/null
++++ b/src/linux/loongarch64/arch_defs_.h
+@@ -0,0 +1,8 @@
++/*
++ * Copyright (c) 2021 The strace developers.
++ * All rights reserved.
++ *
++ * SPDX-License-Identifier: LGPL-2.1-or-later
++ */
++
++#define PERSONALITY0_AUDIT_ARCH { AUDIT_ARCH_LOONGARCH64, 0 }
 diff --git a/src/linux/loongarch64/arch_regs.c b/src/linux/loongarch64/arch_regs.c
 new file mode 100644
-index 000000000..80acde005
+index 000000000..ad679c865
 --- /dev/null
 +++ b/src/linux/loongarch64/arch_regs.c
 @@ -0,0 +1,11 @@
@@ -114,9 +131,9 @@ index 000000000..80acde005
 + * SPDX-License-Identifier: LGPL-2.1-or-later
 + */
 +
-+static struct pt_regs loongarch_regs;
++static struct user_pt_regs loongarch_regs;
 +#define ARCH_REGS_FOR_GETREGSET loongarch_regs
-+#define ARCH_PC_REG loongarch_regs.csr_epc
++#define ARCH_PC_REG loongarch_regs.csr_era
 +#define ARCH_SP_REG loongarch_regs.regs[3]
 diff --git a/src/linux/loongarch64/get_error.c b/src/linux/loongarch64/get_error.c
 new file mode 100644
