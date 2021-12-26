@@ -10,7 +10,7 @@ if [[ ${PV} == "9999" ]] ; then
 	inherit git-r3
 else
 	SRC_URI="https://github.com/${PN}/${PN}/releases/download/v${PV}/${P}.tar.xz"
-	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~ia64 ~loong ~m68k ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86 ~amd64-linux ~x86-linux"
+	KEYWORDS="~alpha amd64 arm arm64 hppa ~ia64 ~loong ~m68k ~mips ppc ppc64 ~riscv ~s390 sparc x86 ~amd64-linux ~x86-linux"
 fi
 
 DESCRIPTION="A useful diagnostic, instructional, and debugging tool"
@@ -19,12 +19,9 @@ HOMEPAGE="https://strace.io/"
 LICENSE="BSD"
 SLOT="0"
 IUSE="aio perl selinux static unwind elfutils"
-
 REQUIRED_USE="?? ( unwind elfutils )"
 
-BDEPEND="
-	virtual/pkgconfig
-"
+BDEPEND="virtual/pkgconfig"
 LIB_DEPEND="
 	unwind? ( sys-libs/libunwind[static-libs(+)] )
 	elfutils? ( dev-libs/elfutils[static-libs(+)] )
@@ -59,12 +56,7 @@ src_prepare() {
 		[[ ! -e CREDITS ]] && cp CREDITS{.in,}
 	fi
 
-	filter-lfs-flags # configure handles this sanely
-
-	export ac_cv_header_libaio_h=$(usex aio)
-	use elibc_musl && export ac_cv_header_stdc=no
-
-	# Stub out the -k test since it's known to be flaky. #545812
+	# Stub out the -k test since it's known to be flaky. bug #545812
 	sed -i '1iexit 77' tests*/strace-k.test || die
 }
 
@@ -77,10 +69,17 @@ src_configure() {
 		export "${v}_FOR_BUILD=${!bv}"
 	done
 
-	# Don't require mpers support on non-multilib systems. #649560
+	filter-lfs-flags # configure handles this sanely
+
+	export ac_cv_header_libaio_h=$(usex aio)
+	use elibc_musl && export ac_cv_header_stdc=no
+
 	local myeconfargs=(
 		--disable-gcc-Werror
+
+		# Don't require mpers support on non-multilib systems. #649560
 		--enable-mpers=check
+
 		$(use_enable static)
 		$(use_with unwind libunwind)
 		$(use_with elfutils libdw)
@@ -91,7 +90,8 @@ src_configure() {
 
 src_test() {
 	if has usersandbox ${FEATURES} ; then
-		ewarn "Test suite is known to fail with FEATURES=usersandbox -- skipping ..." #643044
+		# bug #643044
+		ewarn "Test suite is known to fail with FEATURES=usersandbox -- skipping ..."
 		return 0
 	fi
 
@@ -100,6 +100,7 @@ src_test() {
 
 src_install() {
 	default
+
 	if use perl ; then
 		exeinto /usr/bin
 		doexe src/strace-graph

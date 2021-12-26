@@ -1,4 +1,4 @@
-From 484df02c073a315ae20170bf992d976dbf9cf85b Mon Sep 17 00:00:00 2001
+From 55f8cfdec7e5592372296ac7b7264ec12c2a1bcf Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <git@xen0n.name>
 Date: Tue, 10 Aug 2021 00:11:17 +0800
 Subject: [PATCH] Add 64-bit LoongArch support
@@ -8,7 +8,7 @@ interface is remarkably similar to that of RISC-V, namely using
 asm-generic numbers and parameters, so breakage should be minimal, if
 at all, when the port is eventually merged.
 
-Currently only the LP64 ABI is implemented in the toolchains, so only
+Currently only the LP64* ABI are implemented in the toolchains, so only
 support the host type "loongarch64".
 
 * NEWS: Mention this.
@@ -53,19 +53,19 @@ support the host type "loongarch64".
  create mode 100644 src/linux/loongarch64/syscallent.h
 
 diff --git a/NEWS b/NEWS
-index f88de1d11..d6727a4ed 100644
+index def026ca8..6bb3f9646 100644
 --- a/NEWS
 +++ b/NEWS
-@@ -10,6 +10,7 @@ Noteworthy changes in release 5.14 (2021-09-02)
-   * Updated lists of BPF_*, IORING_*, MADV_*, MOUNT_ATTR_*, SCTP_*,
-     and UFFD_* constants.
-   * Updated lists of ioctl commands from Linux 5.14.
+@@ -33,6 +33,7 @@ Noteworthy changes in release 5.15 (2021-12-01)
+     FAN_REPORT_*, IORING_*, MOVE_MOUNT_*, MPOL_*, PACKET_*, RTM_*, SO_*,
+     and XFRM_MSG_* constants.
+   * Updated lists of ioctl commands from Linux 5.15.
 +  * Added 64-bit LoongArch architecture support.
  
  * Bug fixes
-   * Fixed build using bionic libc.
+   * Fixed printing of struct bpf_prog_info.map_ids array.
 diff --git a/configure.ac b/configure.ac
-index 2771c0f82..def3bb26f 100644
+index 8bd21d26b..7940557c1 100644
 --- a/configure.ac
 +++ b/configure.ac
 @@ -110,6 +110,11 @@ ia64)
@@ -81,10 +81,10 @@ index 2771c0f82..def3bb26f 100644
  	arch=m68k
  	AC_DEFINE([M68K], 1, [Define for the m68k architecture.])
 diff --git a/src/Makefile.am b/src/Makefile.am
-index b7e74a76e..76ce2f9e7 100644
+index 6ef99ba8e..5af9d87cb 100644
 --- a/src/Makefile.am
 +++ b/src/Makefile.am
-@@ -634,6 +634,16 @@ EXTRA_DIST =				\
+@@ -646,6 +646,16 @@ EXTRA_DIST =				\
  	linux/ia64/syscallent.h		\
  	linux/ia64/syscallent_base_nr.h	\
  	linux/ia64/userent.h		\
@@ -299,7 +299,7 @@ index 000000000..44e0191cb
 +
 +#include "../64/syscallent.h"
 diff --git a/src/xlat/elf_em.in b/src/xlat/elf_em.in
-index 9ffbcd6e0..18f4c9a70 100644
+index 116b18292..6d9bf80a0 100644
 --- a/src/xlat/elf_em.in
 +++ b/src/xlat/elf_em.in
 @@ -190,6 +190,7 @@ EM_AMDGPU		224 /* AMD GPU architecture */
@@ -311,5 +311,5 @@ index 9ffbcd6e0..18f4c9a70 100644
  EM_FRV			0x5441 /* Fujitsu FR-V */
  EM_OR32			0x8472 /* arch/openrisc/include/uapi/asm/elf.h */
 -- 
-2.33.0
+2.34.0
 
