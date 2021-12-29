@@ -1,7 +1,5 @@
 -loong
 
-# LLVM hasn't been ported yet
-llvm
 
 # below are taken from gentoo:arch/riscv use.mask:
 

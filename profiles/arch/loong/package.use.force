@@ -4,3 +4,9 @@
 
 # gcc-12 is live ebuild, hence requiring this
 dev-vcs/git curl
+
+# llvm use LoongArch target
+dev-ml/llvm-ocaml llvm_targets_LoongArch
+sys-devel/clang llvm_targets_LoongArch
+sys-devel/llvm llvm_targets_LoongArch
+
