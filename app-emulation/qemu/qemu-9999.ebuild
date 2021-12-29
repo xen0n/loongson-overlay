@@ -27,7 +27,7 @@ else
 fi
 
 DESCRIPTION="QEMU + Kernel-based Virtual Machine userland tools"
-HOMEPAGE="http://www.qemu.org http://www.linux-kvm.org"
+HOMEPAGE="https://www.qemu.org https://www.linux-kvm.org"
 
 LICENSE="GPL-2 LGPL-2 BSD-2"
 SLOT="0"
@@ -179,7 +179,7 @@ SOFTMMU_TOOLS_DEPEND="
 		virtual/opengl
 		media-libs/libepoxy[static-libs(+)]
 		media-libs/mesa[static-libs(+)]
-		media-libs/mesa[egl,gbm]
+		media-libs/mesa[egl(+),gbm(+)]
 	)
 	png? ( media-libs/libpng:0=[static-libs(+)] )
 	pulseaudio? ( media-sound/pulseaudio )
@@ -276,37 +276,6 @@ PATCHES=(
 	"${FILESDIR}"/${PN}-5.2.0-disable-keymap.patch
 	"${FILESDIR}"/${PN}-6.0.0-make.patch
 	"${FILESDIR}"/${PN}-6.1.0-strings.patch
-
-	"${FILESDIR}"/loongarch/v6-0001-elf-Add-machine-type-value-for-LoongArch.patch
-	"${FILESDIR}"/loongarch/v6-0002-MAINTAINERS-Add-tcg-loongarch64-entry-with-myself.patch
-	"${FILESDIR}"/loongarch/v6-0003-tcg-loongarch64-Add-the-tcg-target.h-file.patch
-	"${FILESDIR}"/loongarch/v6-0004-tcg-loongarch64-Add-generated-instruction-opcodes.patch
-	"${FILESDIR}"/loongarch/v6-0005-tcg-loongarch64-Add-register-names-allocation-ord.patch
-	"${FILESDIR}"/loongarch/v6-0006-tcg-loongarch64-Define-the-operand-constraints.patch
-	"${FILESDIR}"/loongarch/v6-0007-tcg-loongarch64-Implement-necessary-relocation-op.patch
-	"${FILESDIR}"/loongarch/v6-0008-tcg-loongarch64-Implement-the-memory-barrier-op.patch
-	"${FILESDIR}"/loongarch/v6-0009-tcg-loongarch64-Implement-tcg_out_mov-and-tcg_out.patch
-	"${FILESDIR}"/loongarch/v6-0010-tcg-loongarch64-Implement-goto_ptr.patch
-	"${FILESDIR}"/loongarch/v6-0011-tcg-loongarch64-Implement-sign-zero-extension-ops.patch
-	"${FILESDIR}"/loongarch/v6-0012-tcg-loongarch64-Implement-not-and-or-xor-nor-andc.patch
-	"${FILESDIR}"/loongarch/v6-0013-tcg-loongarch64-Implement-deposit-extract-ops.patch
-	"${FILESDIR}"/loongarch/v6-0014-tcg-loongarch64-Implement-bswap-16-32-64-ops.patch
-	"${FILESDIR}"/loongarch/v6-0015-tcg-loongarch64-Implement-clz-ctz-ops.patch
-	"${FILESDIR}"/loongarch/v6-0016-tcg-loongarch64-Implement-shl-shr-sar-rotl-rotr-o.patch
-	"${FILESDIR}"/loongarch/v6-0017-tcg-loongarch64-Implement-add-sub-ops.patch
-	"${FILESDIR}"/loongarch/v6-0018-tcg-loongarch64-Implement-mul-mulsh-muluh-div-div.patch
-	"${FILESDIR}"/loongarch/v6-0019-tcg-loongarch64-Implement-br-brcond-ops.patch
-	"${FILESDIR}"/loongarch/v6-0020-tcg-loongarch64-Implement-setcond-ops.patch
-	"${FILESDIR}"/loongarch/v6-0021-tcg-loongarch64-Implement-tcg_out_call.patch
-	"${FILESDIR}"/loongarch/v6-0022-tcg-loongarch64-Implement-simple-load-store-ops.patch
-	"${FILESDIR}"/loongarch/v6-0023-tcg-loongarch64-Add-softmmu-load-store-helpers-im.patch
-	"${FILESDIR}"/loongarch/v6-0024-tcg-loongarch64-Implement-tcg_target_qemu_prologu.patch
-	"${FILESDIR}"/loongarch/v6-0025-tcg-loongarch64-Implement-exit_tb-goto_tb.patch
-	"${FILESDIR}"/loongarch/v6-0026-tcg-loongarch64-Implement-tcg_target_init.patch
-	"${FILESDIR}"/loongarch/v6-0027-tcg-loongarch64-Register-the-JIT.patch
-	"${FILESDIR}"/loongarch/v6-0028-linux-user-Add-safe-syscall-handling-for-loongarc.patch
-	"${FILESDIR}"/loongarch/v6-0029-accel-tcg-user-exec-Implement-CPU-specific-signal.patch
-	"${FILESDIR}"/loongarch/v6-0030-configure-meson.build-Mark-support-for-loongarch6.patch
 )
 
 QA_PREBUILT="
