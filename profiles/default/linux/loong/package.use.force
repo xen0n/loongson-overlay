@@ -1,0 +1,5 @@
+# Force the host target to avoid dependency hell
+dev-ml/llvm-ocaml llvm_targets_LoongArch
+sys-devel/clang llvm_targets_LoongArch
+sys-devel/llvm llvm_targets_LoongArch
+
