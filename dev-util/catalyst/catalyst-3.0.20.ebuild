@@ -43,7 +43,7 @@ RDEPEND="
 	loong? (
 		iso? (
 			dev-libs/libisoburn
-			sys-boot/loongarch-acpi-tables-fix[initrd]
+			sys-boot/loongarch-acpi-tables-fix
 			sys-fs/mtools
 		)
 	)
