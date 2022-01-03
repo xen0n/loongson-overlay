@@ -1,0 +1,72 @@
+diff --color -ur a/Source/ThirdParty/ANGLE/src/common/utilities.cpp b/Source/ThirdParty/ANGLE/src/common/utilities.cpp
+--- a/Source/ThirdParty/ANGLE/src/common/utilities.cpp	2021-09-01 17:16:47.000000000 +0800
++++ b/Source/ThirdParty/ANGLE/src/common/utilities.cpp	2022-01-03 12:46:08.837000000 +0800
+@@ -263,7 +263,7 @@
+             return "mat4";
+         default:
+             UNREACHABLE();
+-            return nullptr;
++            return "";
+     }
+ }
+ 
+diff --color -ur a/Source/WebCore/platform/graphics/x11/XUniqueResource.h b/Source/WebCore/platform/graphics/x11/XUniqueResource.h
+--- a/Source/WebCore/platform/graphics/x11/XUniqueResource.h	2021-09-01 17:16:50.000000000 +0800
++++ b/Source/WebCore/platform/graphics/x11/XUniqueResource.h	2022-01-03 13:44:39.915000000 +0800
+@@ -25,7 +25,7 @@
+ 
+ #ifndef XUniqueResource_h
+ #define XUniqueResource_h
+-
++#include <utility>
+ #if PLATFORM(X11)
+ 
+ #if USE(GLX)
+diff --color -ur a/Source/WTF/wtf/CompletionHandler.h b/Source/WTF/wtf/CompletionHandler.h
+--- a/Source/WTF/wtf/CompletionHandler.h	2021-09-01 17:16:49.000000000 +0800
++++ b/Source/WTF/wtf/CompletionHandler.h	2022-01-03 12:28:54.017000000 +0800
+@@ -24,7 +24,7 @@
+  */
+ 
+ #pragma once
+-
++#include <utility>
+ #include <wtf/Function.h>
+ #include <wtf/MainThread.h>
+ 
+diff --color -ur a/Source/WTF/wtf/dtoa/utils.h b/Source/WTF/wtf/dtoa/utils.h
+--- a/Source/WTF/wtf/dtoa/utils.h	2021-09-01 17:16:49.000000000 +0800
++++ b/Source/WTF/wtf/dtoa/utils.h	2022-01-03 12:20:02.491000000 +0800
+@@ -91,7 +91,7 @@
+     defined(__AARCH64EL__) || defined(__aarch64__) || defined(__AARCH64EB__) || \
+     defined(__riscv) || \
+     defined(__or1k__) || defined(__arc__) || \
+-    defined(__EMSCRIPTEN__)
++    defined(__EMSCRIPTEN__) || defined(__loongarch__)
+ #define DOUBLE_CONVERSION_CORRECT_DOUBLE_OPERATIONS 1
+ #elif defined(__mc68000__) || \
+     defined(__pnacl__) || defined(__native_client__)
+diff --color -ur a/Source/WTF/wtf/MallocPtr.h b/Source/WTF/wtf/MallocPtr.h
+--- a/Source/WTF/wtf/MallocPtr.h	2021-09-01 17:16:49.000000000 +0800
++++ b/Source/WTF/wtf/MallocPtr.h	2022-01-03 12:41:08.500000000 +0800
+@@ -25,6 +25,7 @@
+ 
+ #pragma once
+ 
++#include <utility>
+ #include <wtf/FastMalloc.h>
+ #include <wtf/Noncopyable.h>
+ 
+diff --color -ur a/Source/WTF/wtf/text/IntegerToStringConversion.h b/Source/WTF/wtf/text/IntegerToStringConversion.h
+--- a/Source/WTF/wtf/text/IntegerToStringConversion.h	2021-09-01 17:16:49.000000000 +0800
++++ b/Source/WTF/wtf/text/IntegerToStringConversion.h	2022-01-03 12:38:29.899000000 +0800
+@@ -20,7 +20,8 @@
+  */
+ 
+ #pragma once
+-
++#include <iterator>
++#include <algorithm>
+ #include <wtf/text/LChar.h>
+ 
+ namespace WTF {
