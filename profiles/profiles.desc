@@ -1,4 +1,6 @@
 # Loongson goodies!
+mips    targets/desktop/2f/n32          dev
+mips    targets/desktop/2f/n32/systemd  dev
 mips    targets/desktop/3a3000          dev
 mips    targets/desktop/3a3000/systemd  dev
 mips    targets/desktop/3a4000          dev
