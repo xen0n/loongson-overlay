@@ -24,6 +24,7 @@ if [[ $1 == "test" ]] ; then
 		"ia64-gentoo-freebsd5.99234   |BSD-ia64" \
 		"x86_64-gentoo-freebsdX.Y     |BSD-x86_64" \
 		"hppa64-aldsF-linux-gnu5.3    |linux-generic32 -DB_ENDIAN" \
+		"loongarch64-unknown-linux-gnu	|linux-loongarch64" \
 		"powerpc-gentOO-linux-uclibc  |linux-ppc" \
 		"powerpc64-unk-linux-gnu      |linux-ppc64" \
 		"powerpc64le-linux-gnu        |linux-ppc64le" \
@@ -97,7 +98,7 @@ linux)
 		i[0-9]86*|\
 		x86_64*:x86)  machine=elf;;
 		ia64*)        machine=ia64;;
-		loongarch64*) machine="generic64 -DL_ENDIAN";;
+		loongarch64*)	machine=loongarch64;;
 		m68*)         machine="generic32 -DB_ENDIAN";;
 		mips*el*)     machine="generic32 -DL_ENDIAN";;
 		mips*)        machine="generic32 -DB_ENDIAN";;

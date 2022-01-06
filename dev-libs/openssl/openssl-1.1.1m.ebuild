@@ -34,6 +34,7 @@ PDEPEND="app-misc/ca-certificates"
 PATCHES=(
 	"${FILESDIR}"/${PN}-1.1.0j-parallel_install_fix.patch #671602
 	"${FILESDIR}"/${PN}-1.1.1i-riscv32.patch
+	"${FILESDIR}"/loongarch64.config.patch 
 )
 
 S="${WORKDIR}/${MY_P}"

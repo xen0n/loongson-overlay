@@ -1,0 +1,16 @@
+diff -uNr openssl-1.1.1d/Configurations/10-main.conf openssl-1.1.1d/Configurations/10-main.conf
+--- openssl-1.1.1d/Configurations/10-main.conf	2019-09-10 21:13:07.000000000 +0800
++++ openssl-1.1.1d/Configurations/10-main.conf	2020-10-26 15:41:38.071704454 +0800
+@@ -752,6 +752,11 @@
+         perlasm_scheme   => "64",
+         multilib         => "64",
+     },
++    "linux-loongarch64" => {
++        inherit_from     => [ "linux-generic64" ],
++        perlasm_scheme   => "64",
++        multilib         => "64",
++    },
+ 
+     #### IA-32 targets...
+     #### These two targets are a bit aged and are to be used on older Linux
+
