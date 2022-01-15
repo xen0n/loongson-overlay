@@ -1,14 +1,13 @@
-From 4f3d9388497d4dbf7b5c7b56e766b2983da9d786 Mon Sep 17 00:00:00 2001
+From 819a2c5ff74e8fd957d36ae1e70cb87f02d2b9b6 Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <git@xen0n.name>
 Date: Tue, 10 Aug 2021 00:11:17 +0800
-Subject: [PATCH] Add 64-bit LoongArch support
+Subject: [PATCH 3/5] Add 64-bit LoongArch support
 
-This is based on the WIP Linux port still under review, but the syscall
-interface is remarkably similar to that of RISC-V, namely using
-asm-generic numbers and parameters, so breakage should be minimal, if
-at all, when the port is eventually merged.
+This is based on the WIP Linux port still under review, but the port is
+re-using asm-generic syscall numbers and parameters, so breakage should
+be minimal when the port is eventually merged, if at all.
 
-Currently only the LP64* ABI are implemented in the toolchains, so only
+Currently only the LP64* ABIs are implemented in the toolchains, so only
 support the host type "loongarch64".
 
 * NEWS: Mention this.
@@ -26,10 +25,12 @@ support the host type "loongarch64".
 * src/linux/loongarch64/syscallent.h: Likewise.
 * src/Makefile.am (EXTRA_DIST): Add them.
 * src/xlat/elf_em.in: Add EM_LOONGARCH.
+
+Link: https://lore.kernel.org/lkml/20211013063656.3084555-1-chenhuacai@loongson.cn/
 ---
  NEWS                                     |  1 +
  configure.ac                             |  5 ++++
- src/Makefile.am                          | 10 ++++++++
+ src/Makefile.am                          | 11 +++++++++
  src/linux/loongarch64/arch_defs_.h       |  8 +++++++
  src/linux/loongarch64/arch_regs.c        | 11 +++++++++
  src/linux/loongarch64/get_error.c        | 19 ++++++++++++++++
@@ -42,7 +43,7 @@ support the host type "loongarch64".
  src/linux/loongarch64/set_scno.c         | 15 ++++++++++++
  src/linux/loongarch64/syscallent.h       |  8 +++++++
  src/xlat/elf_em.in                       |  1 +
- 15 files changed, 162 insertions(+)
+ 15 files changed, 163 insertions(+)
  create mode 100644 src/linux/loongarch64/arch_defs_.h
  create mode 100644 src/linux/loongarch64/arch_regs.c
  create mode 100644 src/linux/loongarch64/get_error.c
@@ -56,22 +57,22 @@ support the host type "loongarch64".
  create mode 100644 src/linux/loongarch64/syscallent.h
 
 diff --git a/NEWS b/NEWS
-index def026ca8..476fa32d8 100644
+index ee3acafe2..4a34d98c1 100644
 --- a/NEWS
 +++ b/NEWS
-@@ -2,6 +2,7 @@ Noteworthy changes in release 5.15 (2021-12-01)
+@@ -2,6 +2,7 @@ Noteworthy changes in release ?.?? (????-??-??)
  ===============================================
  
  * Improvements
 +  * Added 64-bit LoongArch architecture support.
-   * Implemented --strings-in-hex=non-ascii-chars option for using hexadecimal
-     numbers instead of octal ones in escape sequences in the output strings.
-   * Implemented --decode-pids=comm option (and its alias -Y) for printing
+ 
+ * Bug fixes
+ 
 diff --git a/configure.ac b/configure.ac
-index 8bd21d26b..7940557c1 100644
+index 27a547ef9..d17ba04a7 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -110,6 +110,11 @@ ia64)
+@@ -115,6 +115,11 @@ ia64)
  	arch=ia64
  	AC_DEFINE([IA64], 1, [Define for the IA64 architecture.])
  	;;
@@ -84,13 +85,14 @@ index 8bd21d26b..7940557c1 100644
  	arch=m68k
  	AC_DEFINE([M68K], 1, [Define for the m68k architecture.])
 diff --git a/src/Makefile.am b/src/Makefile.am
-index 6ef99ba8e..5af9d87cb 100644
+index d61696ec0..4344a1ce2 100644
 --- a/src/Makefile.am
 +++ b/src/Makefile.am
-@@ -646,6 +646,16 @@ EXTRA_DIST =				\
+@@ -646,6 +646,17 @@ EXTRA_DIST =				\
  	linux/ia64/syscallent.h		\
  	linux/ia64/syscallent_base_nr.h	\
  	linux/ia64/userent.h		\
++	linux/loongarch64/arch_defs_.h	\
 +	linux/loongarch64/arch_regs.c	\
 +	linux/loongarch64/get_error.c	\
 +	linux/loongarch64/get_scno.c	\
@@ -106,12 +108,12 @@ index 6ef99ba8e..5af9d87cb 100644
  	linux/m68k/arch_rt_sigframe.c	\
 diff --git a/src/linux/loongarch64/arch_defs_.h b/src/linux/loongarch64/arch_defs_.h
 new file mode 100644
-index 000000000..328ad89da
+index 000000000..ffb573326
 --- /dev/null
 +++ b/src/linux/loongarch64/arch_defs_.h
 @@ -0,0 +1,8 @@
 +/*
-+ * Copyright (c) 2021 The strace developers.
++ * Copyright (c) 2021-2022 The strace developers.
 + * All rights reserved.
 + *
 + * SPDX-License-Identifier: LGPL-2.1-or-later
@@ -120,12 +122,12 @@ index 000000000..328ad89da
 +#define PERSONALITY0_AUDIT_ARCH { AUDIT_ARCH_LOONGARCH64, 0 }
 diff --git a/src/linux/loongarch64/arch_regs.c b/src/linux/loongarch64/arch_regs.c
 new file mode 100644
-index 000000000..ad679c865
+index 000000000..509ac8e4f
 --- /dev/null
 +++ b/src/linux/loongarch64/arch_regs.c
 @@ -0,0 +1,11 @@
 +/*
-+ * Copyright (c) 2021 The strace developers.
++ * Copyright (c) 2021-2022 The strace developers.
 + * All rights reserved.
 + *
 + * SPDX-License-Identifier: LGPL-2.1-or-later
@@ -137,12 +139,12 @@ index 000000000..ad679c865
 +#define ARCH_SP_REG loongarch_regs.regs[3]
 diff --git a/src/linux/loongarch64/get_error.c b/src/linux/loongarch64/get_error.c
 new file mode 100644
-index 000000000..07e9a3e6d
+index 000000000..b52ae28fb
 --- /dev/null
 +++ b/src/linux/loongarch64/get_error.c
 @@ -0,0 +1,19 @@
 +/*
-+ * Copyright (c) 2021 The strace developers.
++ * Copyright (c) 2021-2022 The strace developers.
 + * All rights reserved.
 + *
 + * SPDX-License-Identifier: LGPL-2.1-or-later
@@ -162,12 +164,12 @@ index 000000000..07e9a3e6d
 +}
 diff --git a/src/linux/loongarch64/get_scno.c b/src/linux/loongarch64/get_scno.c
 new file mode 100644
-index 000000000..966f93ed5
+index 000000000..cb0f42cae
 --- /dev/null
 +++ b/src/linux/loongarch64/get_scno.c
 @@ -0,0 +1,14 @@
 +/*
-+ * Copyright (c) 2021 The strace developers.
++ * Copyright (c) 2021-2022 The strace developers.
 + * All rights reserved.
 + *
 + * SPDX-License-Identifier: LGPL-2.1-or-later
@@ -182,12 +184,12 @@ index 000000000..966f93ed5
 +}
 diff --git a/src/linux/loongarch64/get_syscall_args.c b/src/linux/loongarch64/get_syscall_args.c
 new file mode 100644
-index 000000000..4bb054198
+index 000000000..43831688f
 --- /dev/null
 +++ b/src/linux/loongarch64/get_syscall_args.c
 @@ -0,0 +1,19 @@
 +/*
-+ * Copyright (c) 2021 The strace developers.
++ * Copyright (c) 2021-2022 The strace developers.
 + * All rights reserved.
 + *
 + * SPDX-License-Identifier: LGPL-2.1-or-later
@@ -221,14 +223,14 @@ index 000000000..6028afbe4
 +#include "../64/ioctls_inc.h"
 diff --git a/src/linux/loongarch64/raw_syscall.h b/src/linux/loongarch64/raw_syscall.h
 new file mode 100644
-index 000000000..784edbe06
+index 000000000..122777898
 --- /dev/null
 +++ b/src/linux/loongarch64/raw_syscall.h
 @@ -0,0 +1,29 @@
 +/*
 + * Raw syscalls.
 + *
-+ * Copyright (c) 2021 The strace developers.
++ * Copyright (c) 2021-2022 The strace developers.
 + * All rights reserved.
 + *
 + * SPDX-License-Identifier: LGPL-2.1-or-later
@@ -256,12 +258,12 @@ index 000000000..784edbe06
 +#endif /* !STRACE_RAW_SYSCALL_H */
 diff --git a/src/linux/loongarch64/set_error.c b/src/linux/loongarch64/set_error.c
 new file mode 100644
-index 000000000..3eac45e6d
+index 000000000..aa83a3e02
 --- /dev/null
 +++ b/src/linux/loongarch64/set_error.c
 @@ -0,0 +1,20 @@
 +/*
-+ * Copyright (c) 2021 The strace developers.
++ * Copyright (c) 2021-2022 The strace developers.
 + * All rights reserved.
 + *
 + * SPDX-License-Identifier: LGPL-2.1-or-later
@@ -282,12 +284,12 @@ index 000000000..3eac45e6d
 +}
 diff --git a/src/linux/loongarch64/set_scno.c b/src/linux/loongarch64/set_scno.c
 new file mode 100644
-index 000000000..e3b6c084d
+index 000000000..d338f2068
 --- /dev/null
 +++ b/src/linux/loongarch64/set_scno.c
 @@ -0,0 +1,15 @@
 +/*
-+ * Copyright (c) 2021 The strace developers.
++ * Copyright (c) 2021-2022 The strace developers.
 + * All rights reserved.
 + *
 + * SPDX-License-Identifier: LGPL-2.1-or-later
@@ -303,12 +305,12 @@ index 000000000..e3b6c084d
 +}
 diff --git a/src/linux/loongarch64/syscallent.h b/src/linux/loongarch64/syscallent.h
 new file mode 100644
-index 000000000..44e0191cb
+index 000000000..5ab228bfb
 --- /dev/null
 +++ b/src/linux/loongarch64/syscallent.h
 @@ -0,0 +1,8 @@
 +/*
-+ * Copyright (c) 2021 The strace developers.
++ * Copyright (c) 2021-2022 The strace developers.
 + * All rights reserved.
 + *
 + * SPDX-License-Identifier: LGPL-2.1-or-later
@@ -328,5 +330,5 @@ index 116b18292..6d9bf80a0 100644
  EM_FRV			0x5441 /* Fujitsu FR-V */
  EM_OR32			0x8472 /* arch/openrisc/include/uapi/asm/elf.h */
 -- 
-2.34.0
+2.34.1
 

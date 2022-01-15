@@ -1,0 +1,63 @@
+From baed79c7aedcb7370ca5dafcb545a4972691ba4c Mon Sep 17 00:00:00 2001
+From: "Dmitry V. Levin" <ldv@strace.io>
+Date: Tue, 11 Jan 2022 08:00:00 +0000
+Subject: [PATCH 1/5] Post-release administrivia
+
+* NEWS: Add a header line for the next release.
+* debian/changelog.in: Add a changelog entry for 5.16-1.
+* strace.spec.in: Likewise.
+---
+ NEWS                | 7 +++++++
+ debian/changelog.in | 6 ++++++
+ strace.spec.in      | 3 +++
+ 3 files changed, 16 insertions(+)
+
+diff --git a/NEWS b/NEWS
+index b544e5f62..ee3acafe2 100644
+--- a/NEWS
++++ b/NEWS
+@@ -1,3 +1,10 @@
++Noteworthy changes in release ?.?? (????-??-??)
++===============================================
++
++* Improvements
++
++* Bug fixes
++
+ Noteworthy changes in release 5.16 (2022-01-10)
+ ===============================================
+ 
+diff --git a/debian/changelog.in b/debian/changelog.in
+index 54acbc2a7..1fbed9649 100644
+--- a/debian/changelog.in
++++ b/debian/changelog.in
+@@ -4,6 +4,12 @@ strace (@PACKAGE_VERSION@-1) experimental; urgency=low
+ 
+  -- Strace <@PACKAGE_BUGREPORT@>  @DEB_CHANGELOGTIME@
+ 
++strace (5.16-1) unstable; urgency=medium
++
++  * New upstream version.
++
++ -- Dmitry V. Levin <ldv@strace.io>  Mon, 10 Jan 2022 08:00:00 +0000
++
+ strace (5.15-1) unstable; urgency=medium
+ 
+   * New upstream version.
+diff --git a/strace.spec.in b/strace.spec.in
+index 9f0a651ee..ede56ecc9 100644
+--- a/strace.spec.in
++++ b/strace.spec.in
+@@ -110,6 +110,9 @@ echo 'END OF TEST SUITE INFORMATION'
+ * @RPM_CHANGELOGTIME@ @PACKAGE_BUGREPORT@ - @PACKAGE_VERSION@-1
+ - @PACKAGE_STRING@ snapshot.
+ 
++* Mon Jan 10 2022 Dmitry V. Levin <ldv@strace.io> - 5.16-1
++- v5.15 -> v5.16.
++
+ * Wed Dec 01 2021 Dmitry V. Levin <ldv@strace.io> - 5.15-1
+ - v5.14 -> v5.15.
+ 
+-- 
+2.34.1
+
