@@ -241,7 +241,6 @@
 <sys-kernel/installkernel-gentoo-9999 **
 <sys-libs/e2fsprogs-libs-9999 **
 <sys-libs/gdbm-9999 **
-<sys-libs/glibc-2.35 **
 <sys-libs/libcap-9999 **
 <sys-libs/libseccomp-9999 **
 <sys-libs/libxcrypt-9999 **
