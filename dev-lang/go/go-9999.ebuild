@@ -12,7 +12,8 @@ inherit toolchain-funcs
 
 case ${PV}  in
 *9999*)
-	EGIT_REPO_URI="https://github.com/golang/go.git"
+	EGIT_REPO_URI="https://github.com/loongson/go.git"
+	EGIT_BRANCH=loong64-master
 	inherit git-r3
 	;;
 *)
@@ -72,6 +73,7 @@ go_arch() {
 		ppc64) [[ $(tc-endian $@) = big ]] && echo ppc64 || echo ppc64le ;;
 		riscv) echo riscv64 ;;
 		s390) echo s390x ;;
+		loong) echo loong64 ;;
 		*)		echo "${portage_arch}";;
 	esac
 }
