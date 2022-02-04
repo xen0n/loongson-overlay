@@ -898,7 +898,7 @@ src_prepare() {
 	fi
 
 	einfo "Applying LoongArch support patches"
-	eapply "${FILESDIR}"/loongarch-2.34
+	eapply "${FILESDIR}/loongarch-${PV}"
 	einfo "Done."
 
 	if use clone3 ; then
