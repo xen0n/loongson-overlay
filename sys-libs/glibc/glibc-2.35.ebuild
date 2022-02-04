@@ -26,6 +26,9 @@ EMULTILIB_PKG="true"
 PATCH_VER=1
 PATCH_DEV=dilfridge
 
+# LoongArch patchset (also ignored for live ebuilds)
+LOONGARCH_PATCH_VER=20220204-1
+
 if [[ ${PV} == 9999* ]]; then
 	inherit git-r3
 else
@@ -33,6 +36,7 @@ else
 	KEYWORDS=""
 	SRC_URI="mirror://gnu/glibc/${P}.tar.xz"
 	SRC_URI+=" https://dev.gentoo.org/~${PATCH_DEV}/distfiles/${P}-patches-${PATCH_VER}.tar.xz"
+	SRC_URI+=" https://loongson-patchballs-glb.qnbkt.xen0n.name/${P}-loongarch-patches-${LOONGARCH_PATCH_VER}.tar.xz"
 fi
 
 RELEASE_VER=${PV}
@@ -841,6 +845,7 @@ src_unpack() {
 
 		cd "${WORKDIR}" || die
 		unpack glibc-${RELEASE_VER}-patches-${PATCH_VER}.tar.xz
+		unpack glibc-${RELEASE_VER}-loongarch-patches-${LOONGARCH_PATCH_VER}.tar.xz
 	fi
 
 	cd "${WORKDIR}" || die
@@ -861,9 +866,11 @@ src_prepare() {
 		einfo "Done."
 	fi
 
-	einfo "Applying LoongArch support patches"
-	eapply "${FILESDIR}/loongarch-${PV}"
-	einfo "Done."
+	if [[ ${PV} != 9999* ]] ; then
+		einfo "Applying LoongArch support patchset ${LOONGARCH_PATCH_VER}"
+		eapply "${WORKDIR}/loongarch-${PV}"
+		einfo "Done."
+	fi
 
 	if use clone3 ; then
 		append-cppflags -DGENTOO_USE_CLONE3
