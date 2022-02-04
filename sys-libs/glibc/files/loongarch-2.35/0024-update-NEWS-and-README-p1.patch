@@ -1,0 +1,46 @@
+From a16a68aea6cf74e1c7f2eb8c44c4e952e3d2d5a9 Mon Sep 17 00:00:00 2001
+From: caiyinyu <caiyinyu@loongson.cn>
+Date: Tue, 11 Jan 2022 15:18:25 +0800
+Subject: [PATCH 24/32] update NEWS and README p1
+
+---
+ NEWS   | 9 ++++++++-
+ README | 2 +-
+ 2 files changed, 9 insertions(+), 2 deletions(-)
+
+diff --git a/NEWS b/NEWS
+index e5f8db1d3f..e0ee5bafc5 100644
+--- a/NEWS
++++ b/NEWS
+@@ -9,7 +9,14 @@ Version 2.35
+ 
+ Major new features:
+ 
+-* Add LoongArch Port.  Loongson Ltd.
++* Support for LoongArch running on Linux has been added.  This port requires
++  as least binutils 2.38, GCC 12, and Linux 5.16.  Currently only hard-float
++  ABI is supported:
++
++    - loongarch64-linux-gnu
++
++  The LoongArch ABI is 64-bit little-endian and uses 64-bit time (y2038 safe) and
++  64-bit file offsets (LFS default).
+ 
+ * Unicode 14.0.0 Support: Character encoding, character type info, and
+   transliteration tables are all updated to Unicode 14.0.0, using
+diff --git a/README b/README
+index 1c03949dfe..63f3a1bebf 100644
+--- a/README
++++ b/README
+@@ -31,7 +31,7 @@ The GNU C Library supports these configurations for using Linux kernels:
+ 	i[4567]86-*-linux-gnu
+ 	x86_64-*-linux-gnu	Can build either x86_64 or x32
+ 	ia64-*-linux-gnu
+-	loongarch64-*-linux-gnu
++	loongarch64-*-linux-gnu Hardware floating point, LE only.
+ 	m68k-*-linux-gnu
+ 	microblaze*-*-linux-gnu
+ 	mips-*-linux-gnu
+-- 
+2.35.1
+

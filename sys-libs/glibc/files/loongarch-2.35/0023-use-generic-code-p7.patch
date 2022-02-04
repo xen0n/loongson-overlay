@@ -1,0 +1,100 @@
+From f15f723c8565330d5983e45c659cc621a8ba64a7 Mon Sep 17 00:00:00 2001
+From: caiyinyu <caiyinyu@loongson.cn>
+Date: Tue, 11 Jan 2022 14:25:22 +0800
+Subject: [PATCH 23/32] use generic code p7
+
+---
+ .../loongarch/nptl/bits/pthreadtypes-arch.h   | 41 -------------------
+ sysdeps/loongarch/nptl/bits/semaphore.h       | 32 ---------------
+ 2 files changed, 73 deletions(-)
+ delete mode 100644 sysdeps/loongarch/nptl/bits/pthreadtypes-arch.h
+ delete mode 100644 sysdeps/loongarch/nptl/bits/semaphore.h
+
+diff --git a/sysdeps/loongarch/nptl/bits/pthreadtypes-arch.h b/sysdeps/loongarch/nptl/bits/pthreadtypes-arch.h
+deleted file mode 100644
+index e57f122a98..0000000000
+--- a/sysdeps/loongarch/nptl/bits/pthreadtypes-arch.h
++++ /dev/null
+@@ -1,41 +0,0 @@
+-/* Machine-specific pthread type layouts.
+-   Copyright (C) 2021 Free Software Foundation, Inc.
+-   This file is part of the GNU C Library.
+-
+-   The GNU C Library is free software; you can redistribute it and/or
+-   modify it under the terms of the GNU Lesser General Public
+-   License as published by the Free Software Foundation; either
+-   version 2.1 of the License, or (at your option) any later version.
+-
+-   The GNU C Library is distributed in the hope that it will be useful,
+-   but WITHOUT ANY WARRANTY; without even the implied warranty of
+-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+-   Lesser General Public License for more details.
+-
+-   You should have received a copy of the GNU Lesser General Public
+-   License along with the GNU C Library.  If not, see
+-   <https://www.gnu.org/licenses/>.  */
+-
+-#ifndef _BITS_PTHREADTYPES_ARCH_H
+-#define _BITS_PTHREADTYPES_ARCH_H 1
+-
+-#include <bits/endian.h>
+-
+-#ifdef __loongarch_lp64
+-#define __SIZEOF_PTHREAD_ATTR_T 56
+-#define __SIZEOF_PTHREAD_MUTEX_T 40
+-#define __SIZEOF_PTHREAD_MUTEXATTR_T 4
+-#define __SIZEOF_PTHREAD_COND_T 48
+-#define __SIZEOF_PTHREAD_CONDATTR_T 4
+-#define __SIZEOF_PTHREAD_RWLOCK_T 56
+-#define __SIZEOF_PTHREAD_RWLOCKATTR_T 8
+-#define __SIZEOF_PTHREAD_BARRIER_T 32
+-#define __SIZEOF_PTHREAD_BARRIERATTR_T 4
+-#else
+-#error "32bit LoongArch systems are not supported"
+-#endif
+-
+-#define __LOCK_ALIGNMENT
+-#define __ONCE_ALIGNMENT
+-
+-#endif /* bits/pthreadtypes.h */
+diff --git a/sysdeps/loongarch/nptl/bits/semaphore.h b/sysdeps/loongarch/nptl/bits/semaphore.h
+deleted file mode 100644
+index 510f3b0e9a..0000000000
+--- a/sysdeps/loongarch/nptl/bits/semaphore.h
++++ /dev/null
+@@ -1,32 +0,0 @@
+-/* POSIX semaphore type layout
+-   Copyright (C) 2021 Free Software Foundation, Inc.
+-   This file is part of the GNU C Library.
+-
+-   The GNU C Library is free software; you can redistribute it and/or
+-   modify it under the terms of the GNU Lesser General Public
+-   License as published by the Free Software Foundation; either
+-   version 2.1 of the License, or (at your option) any later version.
+-
+-   The GNU C Library is distributed in the hope that it will be useful,
+-   but WITHOUT ANY WARRANTY; without even the implied warranty of
+-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+-   Lesser General Public License for more details.
+-
+-   You should have received a copy of the GNU Lesser General Public
+-   License along with the GNU C Library.  If not, see
+-   <https://www.gnu.org/licenses/>.  */
+-
+-#ifndef _SEMAPHORE_H
+-#error "Never use <bits/semaphore.h> directly; include <semaphore.h> instead."
+-#endif
+-
+-#define __SIZEOF_SEM_T (4 * __SIZEOF_POINTER__)
+-
+-/* Value returned if `sem_open' failed.  */
+-#define SEM_FAILED ((sem_t *) 0)
+-
+-typedef union
+-{
+-  char __size[__SIZEOF_SEM_T];
+-  long int __align;
+-} sem_t;
+-- 
+2.35.1
+

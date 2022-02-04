@@ -1,0 +1,35 @@
+From f5c289a1c7b7bf826aec6b599ad5fbfe962ff769 Mon Sep 17 00:00:00 2001
+From: caiyinyu <caiyinyu@loongson.cn>
+Date: Tue, 11 Jan 2022 09:08:16 +0800
+Subject: [PATCH 18/32] delete nptl-sysdep.S
+
+---
+ sysdeps/loongarch/nptl/Makefile      | 5 -----
+ sysdeps/loongarch/nptl/nptl-sysdep.S | 2 --
+ 2 files changed, 7 deletions(-)
+ delete mode 100644 sysdeps/loongarch/nptl/nptl-sysdep.S
+
+diff --git a/sysdeps/loongarch/nptl/Makefile b/sysdeps/loongarch/nptl/Makefile
+index c6c773b179..86d5711029 100644
+--- a/sysdeps/loongarch/nptl/Makefile
++++ b/sysdeps/loongarch/nptl/Makefile
+@@ -19,8 +19,3 @@
+ ifeq ($(subdir),csu)
+ gen-as-const-headers += tcb-offsets.sym
+ endif
+-
+-ifeq ($(subdir),nptl)
+-libpthread-sysdep_routines += nptl-sysdep
+-libpthread-shared-only-routines += nptl-sysdep
+-endif
+diff --git a/sysdeps/loongarch/nptl/nptl-sysdep.S b/sysdeps/loongarch/nptl/nptl-sysdep.S
+deleted file mode 100644
+index 3f5c2a364a..0000000000
+--- a/sysdeps/loongarch/nptl/nptl-sysdep.S
++++ /dev/null
+@@ -1,2 +0,0 @@
+-/* Pull in __syscall_error.  */
+-#include <sysdep.S>
+-- 
+2.35.1
+

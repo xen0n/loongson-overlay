@@ -1,0 +1,29 @@
+From a4448d7fffa60546acb93e3c1643c07b9d500995 Mon Sep 17 00:00:00 2001
+From: caiyinyu <caiyinyu@loongson.cn>
+Date: Tue, 28 Dec 2021 10:58:11 +0800
+Subject: [PATCH 02/32] LoongArch: Add LoongArch entries to config.h.in
+
+---
+ config.h.in | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/config.h.in b/config.h.in
+index ff8597413d..5ea5c098ef 100644
+--- a/config.h.in
++++ b/config.h.in
+@@ -135,6 +135,12 @@
+ /* RISC-V floating-point ABI for ld.so.  */
+ #undef RISCV_ABI_FLEN
+ 
++/* LOONGARCH integer ABI for ld.so.  */
++#undef LOONGARCH_ABI_GRLEN
++
++/* LOONGARCH floating-point ABI for ld.so.  */
++#undef LOONGARCH_ABI_FRLEN
++
+ /* Linux specific: minimum supported kernel version.  */
+ #undef	__LINUX_KERNEL_VERSION
+ 
+-- 
+2.35.1
+

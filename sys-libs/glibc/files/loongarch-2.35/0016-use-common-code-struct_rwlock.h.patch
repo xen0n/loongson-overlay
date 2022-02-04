@@ -1,0 +1,84 @@
+From ced49bc244dd73e7d414f415c168c15fb8eb01d9 Mon Sep 17 00:00:00 2001
+From: caiyinyu <caiyinyu@loongson.cn>
+Date: Mon, 10 Jan 2022 17:22:46 +0800
+Subject: [PATCH 16/32] use common code struct_rwlock.h
+
+---
+ sysdeps/loongarch/nptl/bits/struct_rwlock.h | 44 ---------------------
+ sysdeps/loongarch/nptl/pthread-offsets.h    | 11 ------
+ 2 files changed, 55 deletions(-)
+ delete mode 100644 sysdeps/loongarch/nptl/bits/struct_rwlock.h
+
+diff --git a/sysdeps/loongarch/nptl/bits/struct_rwlock.h b/sysdeps/loongarch/nptl/bits/struct_rwlock.h
+deleted file mode 100644
+index 12b6a469bd..0000000000
+--- a/sysdeps/loongarch/nptl/bits/struct_rwlock.h
++++ /dev/null
+@@ -1,44 +0,0 @@
+-/* LoongArch internal rwlock struct definitions.
+-   Copyright (C) 2021 Free Software Foundation, Inc.
+-   This file is part of the GNU C Library.
+-
+-   The GNU C Library is free software; you can redistribute it and/or
+-   modify it under the terms of the GNU Lesser General Public
+-   License as published by the Free Software Foundation; either
+-   version 2.1 of the License, or (at your option) any later version.
+-
+-   The GNU C Library is distributed in the hope that it will be useful,
+-   but WITHOUT ANY WARRANTY; without even the implied warranty of
+-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+-   Lesser General Public License for more details.
+-
+-   You should have received a copy of the GNU Lesser General Public
+-   License along with the GNU C Library; if not, see
+-   <https://www.gnu.org/licenses/>.  */
+-
+-#ifndef _RWLOCK_INTERNAL_H
+-#define _RWLOCK_INTERNAL_H
+-
+-/* There is a lot of padding in this structure.  While it's not strictly
+-   necessary on LoongArch, we're going to leave it in to be on the safe side in
+-   case it's needed in the future.  Most other architectures have the padding,
+-   so this gives us the same extensibility as everyone else has.  */
+-struct __pthread_rwlock_arch_t
+-{
+-  unsigned int __readers;
+-  unsigned int __writers;
+-  unsigned int __wrphase_futex;
+-  unsigned int __writers_futex;
+-  unsigned int __pad3;
+-  unsigned int __pad4;
+-  int __cur_writer;
+-  int __shared;
+-  unsigned long int __pad1;
+-  unsigned long int __pad2;
+-  unsigned int __flags;
+-};
+-
+-#define __PTHREAD_RWLOCK_INITIALIZER(__flags) \
+-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, __flags
+-
+-#endif
+diff --git a/sysdeps/loongarch/nptl/pthread-offsets.h b/sysdeps/loongarch/nptl/pthread-offsets.h
+index 415c3c113f..ca7f44ca1e 100644
+--- a/sysdeps/loongarch/nptl/pthread-offsets.h
++++ b/sysdeps/loongarch/nptl/pthread-offsets.h
+@@ -1,15 +1,4 @@
+ #if __WORDSIZE == 64
+ #define __PTHREAD_MUTEX_KIND_OFFSET 16
+-#else
+-#define __PTHREAD_MUTEX_KIND_OFFSET 12
+-#endif
+-
+-#if __WORDSIZE == 64
+-#define __PTHREAD_RWLOCK_FLAGS_OFFSET 48
+-#else
+-#if __BYTE_ORDER == __BIG_ENDIAN
+-#define __PTHREAD_RWLOCK_FLAGS_OFFSET 27
+-#else
+ #define __PTHREAD_RWLOCK_FLAGS_OFFSET 24
+ #endif
+-#endif
+-- 
+2.35.1
+

@@ -1,0 +1,297 @@
+From db5d8e5fb86dc4a1d6cc6d6637b7fa957cb8f757 Mon Sep 17 00:00:00 2001
+From: caiyinyu <caiyinyu@loongson.cn>
+Date: Wed, 12 Jan 2022 10:24:29 +0800
+Subject: [PATCH 27/32] add new macro ADD ADDI SLLI SRLI ... in sys/asm.h and
+ adjust corresponding files. p7
+
+---
+ sysdeps/loongarch/__longjmp.S                |  2 +-
+ sysdeps/loongarch/dl-machine.h               |  2 +-
+ sysdeps/loongarch/dl-trampoline.S            | 20 ++++--------------
+ sysdeps/loongarch/start.S                    | 13 +++++-------
+ sysdeps/loongarch/sys/asm.h                  | 10 +++++----
+ sysdeps/loongarch/sys/regdef.h               |  5 -----
+ sysdeps/unix/sysv/linux/loongarch/clone.S    | 22 ++++++++------------
+ sysdeps/unix/sysv/linux/loongarch/clone3.S   | 12 ++++-------
+ sysdeps/unix/sysv/linux/loongarch/ldconfig.h |  4 ----
+ 9 files changed, 30 insertions(+), 60 deletions(-)
+
+diff --git a/sysdeps/loongarch/__longjmp.S b/sysdeps/loongarch/__longjmp.S
+index 5cc1bc7860..6e81686b36 100644
+--- a/sysdeps/loongarch/__longjmp.S
++++ b/sysdeps/loongarch/__longjmp.S
+@@ -46,7 +46,7 @@ ENTRY (__longjmp)
+ #endif
+ 
+ 	sltui	a0,a1,1
+-	add.d	a0, a0, a1	 # a0 = (a1 == 0) ? 1 : a1
++	ADD	a0, a0, a1	 # a0 = (a1 == 0) ? 1 : a1
+ 	jirl	zero,ra,0
+ 
+ END (__longjmp)
+diff --git a/sysdeps/loongarch/dl-machine.h b/sysdeps/loongarch/dl-machine.h
+index 82274f6bc2..03269c1e77 100644
+--- a/sysdeps/loongarch/dl-machine.h
++++ b/sysdeps/loongarch/dl-machine.h
+@@ -69,10 +69,10 @@ elf_machine_matches_host (const ElfW (Ehdr) * ehdr)
+ 
+ #ifdef __loongarch_lp64
+   if ((ehdr->e_flags & EF_LARCH_ABI) != EF_LARCH_ABI_LP64)
++    return 0;
+ #else
+ #error "Unknown ABI"
+ #endif
+-    return 0;
+ 
+   return 1;
+ }
+diff --git a/sysdeps/loongarch/dl-trampoline.S b/sysdeps/loongarch/dl-trampoline.S
+index 84b1fa1f5e..1201caccde 100644
+--- a/sysdeps/loongarch/dl-trampoline.S
++++ b/sysdeps/loongarch/dl-trampoline.S
+@@ -31,11 +31,7 @@
+ ENTRY (_dl_runtime_resolve)
+ 
+ 	/* Save arguments to stack. */
+-#ifdef __loongarch_lp64
+-	addi.d	sp, sp, -FRAME_SIZE
+-#else
+-#error "32bit LoongArch systems are not supported"
+-#endif
++	ADDI	sp, sp, -FRAME_SIZE
+ 
+ 	REG_S	ra, sp, 9*SZREG
+ 	REG_S	a0, sp, 1*SZREG
+@@ -59,16 +55,12 @@ ENTRY (_dl_runtime_resolve)
+ #endif
+ 
+ 	/* Update .got.plt and obtain runtime address of callee */
+-#ifdef __loongarch_lp64
+-	slli.d	a1, t1, 1
++	SLLI	a1, t1, 1
+ 	or	a0, t0, zero
+-	add.d	a1, a1, t1
++	ADD	a1, a1, t1
+ 	la	a2, _dl_fixup
+ 	jirl	ra, a2, 0
+ 	or	t1, v0, zero
+-#else
+-#error "32bit LoongArch systems are not supported"
+-#endif
+ 
+ 	/* Restore arguments from stack. */
+ 	REG_L	ra, sp, 9*SZREG
+@@ -92,11 +84,7 @@ ENTRY (_dl_runtime_resolve)
+ 	FREG_L	fa7, sp, 10*SZREG + 7*SZFREG
+ #endif
+ 
+-#ifdef __loongarch_lp64
+-	addi.d	sp, sp, FRAME_SIZE
+-#else
+-#error "32bit LoongArch systems are not supported"
+-#endif
++	ADDI	sp, sp, FRAME_SIZE
+ 
+ 	/* Invoke the callee. */
+ 	jirl		zero, t1, 0
+diff --git a/sysdeps/loongarch/start.S b/sysdeps/loongarch/start.S
+index 9ecfb5e2be..056127d83b 100644
+--- a/sysdeps/loongarch/start.S
++++ b/sysdeps/loongarch/start.S
+@@ -47,15 +47,12 @@ ENTRY (ENTRY_POINT)
+ /* We must get symbol main through GOT table, since main may not be local.
+    For instance: googletest defines main in dynamic library.  */
+ 	la.got		a0, t0, main
+-#ifdef __loongarch_lp64
+-	ld.d		a1, sp, 0
+-	addi.d		a2, sp, SZREG
+-#else
+-#error "32bit LoongArch systems are not supported"
+-#endif
++	REG_L		a1, sp, 0
++	ADDI		a2, sp, SZREG
++
+ 	/* Adjust $sp for 16-aligned */
+-	srli.d		sp, sp, 4
+-	slli.d		sp, sp, 4
++	SRLI		sp, sp, 4
++	SLLI		sp, sp, 4
+ 
+ 	move		a3, zero /* used to be init */
+ 	move		a4, zero /* used to be fini */
+diff --git a/sysdeps/loongarch/sys/asm.h b/sysdeps/loongarch/sys/asm.h
+index 1133f76157..18b9b3e019 100644
+--- a/sysdeps/loongarch/sys/asm.h
++++ b/sysdeps/loongarch/sys/asm.h
+@@ -23,17 +23,19 @@
+ #include <sysdeps/generic/sysdep.h>
+ 
+ /* Macros to handle different pointer/register sizes for 32/64-bit code.  */
+-#ifdef __loongarch_lp64
+ #define PTRLOG 3
+ #define SZREG 8
+ #define SZFREG 8
+ #define REG_L ld.d
+ #define REG_S st.d
++#define SRLI srli.d
++#define SLLI slli.d
++#define ADDI addi.d
++#define ADD  add.d
++#define BSTRINS  bstrins.d
++#define LI  li.d
+ #define FREG_L fld.d
+ #define FREG_S fst.d
+-#else
+-#error "32bit LoongArch systems are not supported"
+-#endif
+ 
+ /* Declare leaf routine.  */
+ #define LEAF(symbol) \
+diff --git a/sysdeps/loongarch/sys/regdef.h b/sysdeps/loongarch/sys/regdef.h
+index f53447db62..bf957d5b11 100644
+--- a/sysdeps/loongarch/sys/regdef.h
++++ b/sysdeps/loongarch/sys/regdef.h
+@@ -20,7 +20,6 @@
+ #ifndef _SYS_REGDEF_H
+ #define _SYS_REGDEF_H
+ 
+-#ifdef __loongarch_lp64
+ #define zero $r0
+ #define ra $r1
+ #define tp $r2
+@@ -91,8 +90,4 @@
+ #define fs6 $f30
+ #define fs7 $f31
+ 
+-#else
+-#error "32bit LoongArch systems are not supported"
+-#endif
+-
+ #endif /* _SYS_REGDEF_H */
+diff --git a/sysdeps/unix/sysv/linux/loongarch/clone.S b/sysdeps/unix/sysv/linux/loongarch/clone.S
+index d2bed24440..d32c3ab578 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/clone.S
++++ b/sysdeps/unix/sysv/linux/loongarch/clone.S
+@@ -33,19 +33,15 @@
+ ENTRY (__clone)
+ 
+ 	/* Align stack to 16 or 8 bytes per the ABI.  */
+-#ifdef __loongarch_lp64
+-	bstrins.d	a1, zero, 3, 0
+-#else
+-#error "32bit LoongArch systems are not supported"
+-#endif
++	BSTRINS		a1, zero, 3, 0
+ 
+ 	/* Sanity check arguments.  */
+ 	beqz		a0, L (invalid) /* No NULL function pointers.  */
+ 	beqz		a1, L (invalid) /* No NULL stack pointers.  */
+ 
+-	addi.d 		a1, a1, -16 /* Reserve argument save space.  */
+-	st.d		a0, a1, 0   /* Save function pointer.  */
+-	st.d		a3, a1, SZREG   /* Save argument pointer.  */
++	ADDI 		a1, a1, -16 /* Reserve argument save space.  */
++	REG_S		a0, a1, 0   /* Save function pointer.  */
++	REG_S		a3, a1, SZREG   /* Save argument pointer.  */
+ 
+ 	/* The syscall expects the args to be in different slots.  */
+ 	or		a0, a2, zero
+@@ -54,7 +50,7 @@ ENTRY (__clone)
+ 	or		a4, a5, zero
+ 
+ 	/* Do the system call.  */
+-	li.d		a7,__NR_clone
++	LI		a7,__NR_clone
+ 	syscall		0
+ 
+ 	blt		a0, zero ,L (error)
+@@ -64,7 +60,7 @@ ENTRY (__clone)
+ 	ret
+ 
+ L (invalid):
+-	li.d		a0, -EINVAL
++	LI		a0, -EINVAL
+ 
+ 	/* Something bad happened -- no child created.  */
+ L (error):
+@@ -84,14 +80,14 @@ L (thread_start):
+ 	cfi_undefined (1)
+ 
+ 	/* Restore the arg for user's function.  */
+-	ld.d		a1, sp, 0   /* Function pointer.  */
+-	ld.d		a0, sp, SZREG   /* Argument pointer.  */
++	REG_L		a1, sp, 0   /* Function pointer.  */
++	REG_L		a0, sp, SZREG   /* Argument pointer.  */
+ 
+ 	/* Call the user's function.  */
+ 	jirl		ra, a1, 0
+ 
+ 	/* Call exit with the function's return value.  */
+-	li.d		a7, __NR_exit
++	LI		a7, __NR_exit
+ 	syscall		0
+ 
+ 	END (__thread_start)
+diff --git a/sysdeps/unix/sysv/linux/loongarch/clone3.S b/sysdeps/unix/sysv/linux/loongarch/clone3.S
+index 5eaaa5462e..6868fdd5da 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/clone3.S
++++ b/sysdeps/unix/sysv/linux/loongarch/clone3.S
+@@ -37,7 +37,7 @@ ENTRY (__clone3)
+ 	beqz		a2, L (invalid)	/* No NULL function pointer.  */
+ 
+ 	/* Do the system call.  */
+-	li.d		a7, __NR_clone3
++	LI		a7, __NR_clone3
+ 	syscall		0
+ 
+ 	blt		a0, zero ,L (error)
+@@ -47,7 +47,7 @@ ENTRY (__clone3)
+ 	ret
+ 
+ L (invalid):
+-	li.d		a0, -EINVAL
++	LI		a0, -EINVAL
+ 
+ 	/* Something bad happened -- no child created.  */
+ L (error):
+@@ -67,18 +67,14 @@ L (thread_start3):
+ 	cfi_undefined (1)
+ 
+ 	/* Align stack to 16 or 8 bytes per the ABI.  */
+-#ifdef __loongarch_lp64
+-	bstrins.d	sp, zero, 3, 0
+-#else
+-#error "32bit LoongArch systems are not supported"
+-#endif
++	BSTRINS		sp, zero, 3, 0
+ 
+ 	/* Set up arguments for the function call.  */
+ 	move		a0, a3		/* Argument.  */
+ 	jirl		ra, a2, 0	/* Call function.  */
+ 
+ 	/* Call exit with the function's return value.  */
+-	li.d		a7, __NR_exit
++	LI		a7, __NR_exit
+ 	syscall		0
+ 
+ 	END (__thread_start3)
+diff --git a/sysdeps/unix/sysv/linux/loongarch/ldconfig.h b/sysdeps/unix/sysv/linux/loongarch/ldconfig.h
+index 126f0860e9..67d233e2bc 100644
+--- a/sysdeps/unix/sysv/linux/loongarch/ldconfig.h
++++ b/sysdeps/unix/sysv/linux/loongarch/ldconfig.h
+@@ -18,12 +18,8 @@
+ 
+ #include <sysdeps/generic/ldconfig.h>
+ 
+-#ifdef __loongarch_lp64
+ #define SYSDEP_KNOWN_INTERPRETER_NAMES \
+   { "/lib64/ld-linux-loongarch-lp64d.so.1", FLAG_ELF_LIBC6 },
+-#else
+-#error cannot determine ABI
+-#endif
+ 
+ #define SYSDEP_KNOWN_LIBRARY_NAMES	\
+   { "libc.so.6", FLAG_ELF_LIBC6 },	\
+-- 
+2.35.1
+
