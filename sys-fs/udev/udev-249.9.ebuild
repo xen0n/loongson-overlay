@@ -1,4 +1,4 @@
-# Copyright 2003-2021 Gentoo Authors
+# Copyright 2003-2022 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=7
@@ -30,7 +30,7 @@ else
 		https://dev.gentoo.org/~soap/distfiles/systemd-musl-patches-${MUSL_PATCHSET}.tar.xz
 	)"
 
-	KEYWORDS="~alpha amd64 arm arm64 hppa ~ia64 ~m68k ~mips ppc ppc64 ~riscv ~s390 sparc x86"
+	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~ia64 ~m68k ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86"
 fi
 
 DESCRIPTION="Linux dynamic and persistent device naming support (aka userspace devfs)"
@@ -117,6 +117,7 @@ pkg_setup() {
 
 src_prepare() {
 	local PATCHES=(
+		"${FILESDIR}/249.9-cross-compile.patch"
 		"${FILESDIR}/loongarch/"*.patch
 	)
 	use elibc_musl && PATCHES+=( "${WORKDIR}"/musl-patches )
