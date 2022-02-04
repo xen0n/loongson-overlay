@@ -1,4 +1,4 @@
-# Copyright 1999-2021 Gentoo Authors
+# Copyright 1999-2022 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=7
@@ -23,7 +23,7 @@ SLOT="2.2"
 EMULTILIB_PKG="true"
 
 # Gentoo patchset (ignored for live ebuilds)
-PATCH_VER=8
+PATCH_VER=12
 PATCH_DEV=dilfridge
 
 if [[ ${PV} == 9999* ]]; then
@@ -181,6 +181,12 @@ XFAIL_TEST_LIST=(
 	# https://sourceware.org/PR19329
 	# https://bugs.gentoo.org/719674#c12
 	tst-stack4
+
+	# The following tests fail only inside portage
+	# https://bugs.gentoo.org/831267
+	tst-system
+	tst-strerror
+	tst-strsignal
 )
 
 #
@@ -422,6 +428,9 @@ setup_flags() {
 	# #492892
 	filter-flags -frecord-gcc-switches
 
+	# #829583
+	filter-lfs-flags
+
 	unset CBUILD_OPT CTARGET_OPT
 	if use multilib ; then
 		CTARGET_OPT=$(get_abi_CTARGET)
@@ -439,33 +448,6 @@ setup_flags() {
 	replace-flags -O0 -O1
 
 	filter-flags '-fstack-protector*'
-}
-
-want_tls() {
-	# Archs that can use TLS (Thread Local Storage)
-	case $(tc-arch) in
-		x86)
-			# requires i486 or better #106556
-			[[ ${CTARGET} == i[4567]86* ]] && return 0
-			return 1
-		;;
-	esac
-	return 0
-}
-
-want__thread() {
-	want_tls || return 1
-
-	# For some reason --with-tls --with__thread is causing segfaults on sparc32.
-	[[ ${PROFILE_ARCH} == "sparc" ]] && return 1
-
-	[[ -n ${WANT__THREAD} ]] && return ${WANT__THREAD}
-
-	# only test gcc -- can't test linking yet
-	tc-has-tls -c ${CTARGET}
-	WANT__THREAD=$?
-
-	return ${WANT__THREAD}
 }
 
 use_multiarch() {
@@ -786,14 +768,6 @@ sanity_prechecks() {
 
 	# When we actually have to compile something...
 	if ! just_headers && [[ ${MERGE_TYPE} != "binary" ]] ; then
-		ebegin "Checking gcc for __thread support"
-		if ! eend $(want__thread ; echo $?) ; then
-			echo
-			eerror "Could not find a gcc that supports the __thread directive!"
-			eerror "Please update your binutils/gcc and try again."
-			die "No __thread support in gcc!"
-		fi
-
 		if [[ ${CTARGET} == *-linux* ]] ; then
 			local run_kv build_kv want_kv
 
@@ -1333,7 +1307,7 @@ glibc_do_src_install() {
 	# Make sure the non-native interp can be found on multilib systems even
 	# if the main library set isn't installed into the right place.  Maybe
 	# we should query the active gcc for info instead of hardcoding it ?
-	local i ldso_abi ldso_name target_ldso_path
+	local i ldso_abi ldso_name
 	local ldso_abi_list=(
 		# x86
 		amd64   /lib64/ld-linux-x86-64.so.2
@@ -1384,8 +1358,7 @@ glibc_do_src_install() {
 
 		ldso_name="$(alt_prefix)${ldso_abi_list[i+1]}"
 		if [[ ! -L ${ED}/${ldso_name} && ! -e ${ED}/${ldso_name} ]] ; then
-			target_ldso_path="../$(get_abi_LIBDIR ${ldso_abi})/${ldso_name##*/}"
-			[[ -e ${target_ldso_path} ]] && dosym ${target_ldso_path} ${ldso_name}
+			dosym ../$(get_abi_LIBDIR ${ldso_abi})/${ldso_name##*/} ${ldso_name}
 		fi
 	done
 
@@ -1548,7 +1521,7 @@ glibc_sanity_check() {
 
 	# first let's find the actual dynamic linker here
 	# symlinks may point to the wrong abi
-	local newldso=$(find . -name 'ld*so.?' -type f -print -quit)
+	local newldso=$(find . -maxdepth 1 -name 'ld*so.?' -type f -print -quit)
 
 	einfo Last-minute run tests with ${newldso} in /$(get_libdir) ...
 
