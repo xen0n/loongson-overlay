@@ -1,4 +1,4 @@
-From 9d399d9fbd184a3f158b8cc49ce08e1962565088 Mon Sep 17 00:00:00 2001
+From 7d997b262b731abb92bb82ebfcce893b5ff1ac59 Mon Sep 17 00:00:00 2001
 From: Wu Xiaotian <wuxiaotian@loongson.cn>
 Date: Tue, 1 Sep 2020 12:13:18 +0800
 Subject: [PATCH 3/8] architecture: register 64bit LoongArch
@@ -53,5 +53,5 @@ index 9abc1831da..758bd8ce23 100644
  #  error "Please register your architecture here!"
  #endif
 -- 
-2.34.0
+2.35.1
 

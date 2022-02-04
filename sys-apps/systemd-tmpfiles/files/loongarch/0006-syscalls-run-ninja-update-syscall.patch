@@ -1,4 +1,4 @@
-From 1c969d0b5de8ddef25ed449d2d147807e249f593 Mon Sep 17 00:00:00 2001
+From 955a68ab4e0edca10d7ca09ce8ee849e2a1acbc6 Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <git@xen0n.name>
 Date: Wed, 1 Sep 2021 14:17:36 +0800
 Subject: [PATCH 6/8] syscalls: run ninja update-syscall-*
@@ -10,7 +10,7 @@ Subject: [PATCH 6/8] syscalls: run ninja update-syscall-*
  create mode 100644 src/basic/syscalls-loongarch64.txt
 
 diff --git a/src/basic/missing_syscall_def.h b/src/basic/missing_syscall_def.h
-index 6a48c2a0c5..84d41d9fd3 100644
+index 29dfd2e5fa..d078bf70df 100644
 --- a/src/basic/missing_syscall_def.h
 +++ b/src/basic/missing_syscall_def.h
 @@ -13,6 +13,7 @@
@@ -111,7 +111,7 @@ index 6a48c2a0c5..84d41d9fd3 100644
  #  elif defined(__m68k__)
  #    define systemd_NR_open_tree 428
  #  elif defined(_MIPS_SIM)
-@@ -692,6 +713,8 @@ assert_cc(__NR_open_tree == systemd_NR_open_tree);
+@@ -758,6 +779,8 @@ assert_cc(__NR_openat2 == systemd_NR_openat2);
  #    define systemd_NR_pidfd_open 434
  #  elif defined(__ia64__)
  #    define systemd_NR_pidfd_open 1458
@@ -120,7 +120,7 @@ index 6a48c2a0c5..84d41d9fd3 100644
  #  elif defined(__m68k__)
  #    define systemd_NR_pidfd_open 434
  #  elif defined(_MIPS_SIM)
-@@ -756,6 +779,8 @@ assert_cc(__NR_pidfd_open == systemd_NR_pidfd_open);
+@@ -822,6 +845,8 @@ assert_cc(__NR_pidfd_open == systemd_NR_pidfd_open);
  #    define systemd_NR_pidfd_send_signal 424
  #  elif defined(__ia64__)
  #    define systemd_NR_pidfd_send_signal 1448
@@ -129,7 +129,7 @@ index 6a48c2a0c5..84d41d9fd3 100644
  #  elif defined(__m68k__)
  #    define systemd_NR_pidfd_send_signal 424
  #  elif defined(_MIPS_SIM)
-@@ -820,6 +845,8 @@ assert_cc(__NR_pidfd_send_signal == systemd_NR_pidfd_send_signal);
+@@ -886,6 +911,8 @@ assert_cc(__NR_pidfd_send_signal == systemd_NR_pidfd_send_signal);
  #    define systemd_NR_pkey_mprotect 380
  #  elif defined(__ia64__)
  #    define systemd_NR_pkey_mprotect 1354
@@ -138,7 +138,7 @@ index 6a48c2a0c5..84d41d9fd3 100644
  #  elif defined(__m68k__)
  #    define systemd_NR_pkey_mprotect 381
  #  elif defined(_MIPS_SIM)
-@@ -884,6 +911,8 @@ assert_cc(__NR_pkey_mprotect == systemd_NR_pkey_mprotect);
+@@ -950,6 +977,8 @@ assert_cc(__NR_pkey_mprotect == systemd_NR_pkey_mprotect);
  #    define systemd_NR_renameat2 353
  #  elif defined(__ia64__)
  #    define systemd_NR_renameat2 1338
@@ -147,7 +147,7 @@ index 6a48c2a0c5..84d41d9fd3 100644
  #  elif defined(__m68k__)
  #    define systemd_NR_renameat2 351
  #  elif defined(_MIPS_SIM)
-@@ -948,6 +977,8 @@ assert_cc(__NR_renameat2 == systemd_NR_renameat2);
+@@ -1014,6 +1043,8 @@ assert_cc(__NR_renameat2 == systemd_NR_renameat2);
  #    define systemd_NR_setns 346
  #  elif defined(__ia64__)
  #    define systemd_NR_setns 1330
@@ -156,7 +156,7 @@ index 6a48c2a0c5..84d41d9fd3 100644
  #  elif defined(__m68k__)
  #    define systemd_NR_setns 344
  #  elif defined(_MIPS_SIM)
-@@ -1012,6 +1043,8 @@ assert_cc(__NR_setns == systemd_NR_setns);
+@@ -1078,6 +1109,8 @@ assert_cc(__NR_setns == systemd_NR_setns);
  #    define systemd_NR_statx 383
  #  elif defined(__ia64__)
  #    define systemd_NR_statx 1350
@@ -771,5 +771,5 @@ index 0000000000..14b89c040e
 +write	64
 +writev	66
 -- 
-2.34.0
+2.35.1
 

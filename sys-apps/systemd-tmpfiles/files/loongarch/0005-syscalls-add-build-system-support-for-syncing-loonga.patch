@@ -1,4 +1,4 @@
-From ad4244743260bc28b5af1fcf38b1be3f5372cab8 Mon Sep 17 00:00:00 2001
+From 060cbe52e3b68f49e3f44b0324e17c3e8533d1ca Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <git@xen0n.name>
 Date: Wed, 1 Sep 2021 14:16:21 +0800
 Subject: [PATCH 5/8] syscalls: add build system support for syncing
@@ -25,10 +25,10 @@ index 452b965db3..e4b6720fa3 100644
          'mips64',
          'mips64n32',
 diff --git a/src/basic/missing_syscalls.py b/src/basic/missing_syscalls.py
-index 19f9726d4e..1fbd619789 100644
+index dd458994f2..2694e83b98 100644
 --- a/src/basic/missing_syscalls.py
 +++ b/src/basic/missing_syscalls.py
-@@ -59,6 +59,8 @@ DEF_TEMPLATE_B = '''\
+@@ -60,6 +60,8 @@ DEF_TEMPLATE_B = '''\
  #    define systemd_NR_{syscall} {nr_i386}
  #  elif defined(__ia64__)
  #    define systemd_NR_{syscall} {nr_ia64}
@@ -38,5 +38,5 @@ index 19f9726d4e..1fbd619789 100644
  #    define systemd_NR_{syscall} {nr_m68k}
  #  elif defined(_MIPS_SIM)
 -- 
-2.34.0
+2.35.1
 

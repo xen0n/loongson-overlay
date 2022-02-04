@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Gentoo Authors
+# Copyright 2020-2022 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=7
@@ -10,7 +10,7 @@ else
 fi
 
 MINKV="3.11"
-MUSL_PATCHSET="${PV}-r1"
+MUSL_PATCHSET="249.5-r1"
 PYTHON_COMPAT=( python3_{8..10} )
 inherit flag-o-matic meson python-any-r1
 
@@ -24,7 +24,7 @@ SRC_URI="https://github.com/systemd/${MY_PN}/archive/v${PV}.tar.gz -> ${MY_PN}-$
 
 LICENSE="BSD-2 GPL-2 LGPL-2.1 MIT public-domain"
 SLOT="0"
-KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~ia64 ~m68k ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc x86"
+KEYWORDS="~alpha amd64 arm arm64 hppa ~ia64 ~m68k ~mips ppc ppc64 ~riscv ~s390 sparc x86"
 IUSE="selinux test"
 RESTRICT="!test? ( test )"
 
@@ -74,11 +74,8 @@ pkg_setup() {
 }
 
 src_prepare() {
-	# Do NOT add patches here
-	local PATCHES=()
-
-	# Add local patches here
-	PATCHES+=(
+	local PATCHES=(
+		"${FILESDIR}/249.9-cross-compile.patch"
 		"${FILESDIR}/loongarch/"*.patch
 	)
 
@@ -87,8 +84,7 @@ src_prepare() {
 	# check SRC_URI_MUSL in systemd_${PV}.bb file for exact list of musl patches
 	# we share patch tarball with sys-fs/udev
 	if use elibc_musl; then
-		einfo "applying musl patches and workarounds"
-		eapply "${WORKDIR}/musl-patches"
+		PATCHES+=( "${WORKDIR}/musl-patches" )
 
 		# avoids re-definition of struct ethhdr, also 0006-Include-netinet-if_ether.h.patch
 		append-cppflags '-D__UAPI_DEF_ETHHDR=0'

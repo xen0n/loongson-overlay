@@ -1,4 +1,4 @@
-From 7316be4638bb158bdc4175a462690d85cf2dd8d4 Mon Sep 17 00:00:00 2001
+From c8aff7891321692e7d02cfc40e25d8d63154955d Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <git@xen0n.name>
 Date: Wed, 30 Jun 2021 20:33:37 +0800
 Subject: [PATCH 2/8] gpt: reformat for restoring vertical alignment
@@ -219,5 +219,5 @@ index 22801f9186..d23d2b7b2a 100644
  #if defined(__x86_64__)
  #  define GPT_ROOT_NATIVE GPT_ROOT_X86_64
 -- 
-2.34.0
+2.35.1
 

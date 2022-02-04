@@ -1,4 +1,4 @@
-From 287a209274cc72689875680d339e95bbb4c26f26 Mon Sep 17 00:00:00 2001
+From a3e7e53de835b1313660f13f25f13dc4183a84a3 Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <git@xen0n.name>
 Date: Wed, 16 Jun 2021 16:44:38 +0800
 Subject: [PATCH 1/8] gpt: support LoongArch 64-bit
@@ -236,5 +236,5 @@ index dc530ef1b0..22801f9186 100644
  #if (__riscv_xlen == 32)
  #  define GPT_ROOT_NATIVE GPT_ROOT_RISCV32
 -- 
-2.34.0
+2.35.1
 
