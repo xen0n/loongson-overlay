@@ -1,4 +1,4 @@
-# Copyright 1999-2021 Gentoo Authors
+# Copyright 1999-2022 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=7
@@ -12,12 +12,15 @@ MY_PN="binutils"
 MY_P="${MY_PN}-${PV}"
 PATCH_BINUTILS_VER=${PATCH_BINUTILS_VER:-${PV}}
 PATCH_DEV=${PATCH_DEV:-dilfridge}
+LOONGARCH_PATCH_PV="$(ver_cut 1-2)"
+LOONGARCH_PATCH_VER=20211128-2
 
 DESCRIPTION="Core binutils libraries (libbfd, libopcodes, libiberty) for external packages"
 HOMEPAGE="https://sourceware.org/binutils/"
 SRC_URI="mirror://gnu/binutils/${MY_P}.tar.xz
 	https://dev.gentoo.org/~${PATCH_DEV}/distfiles/${MY_P}.tar.xz
-	https://dev.gentoo.org/~${PATCH_DEV}/distfiles/${MY_PN}-${PATCH_BINUTILS_VER}-patches-${PATCH_VER}.tar.xz"
+	https://dev.gentoo.org/~${PATCH_DEV}/distfiles/${MY_PN}-${PATCH_BINUTILS_VER}-patches-${PATCH_VER}.tar.xz
+	https://loongson-patchballs-glb.qnbkt.xen0n.name/binutils-${LOONGARCH_PATCH_PV}-loongarch-patches-${LOONGARCH_PATCH_VER}.tar.xz"
 
 LICENSE="|| ( GPL-3 LGPL-3 )"
 SLOT="0/${PV%_p?}"
@@ -43,9 +46,11 @@ src_prepare() {
 		eapply "${WORKDIR}/patch"/*.patch
 	fi
 
-	einfo "Applying LoongArch support patches"
-	eapply "${FILESDIR}"/loongarch-2.37
-	einfo "Done."
+	if [[ ! -z ${LOONGARCH_PATCH_VER} ]]; then
+		einfo "Applying LoongArch support patchset ${LOONGARCH_PATCH_VER}"
+		eapply "${WORKDIR}/loongarch-${LOONGARCH_PATCH_PV}"
+		einfo "Done."
+	fi
 
 	# Fix cross-compile relinking issue, bug #626402
 	elibtoolize
