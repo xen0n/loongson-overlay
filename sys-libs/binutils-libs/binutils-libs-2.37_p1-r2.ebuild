@@ -3,7 +3,7 @@
 
 EAPI=7
 
-PATCH_VER=1
+PATCH_VER=2
 PATCH_DEV=dilfridge
 
 inherit libtool toolchain-funcs multilib-minimal
@@ -41,12 +41,12 @@ MULTILIB_WRAPPED_HEADERS=(
 )
 
 src_prepare() {
-	if [[ ! -z ${PATCH_VER} ]] ; then
+	if [[ -n ${PATCH_VER} ]] ; then
 		einfo "Applying binutils-${PATCH_BINUTILS_VER} patchset ${PATCH_VER}"
 		eapply "${WORKDIR}/patch"/*.patch
 	fi
 
-	if [[ ! -z ${LOONGARCH_PATCH_VER} ]]; then
+	if [[ -n ${LOONGARCH_PATCH_VER} ]]; then
 		einfo "Applying LoongArch support patchset ${LOONGARCH_PATCH_VER}"
 		eapply "${WORKDIR}/loongarch-${LOONGARCH_PATCH_PV}"
 		einfo "Done."
