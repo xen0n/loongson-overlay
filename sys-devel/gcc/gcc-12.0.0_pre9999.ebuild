@@ -13,7 +13,7 @@ inherit toolchain
 
 # add LoongArch port and further upstream-friendly customizations
 EGIT_REPO_URI="https://github.com/xen0n/gcc.git"
-EGIT_BRANCH=for-gentoo-gcc-12-v6
+EGIT_BRANCH=for-gentoo-gcc-12-v20220205
 
 RDEPEND=""
 BDEPEND="${CATEGORY}/binutils"
