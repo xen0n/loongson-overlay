@@ -1,0 +1,63 @@
+From cb06c2b1a1912289f7cae23fb3c11fb212712570 Mon Sep 17 00:00:00 2001
+From: WANG Xuerui <git@xen0n.name>
+Date: Tue, 25 Jan 2022 23:42:11 +0800
+Subject: [PATCH] loongarch64: make use of the newly exposed orig_a0 field for
+ ptrace
+
+* src/linux/loongarch64/get_syscall_args.c: Use orig_a0 for first
+syscall argument.
+* src/linux/loongarch64/arch_prstatus_regset.c: Print the new field.
+* tests/ptrace.c (print_prstatus_regset) [__loongarch__]: Update
+expected output.
+---
+ src/linux/loongarch64/arch_prstatus_regset.c | 4 ++++
+ src/linux/loongarch64/get_syscall_args.c     | 2 +-
+ tests/ptrace.c                               | 4 ++++
+ 3 files changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/src/linux/loongarch64/arch_prstatus_regset.c b/src/linux/loongarch64/arch_prstatus_regset.c
+index eb83c5993..8df75aa8e 100644
+--- a/src/linux/loongarch64/arch_prstatus_regset.c
++++ b/src/linux/loongarch64/arch_prstatus_regset.c
+@@ -20,6 +20,10 @@ arch_decode_prstatus_regset(struct tcb *const tcp,
+ 		PRINT_FIELD_ARRAY_UPTO(regs, regs,
+ 				       fetch_size / 8, tcp,
+ 				       print_xint_array_member);
++		if (fetch_size > offsetof(struct_prstatus_regset, orig_a0)) {
++			tprint_struct_next();
++			PRINT_FIELD_X(regs, orig_a0);
++		}
+ 		if (fetch_size > offsetof(struct_prstatus_regset, csr_era)) {
+ 			tprint_struct_next();
+ 			PRINT_FIELD_X(regs, csr_era);
+diff --git a/src/linux/loongarch64/get_syscall_args.c b/src/linux/loongarch64/get_syscall_args.c
+index 43831688f..e97aa7274 100644
+--- a/src/linux/loongarch64/get_syscall_args.c
++++ b/src/linux/loongarch64/get_syscall_args.c
+@@ -9,7 +9,7 @@
+ static int
+ arch_get_syscall_args(struct tcb *tcp)
+ {
+-	tcp->u_arg[0] = loongarch_regs.regs[4];
++	tcp->u_arg[0] = loongarch_regs.orig_a0;
+ 	tcp->u_arg[1] = loongarch_regs.regs[5];
+ 	tcp->u_arg[2] = loongarch_regs.regs[6];
+ 	tcp->u_arg[3] = loongarch_regs.regs[7];
+diff --git a/tests/ptrace.c b/tests/ptrace.c
+index cd3d59c32..0ecd3c7b7 100644
+--- a/tests/ptrace.c
++++ b/tests/ptrace.c
+@@ -857,6 +857,10 @@ print_prstatus_regset(const void *const rs, const size_t size)
+ 		}
+ 		fputs("]", stdout);
+ 	}
++	if (size >= offsetofend(TRACEE_REGS_STRUCT, orig_a0)) {
++		fputs(", ", stdout);
++		PRINT_FIELD_X(*regs, orig_a0);
++	}
+ 	if (size >= offsetofend(TRACEE_REGS_STRUCT, csr_era)) {
+ 		fputs(", ", stdout);
+ 		PRINT_FIELD_X(*regs, csr_era);
+-- 
+2.35.1
+

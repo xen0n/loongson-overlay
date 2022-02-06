@@ -46,6 +46,7 @@ PATCHES=(
 	"${FILESDIR}/${PV}-loongarch/0003-Add-64-bit-LoongArch-support.patch"
 	"${FILESDIR}/${PV}-loongarch/0004-xlat-add-AUDIT_ARCH_LOONGARCH-constants.patch"
 	"${FILESDIR}/${PV}-loongarch/0005-loongarch64-implement-NT_PRSTATUS-and-NT_FPREGSET-re.patch"
+	"${FILESDIR}/${PV}-loongarch/0006-loongarch64-make-use-of-the-newly-exposed-orig_a0-fi.patch"
 )
 
 src_prepare() {
