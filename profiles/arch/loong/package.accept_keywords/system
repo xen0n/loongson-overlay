@@ -80,6 +80,7 @@
 <app-text/build-docbook-catalog-9999 **
 <app-text/docbook-xml-dtd-9999 **
 <app-text/docbook-xsl-stylesheets-9999 **
+<app-text/mandoc-9999 **
 <app-text/manpager-9999 **
 <app-text/opensp-9999 **
 <app-text/po4a-9999 **
@@ -152,6 +153,9 @@
 <dev-python/flit_core-9999 **
 <dev-python/idna-9999 **
 <dev-python/installer-9999 **
+<dev-python/jaraco-context-9999 **
+<dev-python/jaraco-context-9999 **
+<dev-python/jaraco-functools-9999 **
 <dev-python/jaraco-text-9999 **
 <dev-python/jinja-9999 **
 <dev-python/lxml-9999 **
