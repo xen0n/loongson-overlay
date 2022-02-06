@@ -46,14 +46,27 @@ RDEPEND="
 	iso? ( app-cdr/cdrtools )
 	kernel_linux? ( app-misc/zisofs-tools >=sys-fs/squashfs-tools-2.1 )
 "
-PDEPEND="system-bootloader? ( >=sys-apps/memtest86+-5.01-r4
-				sys-boot/grub:2
-				amd64? ( sys-boot/grub[grub_platforms_efi-32,grub_platforms_efi-64] )
-				loong? ( sys-boot/grub[grub_platforms_efi-64]
-					sys-boot/loongarch-acpi-tables-fix )
-				x86? ( sys-boot/grub[grub_platforms_efi-32] )
-				sys-boot/syslinux
-				sys-boot/shim )"
+COMMON_PDEPEND_X86="
+	>=sys-apps/memtest86+-5.01-r4
+	sys-boot/syslinux
+	sys-boot/shim
+"
+PDEPEND="
+	system-bootloader? (
+		amd64? (
+			${COMMON_PDEPEND_X86}
+			sys-boot/grub:2[grub_platforms_efi-32,grub_platforms_efi-64]
+		)
+		x86? (
+			${COMMON_PDEPEND_X86}
+			sys-boot/grub:2[grub_platforms_efi-32]
+		)
+		loong? (
+			sys-boot/grub:2[grub_platforms_efi-64]
+			sys-boot/loongarch-acpi-tables-fix
+		)
+	)
+"
 
 PATCHES=(
 	"${FILESDIR}"/0001-add-support-for-ARCH-loong.patch
