@@ -31,3 +31,6 @@ sys-block/fio -io-uring -zbc
 # We never had non-deprecated libcrypt support from glibc, so disable compat
 # from libxcrypt for a world without libcrypt.so.1
 >=sys-libs/libxcrypt-4.4.23-r1 compat
+
+# Catalyst has support for assembling bootloader on this arch
+dev-util/catalyst -system-bootloader
