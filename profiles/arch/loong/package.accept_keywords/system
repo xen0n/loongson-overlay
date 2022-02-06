@@ -145,13 +145,19 @@
 <dev-perl/Unicode-EastAsianWidth-9999 **
 <dev-perl/Unicode-LineBreak-9999 **
 <dev-perl/YAML-Tiny-9999 **
+<dev-python/appdirs-9999 **
 <dev-python/certifi-99999 **
 <dev-python/charset_normalizer-99999 **
 <dev-python/cython-9999 **
+<dev-python/flit_core-9999 **
 <dev-python/idna-9999 **
+<dev-python/installer-9999 **
+<dev-python/jaraco-text-9999 **
 <dev-python/jinja-9999 **
 <dev-python/lxml-9999 **
 <dev-python/markupsafe-9999 **
+<dev-python/more-itertools-9999 **
+<dev-python/ordered-set-9999 **
 <dev-python/packaging-9999 **
 <dev-python/PySocks-9999 **
 <dev-python/requests-9999 **
@@ -160,6 +166,7 @@
 <dev-python/toml-9999 **
 <dev-python/tomli-9999 **
 <dev-python/urllib3-9999 **
+<dev-python/wheel-9999 **
 <dev-util/cmake-9999 **
 <dev-util/gperf-9999 **
 <dev-util/gtk-doc-am-9999 **
