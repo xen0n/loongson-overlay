@@ -76,7 +76,7 @@
 <app-portage/elt-patches-99999999 **
 <app-portage/gemato-9999 **
 <app-portage/portage-utils-9999 **
-<app-shells/bash-9999 **
+<app-shells/bash-5.2_alpha **
 <app-text/build-docbook-catalog-9999 **
 <app-text/docbook-xml-dtd-9999 **
 <app-text/docbook-xsl-stylesheets-9999 **
