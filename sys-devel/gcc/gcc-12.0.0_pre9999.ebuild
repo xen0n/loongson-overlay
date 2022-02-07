@@ -14,7 +14,7 @@ inherit toolchain
 # Needs to be after inherit (for now?), bug #830908
 # add LoongArch port and further upstream-friendly customizations
 EGIT_REPO_URI="https://github.com/xen0n/gcc.git"
-EGIT_BRANCH=for-gentoo-gcc-12-v20220205
+EGIT_BRANCH=for-gentoo-gcc-12-v20220207
 EGIT_CLONE_TYPE=${EGIT_CLONE_TYPE:-shallow}
 
 # Don't keyword live ebuilds
