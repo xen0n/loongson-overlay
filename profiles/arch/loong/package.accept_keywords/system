@@ -76,7 +76,7 @@ app-misc/pax-utils ~*
 app-portage/elt-patches ~*
 app-portage/gemato ~*
 app-portage/portage-utils ~*
-<app-shells/bash-5.2_alpha **
+app-shells/bash ~*
 app-text/build-docbook-catalog ~*
 app-text/docbook-xml-dtd ~*
 app-text/docbook-xsl-stylesheets ~*
