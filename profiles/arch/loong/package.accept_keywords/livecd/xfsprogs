@@ -1,2 +1,2 @@
-<sys-fs/xfsprogs-9999 **
-<dev-libs/inih-9999 **
+sys-fs/xfsprogs ~*
+dev-libs/inih ~*

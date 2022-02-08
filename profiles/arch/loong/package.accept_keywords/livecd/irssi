@@ -1,5 +1,5 @@
-<net-irc/irssi-9999 **
-<net-proxy/dante-9999 **
-<acct-group/sockd-9999 **
-<acct-user/sockd-9999 **
-<sys-apps/tcp-wrappers-9999 **
+net-irc/irssi ~*
+net-proxy/dante ~*
+acct-group/sockd ~*
+acct-user/sockd ~*
+sys-apps/tcp-wrappers ~*

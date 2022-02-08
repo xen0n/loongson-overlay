@@ -1,5 +1,5 @@
-<app-misc/livecd-tools-9999 **
-<dev-util/dialog-9999 **
-<media-sound/alsa-utils-9999 **
-<net-dialup/mingetty-9999 **
-<media-libs/libsamplerate-9999 **
+app-misc/livecd-tools ~*
+dev-util/dialog ~*
+media-sound/alsa-utils ~*
+net-dialup/mingetty ~*
+media-libs/libsamplerate ~*

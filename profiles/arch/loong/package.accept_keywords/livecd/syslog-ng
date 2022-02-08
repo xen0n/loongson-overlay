@@ -1,2 +1,2 @@
-<app-admin/syslog-ng-9999 **
-<dev-libs/ivykis-9999 **
+app-admin/syslog-ng ~*
+dev-libs/ivykis ~*

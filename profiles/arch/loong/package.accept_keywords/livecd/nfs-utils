@@ -1,3 +1,3 @@
-<net-fs/nfs-utils-9999 **
-<net-nds/rpcbind-9999 **
-<net-libs/rpcsvc-proto-9999 **
+net-fs/nfs-utils ~*
+net-nds/rpcbind ~*
+net-libs/rpcsvc-proto ~*

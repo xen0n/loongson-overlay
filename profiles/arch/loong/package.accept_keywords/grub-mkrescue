@@ -1,2 +1,2 @@
-<dev-libs/libisoburn-9999 **
-<sys-fs/mtools-9999 **
+dev-libs/libisoburn ~*
+sys-fs/mtools ~*

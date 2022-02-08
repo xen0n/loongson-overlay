@@ -1,2 +1,2 @@
 # needed by USE=X
-<x11-libs/libXaw-9999 **
+x11-libs/libXaw ~*

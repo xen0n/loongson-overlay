@@ -1,2 +1,2 @@
-<sys-apps/irqbalance-9999 **
-<sys-process/numactl-9999 **
+sys-apps/irqbalance ~*
+sys-process/numactl ~*

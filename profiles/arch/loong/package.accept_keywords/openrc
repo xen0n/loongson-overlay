@@ -1,4 +1,4 @@
-<net-misc/netifrc-9999 **
-<sys-apps/openrc-9999 **
-<sys-apps/systemd-tmpfiles-9999 **
-<sys-fs/udev-9999 **
+net-misc/netifrc ~*
+sys-apps/openrc ~*
+sys-apps/systemd-tmpfiles ~*
+sys-fs/udev ~*

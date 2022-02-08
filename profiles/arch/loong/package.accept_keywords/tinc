@@ -1,2 +1,2 @@
-<dev-libs/lzo-9999 **
-<net-vpn/tinc-9999 **
+dev-libs/lzo ~*
+net-vpn/tinc ~*

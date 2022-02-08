@@ -1,2 +1,2 @@
-<sys-apps/acl-9999 **
-<sys-fs/btrfs-progs-9999 **
+sys-apps/acl ~*
+sys-fs/btrfs-progs ~*

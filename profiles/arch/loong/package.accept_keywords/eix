@@ -1,3 +1,3 @@
-<app-portage/eix-9999 **
-<app-shells/push-9999 **
-<app-shells/quoter-9999 **
+app-portage/eix ~*
+app-shells/push ~*
+app-shells/quoter ~*

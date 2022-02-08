@@ -1,6 +1,6 @@
-<dev-lang/swig-9999 **
-<dev-libs/libnl-99999999 **
-<dev-python/m2crypto-9999 **
-<net-wireless/crda-9999 **
-<net-wireless/wireless-regdb-99999999 **
-<net-wireless/wpa_supplicant-9999 **
+dev-lang/swig ~*
+dev-libs/libnl ~*
+dev-python/m2crypto ~*
+net-wireless/crda ~*
+net-wireless/wireless-regdb ~*
+net-wireless/wpa_supplicant ~*

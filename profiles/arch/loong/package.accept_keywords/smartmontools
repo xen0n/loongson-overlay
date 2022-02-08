@@ -1,2 +1,2 @@
-<net-mail/mailutils-9999 **
+net-mail/mailutils ~*
 virtual/mailx **

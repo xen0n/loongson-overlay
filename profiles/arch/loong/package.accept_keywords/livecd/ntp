@@ -1,3 +1,3 @@
-<net-misc/ntp-9999 **
-<acct-group/ntp-9999 **
-<acct-user/ntp-9999 **
+net-misc/ntp ~*
+acct-group/ntp ~*
+acct-user/ntp ~*

@@ -1,2 +1,2 @@
-<sys-apps/sdparm-9999 **
-<sys-apps/sg3_utils-9999 **
+sys-apps/sdparm ~*
+sys-apps/sg3_utils ~*

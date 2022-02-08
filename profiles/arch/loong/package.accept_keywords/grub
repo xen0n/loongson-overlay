@@ -1,3 +1,3 @@
-<sys-boot/efibootmgr-9999 **
-<sys-boot/grub-9999 **
-<sys-libs/efivar-9999 **
+sys-boot/efibootmgr ~*
+sys-boot/grub ~*
+sys-libs/efivar ~*
