@@ -39,7 +39,7 @@ else
 	SLOT=$(ver_cut 1-2)
 	# only meant for testing on loong
 	#KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~ia64 ~m68k ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86"
-	KEYWORDS=""
+	KEYWORDS="~loong"
 fi
 
 #
