@@ -19,7 +19,7 @@ REQUIRED_USE="default-gold? ( gold )"
 # PATCH_DEV          - Use download URI https://dev.gentoo.org/~{PATCH_DEV}/distfiles/...
 #                      for the patchsets
 
-PATCH_VER=
+PATCH_VER=2
 PATCH_DEV=dilfridge
 
 LOONGARCH_PATCH_PV="$(ver_cut 1-2)"
@@ -37,6 +37,7 @@ else
 	[[ -z ${LOONGARCH_PATCH_VER} ]] || SRC_URI="${SRC_URI}
 		https://loongson-patchballs-glb.qnbkt.xen0n.name/binutils-${LOONGARCH_PATCH_PV}-loongarch-patches-${LOONGARCH_PATCH_VER}.tar.xz"
 	SLOT=$(ver_cut 1-2)
+	# live ebuild
 	# only meant for testing on loong
 	#KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~ia64 ~m68k ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86"
 	KEYWORDS="~loong"
@@ -91,8 +92,8 @@ src_unpack() {
 		unpack ${P/-hppa64/}.tar.xz
 
 		cd "${WORKDIR}" || die
-		[[ -n $PATCH_VER ]] && unpack binutils-${PATCH_BINUTILS_VER}-patches-${PATCH_VER}.tar.xz
-		[[ -n $LOONGARCH_PATCH_VER ]] && unpack binutils-${LOONGARCH_PATCH_PV}-loongarch-patches-${LOONGARCH_PATCH_VER}.tar.xz
+		unpack binutils-${PATCH_BINUTILS_VER}-patches-${PATCH_VER}.tar.xz
+		unpack binutils-${LOONGARCH_PATCH_PV}-loongarch-patches-${LOONGARCH_PATCH_VER}.tar.xz
 
 		# _p patch versions are Gentoo specific tarballs ...
 		local dir=${P%_p?}
