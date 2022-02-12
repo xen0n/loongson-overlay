@@ -6,10 +6,7 @@ EAPI=7
 # Bumping notes: https://wiki.gentoo.org/wiki/Project:Toolchain/sys-libs/glibc
 # Please read & adapt the page as necessary if obsolete.
 
-# We avoid Python 3.10 here _for now_ (it does work!) to avoid circular dependencies
-# on upgrades as people migrate to libxcrypt.
-# https://wiki.gentoo.org/wiki/User:Sam/Portage_help/Circular_dependencies#Python_and_libcrypt
-PYTHON_COMPAT=( python3_{7,8,9} )
+PYTHON_COMPAT=( python3_{8,9,10} )
 TMPFILES_OPTIONAL=1
 
 inherit python-any-r1 prefix preserve-libs toolchain-funcs flag-o-matic gnuconfig \
@@ -23,7 +20,7 @@ SLOT="2.2"
 EMULTILIB_PKG="true"
 
 # Gentoo patchset (ignored for live ebuilds)
-PATCH_VER=1
+PATCH_VER=2
 PATCH_DEV=dilfridge
 
 # LoongArch patchset (also ignored for live ebuilds)
@@ -909,21 +906,9 @@ glibc_do_configure() {
 	echo
 	local myconf=()
 
-	case ${CTARGET} in
-		m68k*)
-			# setjmp() is not compatible with stack protection:
-			# https://sourceware.org/PR24202
-			myconf+=( --enable-stack-protector=no )
-			;;
-		*)
-			# Use '=strong' instead of '=all' to protect only functions
-			# worth protecting from stack smashes.
-			# '=all' is also known to have a problem in IFUNC resolution
-			# tests: https://sourceware.org/PR25680, bug #712356.
-			myconf+=( --enable-stack-protector=$(usex ssp strong no) )
-			;;
-	esac
-	myconf+=( --enable-stackguard-randomization )
+	# Use '=strong' instead of '=all' to protect only functions
+	# worth protecting from stack smashes.
+	myconf+=( --enable-stack-protector=$(usex ssp strong no) )
 
 	# Keep a whitelist of targets supporing IFUNC. glibc's ./configure
 	# is not robust enough to detect proper support:
@@ -973,7 +958,6 @@ glibc_do_configure() {
 	fi
 
 	myconf+=(
-		--without-cvs
 		--disable-werror
 		--enable-bind-now
 		--build=${CBUILD_OPT:-${CBUILD}}
@@ -1144,7 +1128,6 @@ glibc_headers_configure() {
 	myconf+=(
 		--disable-sanity-checks
 		--enable-hacker-mode
-		--without-cvs
 		--disable-werror
 		--enable-bind-now
 		--build=${CBUILD_OPT:-${CBUILD}}
