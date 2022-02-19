@@ -37,3 +37,9 @@ sys-devel/llvm llvm_targets_NVPTX llvm_targets_PowerPC
 sys-devel/llvm llvm_targets_RISCV llvm_targets_Sparc
 sys-devel/llvm llvm_targets_SystemZ llvm_targets_WebAssembly
 sys-devel/llvm llvm_targets_X86 llvm_targets_XCore
+
+# taken from ::gentoo, we're the same:
+#
+# Sam James <sam@gentoo.org> (2022-02-19)
+# New enough SpiderMonkey not keyworded here, bug #753221
+sys-auth/polkit duktape
