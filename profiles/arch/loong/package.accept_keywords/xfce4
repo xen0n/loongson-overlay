@@ -9,7 +9,8 @@ app-eselect/eselect-fontconfig ~*
 app-text/gnome-doc-utils ~*
 app-text/iso-codes ~*
 app-text/scrollkeeper-dtd ~*
-<dev-lang/spidermonkey-78 ** # to avoid rust
+dev-lang/duktape ~*
+<dev-lang/spidermonkey-78 ~* # to avoid rust
 dev-lang/vala ~*
 dev-libs/atk ~*
 dev-libs/boost ~*
@@ -68,7 +69,7 @@ media-libs/harfbuzz ~*
 media-libs/libpng ~*
 net-libs/glib-networking ~*
 net-libs/libproxy ~*
-<sys-auth/polkit-0.118 ** # to avoid spidermonkey:78
+sys-auth/polkit ~*
 sys-block/parted ~*
 sys-block/thin-provisioning-tools ~*
 sys-fs/cryptsetup ~*
