@@ -6,10 +6,12 @@ EAPI=8
 PYTHON_COMPAT=( python3_{8,9,10} )
 PYTHON_REQ_USE="ncurses,readline"
 
-FIRMWARE_ABI_VERSION="6.2.0"
+FIRMWARE_ABI_VERSION="7.0.0"
 
 inherit linux-info toolchain-funcs python-r1 udev fcaps readme.gentoo-r1 \
 		pax-utils xdg-utils
+
+LOONGARCH_PATCH_VER=20220323-1
 
 if [[ ${PV} = *9999* ]]; then
 	EGIT_REPO_URI="https://git.qemu.org/git/qemu.git"
@@ -22,9 +24,13 @@ if [[ ${PV} = *9999* ]]; then
 	inherit git-r3
 	SRC_URI=""
 else
-	SRC_URI="https://download.qemu.org/${P}.tar.xz"
-	KEYWORDS="~amd64 ~arm ~arm64 ~ppc ~ppc64 ~riscv ~x86"
+	SRC_URI="
+		https://download.qemu.org/${P/_/-}.tar.xz
+		https://loongson-patchballs-glb.qnbkt.xen0n.name/${P}-loongarch-patches-${LOONGARCH_PATCH_VER}.tar.xz"
+	KEYWORDS="~amd64"
 fi
+
+S="${WORKDIR}/${P/_/-}"
 
 DESCRIPTION="QEMU + Kernel-based Virtual Machine userland tools"
 HOMEPAGE="https://www.qemu.org https://www.linux-kvm.org"
@@ -41,7 +47,7 @@ IUSE="accessibility +aio alsa bpf bzip2 capstone +caps +curl debug +doc
 	+slirp
 	smartcard snappy spice ssh static static-user systemtap test udev usb
 	usbredir vde +vhost-net vhost-user-fs virgl virtfs +vnc vte xattr xen
-	xfs zstd"
+	zstd"
 
 COMMON_TARGETS="
 	aarch64
@@ -50,6 +56,7 @@ COMMON_TARGETS="
 	cris
 	hppa
 	i386
+	loongarch64
 	m68k
 	microblaze
 	microblazeel
@@ -85,7 +92,6 @@ IUSE_USER_TARGETS="
 	hexagon
 	mipsn32
 	mipsn32el
-	ppc64abi32
 	ppc64le
 	sparc32plus
 "
@@ -136,7 +142,6 @@ ALL_DEPEND="
 # Dependencies required for qemu tools (qemu-nbd, qemu-img, qemu-io, ...)
 # softmmu targets (qemu-system-*).
 SOFTMMU_TOOLS_DEPEND="
-	dev-libs/libxml2[static-libs(+)]
 	>=x11-libs/pixman-0.28.0[static-libs(+)]
 	accessibility? (
 		app-accessibility/brltty[api]
@@ -206,7 +211,6 @@ SOFTMMU_TOOLS_DEPEND="
 	virgl? ( media-libs/virglrenderer[static-libs(+)] )
 	virtfs? ( sys-libs/libcap )
 	xen? ( app-emulation/xen-tools:= )
-	xfs? ( sys-fs/xfsprogs[static-libs(+)] )
 	zstd? ( >=app-arch/zstd-1.4.0[static-libs(+)] )
 "
 
@@ -279,8 +283,7 @@ PATCHES=(
 	"${FILESDIR}"/${PN}-5.2.0-disable-keymap.patch
 	"${FILESDIR}"/${PN}-6.0.0-make.patch
 	"${FILESDIR}"/${PN}-6.1.0-strings.patch
-	"${FILESDIR}"/${PN}-6.2.0-user-SLIC-crash.patch
-	"${FILESDIR}"/${PN}-6.2.0-also-build-virtfs-proxy-helper.patch
+	"${FILESDIR}"/${PN}-7.0.0-also-build-virtfs-proxy-helper.patch
 )
 
 QA_PREBUILT="
@@ -409,6 +412,9 @@ check_targets() {
 }
 
 src_prepare() {
+	# Add LoongArch target support first
+	eapply "${WORKDIR}/loongarch-${PV}/"*.patch
+
 	check_targets IUSE_SOFTMMU_TARGETS softmmu
 	check_targets IUSE_USER_TARGETS linux-user
 
@@ -567,17 +573,10 @@ qemu_src_configure() {
 		$(conf_notuser vte)
 		$(conf_notuser xen)
 		$(conf_notuser xen xen-pci-passthrough)
-		$(conf_notuser xfs xfsctl)
 		# use prebuilt keymaps, bug #759604
 		--disable-xkbcommon
 		$(conf_notuser zstd)
 	)
-
-	if [[ ${buildtype} == "user" ]] ; then
-		conf_opts+=( --disable-libxml2 )
-	else
-		conf_opts+=( --enable-libxml2 )
-	fi
 
 	if [[ ! ${buildtype} == "user" ]] ; then
 		# audio options
