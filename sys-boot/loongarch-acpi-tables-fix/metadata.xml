@@ -5,11 +5,4 @@
 	<email>git@xen0n.name</email>
 	<name>WANG Xuerui</name>
 </maintainer>
-<use>
-	<flag name="dracut">
-		Install dracut config file for automatically including ACPI tables
-		from this package
-	</flag>
-	<flag name="initrd">Install an early initrd ready for use into /boot</flag>
-</use>
 </pkgmetadata>
