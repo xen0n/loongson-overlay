@@ -3,7 +3,7 @@
 
 EAPI=7
 
-PATCH_VER=2
+PATCH_VER=3
 PATCH_DEV=dilfridge
 
 inherit libtool toolchain-funcs multilib-minimal
@@ -13,7 +13,7 @@ MY_P="${MY_PN}-${PV}"
 PATCH_BINUTILS_VER=${PATCH_BINUTILS_VER:-${PV}}
 PATCH_DEV=${PATCH_DEV:-dilfridge}
 LOONGARCH_PATCH_PV="$(ver_cut 1-2)"
-LOONGARCH_PATCH_VER=20211128-2
+LOONGARCH_PATCH_VER=20220324-1
 
 DESCRIPTION="Core binutils libraries (libbfd, libopcodes, libiberty) for external packages"
 HOMEPAGE="https://sourceware.org/binutils/"
