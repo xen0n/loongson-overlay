@@ -19,11 +19,11 @@ REQUIRED_USE="default-gold? ( gold )"
 # PATCH_DEV          - Use download URI https://dev.gentoo.org/~{PATCH_DEV}/distfiles/...
 #                      for the patchsets
 
-PATCH_VER=2
+PATCH_VER=3
 PATCH_DEV=dilfridge
 
 LOONGARCH_PATCH_PV="$(ver_cut 1-2)"
-LOONGARCH_PATCH_VER=20220209-1
+LOONGARCH_PATCH_VER=20220324-1
 
 if [[ ${PV} == 9999* ]]; then
 	inherit git-r3
@@ -295,10 +295,6 @@ src_configure() {
 		if use pgo ; then
 			export BUILD_CFLAGS="${CFLAGS}"
 		fi
-	fi
-
-	if use pgo && ! is_cross ; then
-		export BUILD_CFLAGS="${CFLAGS}"
 	fi
 
 	echo ./configure "${myconf[@]}"
