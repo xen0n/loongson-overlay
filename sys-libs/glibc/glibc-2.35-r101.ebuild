@@ -24,7 +24,8 @@ PATCH_VER=3
 PATCH_DEV=dilfridge
 
 # LoongArch patchset (also ignored for live ebuilds)
-LOONGARCH_PATCH_VER=20220204-1
+LOONGARCH_PATCH_VER=20220326-1
+LOONGARCH_PATCH_DEV=xen0n
 
 if [[ ${PV} == 9999* ]]; then
 	inherit git-r3
@@ -33,7 +34,7 @@ else
 	KEYWORDS="~loong"
 	SRC_URI="mirror://gnu/glibc/${P}.tar.xz"
 	SRC_URI+=" https://dev.gentoo.org/~${PATCH_DEV}/distfiles/${P}-patches-${PATCH_VER}.tar.xz"
-	SRC_URI+=" https://loongson-patchballs-glb.qnbkt.xen0n.name/${P}-loongarch-patches-${LOONGARCH_PATCH_VER}.tar.xz"
+	SRC_URI+=" https://dev.gentoo.org/~${LOONGARCH_PATCH_DEV}/distfiles/${P}-loongarch-patches-${LOONGARCH_PATCH_VER}.tar.xz"
 fi
 
 RELEASE_VER=${PV}
