@@ -280,6 +280,7 @@ gentoo_urls() {
 		HTTP~sam/distfiles/URI
 		HTTP~sam/distfiles/sys-devel/gcc/URI
 		HTTP~tamiko/distfiles/URI
+		HTTP~xen0n/distfiles/URI
 		HTTP~zorry/patches/gcc/URI
 		HTTP~vapier/dist/URI
 		HTTP~blueness/dist/URI"
