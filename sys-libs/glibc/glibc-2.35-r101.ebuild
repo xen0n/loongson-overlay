@@ -866,6 +866,12 @@ src_prepare() {
 		einfo "Done."
 	fi
 
+	if [[ ${PV} != 9999* ]] ; then
+		einfo "Applying LoongArch support patchset ${LOONGARCH_PATCH_VER}"
+		eapply "${WORKDIR}/loongarch-${PV}"
+		einfo "Done."
+	fi
+
 	# TODO: We can drop this once patch is gone from our patchset
 	append-cppflags -DGENTOO_USE_CLONE3
 
