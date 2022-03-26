@@ -179,7 +179,9 @@ dev-util/gperf ~*
 dev-util/gtk-doc-am ~*
 dev-util/meson ~*
 dev-util/meson-format-array ~*
+dev-util/ninja ~*
 dev-util/pkgconf ~*
+dev-util/re2c ~*
 dev-util/strace ~*
 dev-vcs/git ~*
 net-dns/libidn2 ~*
