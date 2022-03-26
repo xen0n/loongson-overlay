@@ -106,6 +106,7 @@ dev-libs/libpcre2 ~*
 dev-libs/libpcre ~*
 dev-libs/libpipeline ~*
 dev-libs/libtasn1 ~*
+dev-libs/libunistring ~*
 dev-libs/libxml2 ~*
 dev-libs/libxslt ~*
 dev-libs/mpc ~*
