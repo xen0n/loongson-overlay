@@ -11,7 +11,7 @@ FIRMWARE_ABI_VERSION="7.0.0"
 inherit linux-info toolchain-funcs python-r1 udev fcaps readme.gentoo-r1 \
 		pax-utils xdg-utils
 
-LOONGARCH_PATCH_VER=20220323-1
+LOONGARCH_PATCH_VER=20220331-1
 
 if [[ ${PV} = *9999* ]]; then
 	EGIT_REPO_URI="https://git.qemu.org/git/qemu.git"
