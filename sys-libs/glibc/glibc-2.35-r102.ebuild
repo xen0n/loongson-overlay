@@ -20,7 +20,7 @@ SLOT="2.2"
 EMULTILIB_PKG="true"
 
 # Gentoo patchset (ignored for live ebuilds)
-PATCH_VER=3
+PATCH_VER=5
 PATCH_DEV=dilfridge
 
 # LoongArch patchset (also ignored for live ebuilds)
@@ -49,7 +49,7 @@ SRC_URI+=" https://gitweb.gentoo.org/proj/locale-gen.git/snapshot/locale-gen-${L
 SRC_URI+=" multilib-bootstrap? ( https://dev.gentoo.org/~dilfridge/distfiles/gcc-multilib-bootstrap-${GCC_BOOTSTRAP_VER}.tar.xz )"
 SRC_URI+=" systemd? ( https://gitweb.gentoo.org/proj/toolchain/glibc-systemd.git/snapshot/glibc-systemd-${GLIBC_SYSTEMD_VER}.tar.gz )"
 
-IUSE="audit caps cet compile-locales +crypt custom-cflags doc gd headers-only +multiarch multilib multilib-bootstrap nscd profile selinux +ssp +static-libs suid systemd systemtap test vanilla"
+IUSE="audit caps cet +clone3 compile-locales +crypt custom-cflags doc gd headers-only +multiarch multilib multilib-bootstrap nscd profile selinux +ssp +static-libs suid systemd systemtap test vanilla"
 
 # Minimum kernel version that glibc requires
 MIN_KERN_VER="3.2.0"
@@ -523,8 +523,8 @@ setup_env() {
 		# Last, we need the settings of the *build* environment, not of the
 		# target environment...
 
-		local current_binutils_path=$(env ROOT="${SYSROOT}" binutils-config -B)
-		local current_gcc_path=$(env ROOT="${SYSROOT}" gcc-config -B)
+		local current_binutils_path=$(env ROOT="${BROOT}" binutils-config -B)
+		local current_gcc_path=$(env ROOT="${BROOT}" gcc-config -B)
 		einfo "Overriding clang configuration, since it won't work here"
 
 		export CC="${current_gcc_path}/gcc"
@@ -800,6 +800,7 @@ upgrade_warning() {
 				ewarn "After upgrading glibc, please restart all running processes."
 				ewarn "Be sure to include init (telinit u) or systemd (systemctl daemon-reexec)."
 				ewarn "Alternatively, reboot your system."
+				ewarn "(See bug #660556, bug #741116, bug #823756, etc)"
 				break
 			fi
 		done
@@ -872,8 +873,13 @@ src_prepare() {
 		einfo "Done."
 	fi
 
-	# TODO: We can drop this once patch is gone from our patchset
-	append-cppflags -DGENTOO_USE_CLONE3
+	if use clone3 ; then
+		append-cppflags -DGENTOO_USE_CLONE3
+	else
+		# See e.g. bug #827386, bug #819045.
+		elog "Disabling the clone3 syscall for compatibility with older Electron apps."
+		elog "Please re-enable this flag before filing bugs!"
+	fi
 
 	default
 
