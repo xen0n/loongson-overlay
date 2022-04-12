@@ -6,7 +6,7 @@ EAPI=8
 PYTHON_COMPAT=( python3_{8,9,10} )
 PYTHON_REQ_USE="ncurses,readline"
 
-FIRMWARE_ABI_VERSION="7.0.0"
+FIRMWARE_ABI_VERSION="6.2.0"
 
 inherit linux-info toolchain-funcs python-r1 udev fcaps readme.gentoo-r1 \
 		pax-utils xdg-utils
@@ -14,7 +14,7 @@ inherit linux-info toolchain-funcs python-r1 udev fcaps readme.gentoo-r1 \
 LOONGARCH_PATCH_VER=20220331-1
 
 if [[ ${PV} = *9999* ]]; then
-	EGIT_REPO_URI="https://git.qemu.org/git/qemu.git"
+	EGIT_REPO_URI="https://gitlab.com/qemu-project/qemu.git/"
 	EGIT_SUBMODULES=(
 		meson
 		tests/fp/berkeley-softfloat-3
@@ -24,13 +24,13 @@ if [[ ${PV} = *9999* ]]; then
 	inherit git-r3
 	SRC_URI=""
 else
+	MY_P="${PN}-${PV/_rc/-rc}"
 	SRC_URI="
-		https://download.qemu.org/${P/_/-}.tar.xz
-		https://loongson-patchballs-glb.qnbkt.xen0n.name/${P}-loongarch-patches-${LOONGARCH_PATCH_VER}.tar.xz"
+		https://download.qemu.org/${MY_P}.tar.xz
+		https://loongson-patchballs-glb.qnbkt.xen0n.name/qemu-7.0.0_rc2-loongarch-patches-${LOONGARCH_PATCH_VER}.tar.xz"
 	KEYWORDS="~amd64"
+	S="${WORKDIR}/${MY_P}"
 fi
-
-S="${WORKDIR}/${P/_/-}"
 
 DESCRIPTION="QEMU + Kernel-based Virtual Machine userland tools"
 HOMEPAGE="https://www.qemu.org https://www.linux-kvm.org"
@@ -304,6 +304,7 @@ QA_WX_LOAD="usr/bin/qemu-i386
 	usr/bin/qemu-alpha
 	usr/bin/qemu-arm
 	usr/bin/qemu-cris
+	usr/bin/qemu-loongarch64
 	usr/bin/qemu-m68k
 	usr/bin/qemu-microblaze
 	usr/bin/qemu-microblazeel
@@ -312,7 +313,6 @@ QA_WX_LOAD="usr/bin/qemu-i386
 	usr/bin/qemu-or1k
 	usr/bin/qemu-ppc
 	usr/bin/qemu-ppc64
-	usr/bin/qemu-ppc64abi32
 	usr/bin/qemu-sh4
 	usr/bin/qemu-sh4eb
 	usr/bin/qemu-sparc
