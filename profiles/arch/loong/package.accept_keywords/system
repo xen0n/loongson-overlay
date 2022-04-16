@@ -102,8 +102,8 @@ dev-libs/libgcrypt ~*
 dev-libs/libgpg-error ~*
 dev-libs/libksba ~*
 dev-libs/libltdl ~*
-dev-libs/libpcre2 ~*
 dev-libs/libpcre ~*
+dev-libs/libpcre2 ~*
 dev-libs/libpipeline ~*
 dev-libs/libtasn1 ~*
 dev-libs/libunistring ~*
@@ -206,12 +206,14 @@ sys-apps/attr ~*
 sys-apps/baselayout ~*
 sys-apps/busybox ~*
 sys-apps/coreutils ~*
+sys-apps/dbus ~*
 sys-apps/debianutils ~*
 sys-apps/diffutils ~*
 sys-apps/file ~*
 sys-apps/findutils ~*
 sys-apps/gawk ~*
 sys-apps/gentoo-functions ~*
+sys-apps/gentoo-systemd-integration ~*
 sys-apps/grep ~*
 sys-apps/groff ~*
 sys-apps/help2man ~*
@@ -254,6 +256,7 @@ sys-devel/libtool ~*
 sys-devel/m4 ~*
 sys-devel/make ~*
 sys-devel/patch ~*
+sys-devel/systemd-m4 ~*
 sys-fs/e2fsprogs ~*
 sys-fs/udev-init-scripts ~*
 sys-kernel/installkernel-gentoo ~*
