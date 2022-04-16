@@ -413,7 +413,7 @@ check_targets() {
 
 src_prepare() {
 	# Add LoongArch target support first
-	eapply "${WORKDIR}/loongarch-${PV}/"*.patch
+	eapply "${WORKDIR}/loongarch-7.0.0_rc2/"*.patch
 
 	check_targets IUSE_SOFTMMU_TARGETS softmmu
 	check_targets IUSE_USER_TARGETS linux-user
