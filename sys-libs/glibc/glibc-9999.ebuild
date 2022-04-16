@@ -23,14 +23,20 @@ EMULTILIB_PKG="true"
 PATCH_VER=1
 PATCH_DEV=dilfridge
 
+# LoongArch patchset (also ignored for live ebuilds)
+LOONGARCH_PATCH_VER=20220416-2
+LOONGARCH_PATCH_DEV=xen0n
+
 if [[ ${PV} == 9999* ]]; then
 	inherit git-r3
 else
 	#KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~ia64 ~m68k ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86"
-	KEYWORDS=""
+	KEYWORDS="~loong"
 	SRC_URI="mirror://gnu/glibc/${P}.tar.xz"
 	SRC_URI+=" https://dev.gentoo.org/~${PATCH_DEV}/distfiles/${P}-patches-${PATCH_VER}.tar.xz"
 fi
+
+SRC_URI+=" https://dev.gentoo.org/~${LOONGARCH_PATCH_DEV}/distfiles/glibc-2.36-loongarch-patches-${LOONGARCH_PATCH_VER}.tar.xz"
 
 RELEASE_VER=${PV}
 
@@ -831,10 +837,11 @@ src_unpack() {
 	use multilib-bootstrap && unpack gcc-multilib-bootstrap-${GCC_BOOTSTRAP_VER}.tar.xz
 
 	if [[ ${PV} == 9999* ]] ; then
-		EGIT_REPO_URI="https://anongit.gentoo.org/git/proj/toolchain/glibc-patches.git"
-		EGIT_CHECKOUT_DIR=${WORKDIR}/patches-git
-		git-r3_src_unpack
-		mv patches-git/9999 patches || die
+		# upstream needs updating; packed in loongarch patchball in the meantime
+		#EGIT_REPO_URI="https://anongit.gentoo.org/git/proj/toolchain/glibc-patches.git"
+		#EGIT_CHECKOUT_DIR=${WORKDIR}/patches-git
+		#git-r3_src_unpack
+		#mv patches-git/9999 patches || die
 
 		EGIT_REPO_URI="https://sourceware.org/git/glibc.git"
 		EGIT_CHECKOUT_DIR=${S}
@@ -849,6 +856,8 @@ src_unpack() {
 	cd "${WORKDIR}" || die
 	unpack locale-gen-${LOCALE_GEN_VER}.tar.gz
 	use systemd && unpack glibc-systemd-${GLIBC_SYSTEMD_VER}.tar.gz
+
+	unpack glibc-2.36-loongarch-patches-${LOONGARCH_PATCH_VER}.tar.xz
 }
 
 src_prepare() {
@@ -863,6 +872,10 @@ src_prepare() {
 		eapply "${WORKDIR}"/patches
 		einfo "Done."
 	fi
+
+	einfo "Applying LoongArch support patchset ${LOONGARCH_PATCH_VER}"
+	eapply "${WORKDIR}/loongarch-2.36"
+	einfo "Done."
 
 	default
 
@@ -1273,12 +1286,14 @@ glibc_do_src_install() {
 	# Make sure the non-native interp can be found on multilib systems even
 	# if the main library set isn't installed into the right place.  Maybe
 	# we should query the active gcc for info instead of hardcoding it ?
-	local i ldso_abi ldso_name
+	local i ldso_abi ldso_name target_ldso_path
 	local ldso_abi_list=(
 		# x86
 		amd64   /lib64/ld-linux-x86-64.so.2
 		x32     /libx32/ld-linux-x32.so.2
 		x86     /lib/ld-linux.so.2
+		# loong
+		lp64d   /lib64/ld-linux-loongarch-lp64d.so.1
 		# mips
 		o32     /lib/ld.so.1
 		n32     /lib32/ld.so.1
@@ -1324,7 +1339,8 @@ glibc_do_src_install() {
 
 		ldso_name="$(alt_prefix)${ldso_abi_list[i+1]}"
 		if [[ ! -L ${ED}/${ldso_name} && ! -e ${ED}/${ldso_name} ]] ; then
-			dosym ../$(get_abi_LIBDIR ${ldso_abi})/${ldso_name##*/} ${ldso_name}
+			target_ldso_path="../$(get_abi_LIBDIR ${ldso_abi})/${ldso_name##*/}"
+			[[ -e ${target_ldso_path} ]] && dosym ${target_ldso_path} ${ldso_name}
 		fi
 	done
 
