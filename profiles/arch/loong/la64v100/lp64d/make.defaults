@@ -12,10 +12,3 @@ FCFLAGS="${CFLAGS}"
 MULTILIB_ABIS="lp64d"
 DEFAULT_ABI="lp64d"
 ABI="lp64d"
-
-# Temporarily workaround multilib.eclass having no support for LoongArch
-#LIBDIR_default="lib64"
-CONF_LIBDIR="lib64"
-CFLAGS_default="-mabi=lp64d"
-LDFLAGS_default="-m elf64loongarch"
-CHOST_default="loongarch64-unknown-linux-gnu"
