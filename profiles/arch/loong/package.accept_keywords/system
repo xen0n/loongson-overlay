@@ -163,6 +163,7 @@ dev-python/jinja ~*
 dev-python/lxml ~*
 dev-python/markupsafe ~*
 dev-python/more-itertools ~*
+dev-python/nspektr ~*
 dev-python/ordered-set ~*
 dev-python/packaging ~*
 dev-python/PySocks ~*
