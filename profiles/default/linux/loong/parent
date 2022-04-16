@@ -1,2 +1,3 @@
 gentoo:base
 gentoo:default/linux
+../../../arch/loong
