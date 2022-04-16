@@ -24,7 +24,7 @@ PATCH_VER=1
 PATCH_DEV=dilfridge
 
 # LoongArch patchset (also ignored for live ebuilds)
-LOONGARCH_PATCH_VER=20220416-2
+LOONGARCH_PATCH_VER=20220416-1
 LOONGARCH_PATCH_DEV=xen0n
 
 if [[ ${PV} == 9999* ]]; then
@@ -840,11 +840,10 @@ src_unpack() {
 	use multilib-bootstrap && unpack gcc-multilib-bootstrap-${GCC_BOOTSTRAP_VER}.tar.xz
 
 	if [[ ${PV} == 9999* ]] ; then
-		# upstream needs updating; packed in loongarch patchball in the meantime
-		#EGIT_REPO_URI="https://anongit.gentoo.org/git/proj/toolchain/glibc-patches.git"
-		#EGIT_CHECKOUT_DIR=${WORKDIR}/patches-git
-		#git-r3_src_unpack
-		#mv patches-git/9999 patches || die
+		EGIT_REPO_URI="https://anongit.gentoo.org/git/proj/toolchain/glibc-patches.git"
+		EGIT_CHECKOUT_DIR=${WORKDIR}/patches-git
+		git-r3_src_unpack
+		mv patches-git/9999 patches || die
 
 		EGIT_REPO_URI="https://sourceware.org/git/glibc.git"
 		EGIT_CHECKOUT_DIR=${S}
