@@ -7,6 +7,6 @@ mips    targets/desktop/3a4000          dev
 mips    targets/desktop/3a4000/systemd  dev
 
 loong   default/linux/loong/22.0/la64v100/lp64d                  dev
-loong   default/linux/loong/22.0/la64v100/lp64d/desktop          dev
-loong   default/linux/loong/22.0/la64v100/lp64d/desktop/systemd  dev
-loong   default/linux/loong/22.0/la64v100/lp64d/systemd          dev
+loong   default/linux/loong/22.0/la64v100/lp64d/desktop          exp
+loong   default/linux/loong/22.0/la64v100/lp64d/desktop/systemd  exp
+loong   default/linux/loong/22.0/la64v100/lp64d/systemd          exp
