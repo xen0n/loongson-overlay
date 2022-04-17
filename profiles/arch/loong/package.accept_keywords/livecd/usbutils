@@ -1,3 +1,0 @@
-sys-apps/usbutils ~*
-virtual/libusb **
-dev-libs/libusb ~*

@@ -1,6 +1,0 @@
-acct-group/nullmail **
-acct-user/nullmail **
-app-admin/sudo ~*
-mail-mta/nullmailer ~*
-virtual/logger **
-virtual/mta **

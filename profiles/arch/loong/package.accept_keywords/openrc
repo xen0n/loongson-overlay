@@ -1,4 +1,0 @@
-net-misc/netifrc ~*
-sys-apps/openrc ~*
-sys-apps/systemd-tmpfiles ~*
-sys-fs/udev ~*

@@ -1,5 +1,0 @@
-net-irc/irssi ~*
-net-proxy/dante ~*
-acct-group/sockd ~*
-acct-user/sockd ~*
-sys-apps/tcp-wrappers ~*
