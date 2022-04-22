@@ -1,12 +1,12 @@
 # Loongson goodies!
-mips    targets/desktop/2f/n32          dev
-mips    targets/desktop/2f/n32/systemd  dev
-mips    targets/desktop/3a3000          dev
-mips    targets/desktop/3a3000/systemd  dev
-mips    targets/desktop/3a4000          dev
-mips    targets/desktop/3a4000/systemd  dev
+mips    targets/desktop/2f/n32          exp
+mips    targets/desktop/2f/n32/systemd  exp
+mips    targets/desktop/3a3000          exp
+mips    targets/desktop/3a3000/systemd  exp
+mips    targets/desktop/3a4000          exp
+mips    targets/desktop/3a4000/systemd  exp
 
-loong   default/linux/loong/22.0/la64v100/lp64d                  dev
-loong   default/linux/loong/22.0/la64v100/lp64d/desktop          dev
-loong   default/linux/loong/22.0/la64v100/lp64d/desktop/systemd  dev
-loong   default/linux/loong/22.0/la64v100/lp64d/systemd          dev
+loong   default/linux/loong/22.0/la64v100/lp64d                  exp
+loong   default/linux/loong/22.0/la64v100/lp64d/desktop          exp
+loong   default/linux/loong/22.0/la64v100/lp64d/desktop/systemd  exp
+loong   default/linux/loong/22.0/la64v100/lp64d/systemd          exp
