@@ -20,11 +20,11 @@ SLOT="2.2"
 EMULTILIB_PKG="true"
 
 # Gentoo patchset (ignored for live ebuilds)
-PATCH_VER=5
+PATCH_VER=6
 PATCH_DEV=dilfridge
 
 # LoongArch patchset (also ignored for live ebuilds)
-LOONGARCH_PATCH_VER=20220326-1
+LOONGARCH_PATCH_VER=20220422
 LOONGARCH_PATCH_DEV=xen0n
 
 if [[ ${PV} == 9999* ]]; then
@@ -435,6 +435,9 @@ setup_flags() {
 	replace-flags -O0 -O1
 
 	filter-flags '-fstack-protector*'
+
+	# See end of bug #830454; we handle this via USE=cet
+	filter-flags '-fcf-protection='
 }
 
 use_multiarch() {
