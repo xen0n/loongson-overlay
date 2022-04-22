@@ -29,9 +29,6 @@ LOONGARCH_PATCH_DEV=xen0n
 
 if [[ ${PV} == 9999* ]]; then
 	inherit git-r3
-    # use this live ebuild for latest patch series which builds upon the
-    # unreleased 2.36
-	KEYWORDS="~loong"
 else
 	#KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~ia64 ~m68k ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86"
 	KEYWORDS="~loong"
