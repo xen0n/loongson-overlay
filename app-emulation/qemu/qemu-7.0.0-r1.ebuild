@@ -6,12 +6,12 @@ EAPI=8
 PYTHON_COMPAT=( python3_{8,9,10} )
 PYTHON_REQ_USE="ncurses,readline"
 
-FIRMWARE_ABI_VERSION="6.2.0"
+FIRMWARE_ABI_VERSION="7.0.0"
 
 inherit linux-info toolchain-funcs python-r1 udev fcaps readme.gentoo-r1 \
 		pax-utils xdg-utils
 
-LOONGARCH_PATCH_VER=20220331-1
+LOONGARCH_PATCH_VER=20220423
 
 if [[ ${PV} = *9999* ]]; then
 	EGIT_REPO_URI="https://gitlab.com/qemu-project/qemu.git/"
@@ -27,8 +27,8 @@ else
 	MY_P="${PN}-${PV/_rc/-rc}"
 	SRC_URI="
 		https://download.qemu.org/${MY_P}.tar.xz
-		https://loongson-patchballs-glb.qnbkt.xen0n.name/qemu-7.0.0_rc2-loongarch-patches-${LOONGARCH_PATCH_VER}.tar.xz"
-	KEYWORDS="~amd64"
+		https://dev.gentoo.org/~xen0n/distfiles/${MY_P}-loongarch-patches-${LOONGARCH_PATCH_VER}.tar.xz"
+	KEYWORDS="~amd64 ~arm64 ~ppc ~ppc64 ~x86"
 	S="${WORKDIR}/${MY_P}"
 fi
 
@@ -154,7 +154,7 @@ SOFTMMU_TOOLS_DEPEND="
 	capstone? ( dev-libs/capstone:= )
 	caps? ( sys-libs/libcap-ng[static-libs(+)] )
 	curl? ( >=net-misc/curl-7.15.4[static-libs(+)] )
-	fdt? ( >=sys-apps/dtc-1.5.0[static-libs(+)] )
+	fdt? ( >=sys-apps/dtc-1.5.1[static-libs(+)] )
 	fuse? ( >=sys-fs/fuse-3.1:3[static-libs(+)] )
 	glusterfs? ( >=sys-cluster/glusterfs-3.4.0[static-libs(+)] )
 	gnutls? (
@@ -413,7 +413,7 @@ check_targets() {
 
 src_prepare() {
 	# Add LoongArch target support first
-	eapply "${WORKDIR}/loongarch-7.0.0_rc2/"*.patch
+	eapply "${WORKDIR}/loongarch-${PV/_rc/-rc}/"*.patch
 
 	check_targets IUSE_SOFTMMU_TARGETS softmmu
 	check_targets IUSE_USER_TARGETS linux-user
