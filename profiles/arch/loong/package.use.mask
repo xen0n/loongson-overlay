@@ -25,6 +25,9 @@ www-servers/nginx pcre-jit
 
 # end riscv snippet
 
+# Unmask experimental-loong for us
+sys-libs/glibc -experimental-loong
+
 # Mask io-uring & zbc pending keywording
 sys-block/fio -io-uring -zbc
 

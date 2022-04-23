@@ -1,3 +1,6 @@
+# Force-on experimental-loong
+sys-libs/glibc experimental-loong
+
 # gcc-12 is live ebuild, hence requiring this
 dev-vcs/git curl
 
