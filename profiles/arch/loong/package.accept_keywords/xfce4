@@ -1,5 +1,3 @@
-acct-group/polkitd ~*
-acct-user/polkitd ~*
 app-accessibility/at-spi2-atk ~*
 app-accessibility/at-spi2-core ~*
 app-crypt/argon2 ~*

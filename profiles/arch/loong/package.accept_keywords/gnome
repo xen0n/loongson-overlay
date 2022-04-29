@@ -12,8 +12,6 @@ media-libs/libwebp ~*
 media-plugins/gst-plugins-opus ~*
 sys-apps/bubblewrap ~*
 app-misc/geoclue ~*
-acct-user/geoclue ~*
-acct-group/geoclue ~*
 app-text/hunspell ~*
 app-arch/brotli ~*
 media-libs/babl ~*
@@ -26,7 +24,6 @@ media-libs/libnsgif ~*
 media-libs/libraw ~*
 dev-util/netsurf-buildsystem ~*
 media-plugins/gst-plugins-gdkpixbuf ~*
-acct-group/plugdev ~*
 media-libs/gd ~*
 dev-libs/libgnome-games-support ~*
 media-libs/clutter ~*
