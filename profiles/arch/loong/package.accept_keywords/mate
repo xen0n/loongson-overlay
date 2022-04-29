@@ -94,4 +94,3 @@ x11-themes/murrine-themes ~*
 x11-themes/sound-theme-freedesktop ~*
 x11-wm/marco ~*
 virtual/notification-daemon **
-virtual/perl-Storable **

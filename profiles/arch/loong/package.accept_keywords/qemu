@@ -4,14 +4,12 @@ app-emulation/spice ~*
 app-emulation/spice-protocol ~*
 dev-lang/orc ~*
 dev-libs/glib ~*
-dev-libs/libpcre ~*
 dev-python/alabaster ~*
 dev-python/Babel ~*
 dev-python/docutils ~*
 dev-python/imagesize ~*
 dev-python/namespace-sphinxcontrib ~*
 dev-python/pygments ~*
-dev-python/pyparsing ~*
 dev-python/pytz ~*
 dev-python/six ~*
 dev-python/snowballstemmer ~*
