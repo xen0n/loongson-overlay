@@ -1,6 +1,5 @@
 app-arch/libarchive ~*
 app-arch/unzip ~*
-<app-crypt/gnupg-2.3 **
 app-crypt/openpgp-keys-gentoo-release ~*
 app-crypt/rhash ~*
 app-editors/vim ~*
@@ -20,7 +19,6 @@ dev-lang/tcl ~*
 dev-libs/jsoncpp ~*
 dev-libs/libuv ~*
 dev-libs/libxslt ~*
-<dev-libs/openssl-2 **
 dev-perl/Authen-SASL ~*
 dev-perl/Capture-Tiny ~*
 dev-perl/Class-Inspector ~*
@@ -74,9 +72,7 @@ sys-apps/help2man ~*
 sys-apps/hwids ~*
 <sys-apps/texinfo-6.8 **
 sys-devel/autoconf-archive ~*
-<sys-devel/gcc-9999 **
 sys-devel/systemd-m4 ~*
 sys-libs/e2fsprogs-libs ~*
-=sys-libs/glibc-2.35-r3 **
 sys-libs/musl ~*
 virtual/yacc **
