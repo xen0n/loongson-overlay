@@ -1,4 +1,3 @@
-app-arch/lbzip2 ~*
 app-cdr/cdrtools ~*
 app-crypt/mhash ~*
 app-crypt/shash ~*

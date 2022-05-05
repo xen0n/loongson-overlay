@@ -8,4 +8,3 @@ app-crypt/mit-krb5 ~*
 dev-util/cmocka ~*
 dev-db/lmdb ~*
 dev-libs/libverto ~*
-dev-libs/libev ~*

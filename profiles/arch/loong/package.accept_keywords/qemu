@@ -11,5 +11,4 @@ net-libs/libslirp ~*
 sys-apps/dtc ~*
 sys-firmware/seabios ~*
 sys-firmware/sgabios ~*
-sys-libs/libcap-ng ~*
 virtual/jpeg **
