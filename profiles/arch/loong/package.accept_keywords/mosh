@@ -1,4 +1,3 @@
-dev-libs/protobuf ~*
 dev-perl/IO-Tty ~*
 net-misc/mosh ~*
 sys-libs/libutempter ~*

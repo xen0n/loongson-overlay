@@ -1,4 +1,3 @@
-dev-lang/swig ~*
 dev-libs/libnl ~*
 dev-python/m2crypto ~*
 net-wireless/crda ~*

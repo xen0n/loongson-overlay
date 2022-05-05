@@ -2,22 +2,15 @@ app-accessibility/at-spi2-atk ~*
 app-accessibility/at-spi2-core ~*
 app-crypt/argon2 ~*
 app-crypt/gcr ~*
-app-crypt/p11-kit ~*
 app-eselect/eselect-fontconfig ~*
 app-text/gnome-doc-utils ~*
 app-text/iso-codes ~*
 app-text/scrollkeeper-dtd ~*
-dev-lang/duktape ~*
 <dev-lang/spidermonkey-78 ~* # to avoid rust
 dev-lang/vala ~*
 dev-libs/atk ~*
-dev-libs/boost ~*
 dev-libs/dbus-glib ~*
-dev-libs/elfutils ~*
 dev-libs/fribidi ~*
-dev-libs/gobject-introspection ~*
-dev-libs/gobject-introspection-common ~*
-dev-libs/icu ~*
 dev-libs/json-c ~*
 dev-libs/libaio ~*
 dev-libs/libatasmart ~*
@@ -46,7 +39,6 @@ dev-perl/Try-Tiny ~*
 dev-perl/URI ~*
 dev-perl/WWW-RobotRules ~*
 dev-perl/XML-Parser ~*
-dev-util/boost-build ~*
 dev-util/desktop-file-utils ~*
 dev-util/gdbus-codegen ~*
 dev-util/glib-utils ~*
@@ -67,7 +59,6 @@ media-libs/harfbuzz ~*
 media-libs/libpng ~*
 net-libs/glib-networking ~*
 net-libs/libproxy ~*
-sys-auth/polkit ~*
 sys-block/parted ~*
 sys-block/thin-provisioning-tools ~*
 sys-fs/cryptsetup ~*
@@ -76,11 +67,9 @@ sys-fs/udisks ~*
 sys-libs/binutils-libs ~*
 sys-libs/libblockdev ~*
 virtual/freedesktop-icon-theme **
-virtual/libelf **
 virtual/perl-Compress-Raw-Bzip2 **
 virtual/perl-Compress-Raw-Zlib **
 virtual/perl-IO-Compress **
-virtual/ttf-fonts **
 x11-apps/mkfontscale ~*
 x11-libs/cairo ~*
 x11-libs/gdk-pixbuf ~*
@@ -98,7 +87,6 @@ x11-libs/libXScrnSaver ~*
 x11-libs/libXtst ~*
 x11-libs/pango ~*
 x11-libs/vte ~*
-x11-misc/shared-mime-info ~*
 x11-misc/xdg-user-dirs ~*
 x11-misc/xdg-user-dirs-gtk ~*
 x11-terms/xfce4-terminal ~*

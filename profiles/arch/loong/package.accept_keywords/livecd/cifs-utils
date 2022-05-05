@@ -1,5 +1,4 @@
 net-fs/cifs-utils ~*
-sys-apps/keyutils ~*
 sys-libs/talloc ~*
 sys-libs/ldb ~*
 sys-libs/tdb ~*
@@ -10,4 +9,3 @@ dev-util/cmocka ~*
 dev-db/lmdb ~*
 dev-libs/libverto ~*
 dev-libs/libev ~*
-virtual/krb5 **

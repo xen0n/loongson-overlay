@@ -7,17 +7,14 @@ x11-libs/libXv ~*
 media-libs/graphene ~*
 app-i18n/uchardet ~*
 dev-libs/nss ~*
-app-crypt/libsecret ~*
 media-libs/libwebp ~*
 media-plugins/gst-plugins-opus ~*
 sys-apps/bubblewrap ~*
 app-misc/geoclue ~*
 app-text/hunspell ~*
-app-arch/brotli ~*
 media-libs/babl ~*
 media-libs/gegl ~*
 net-misc/gnome-online-miners ~*
-dev-libs/libyaml ~*
 net-libs/libzapojit ~*
 media-gfx/exiv2 ~*
 media-libs/libnsgif ~*
