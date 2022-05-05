@@ -1,9 +1,6 @@
-# we're targeting at least 6.2 (in development as of 2021/10)
-=app-emulation/qemu-9999 **
 app-emulation/spice ~*
 app-emulation/spice-protocol ~*
 dev-lang/orc ~*
-dev-python/namespace-sphinxcontrib ~*
 dev-python/sphinx_rtd_theme ~*
 media-libs/alsa-lib ~*
 media-libs/alsa-topology-conf ~*
