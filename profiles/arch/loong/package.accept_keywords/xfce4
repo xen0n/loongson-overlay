@@ -1,6 +1,5 @@
 app-accessibility/at-spi2-atk ~*
 app-accessibility/at-spi2-core ~*
-app-crypt/argon2 ~*
 app-crypt/gcr ~*
 app-eselect/eselect-fontconfig ~*
 app-text/gnome-doc-utils ~*
@@ -67,8 +66,6 @@ sys-fs/udisks ~*
 sys-libs/binutils-libs ~*
 sys-libs/libblockdev ~*
 virtual/freedesktop-icon-theme **
-virtual/perl-Compress-Raw-Bzip2 **
-virtual/perl-Compress-Raw-Zlib **
 virtual/perl-IO-Compress **
 x11-apps/mkfontscale ~*
 x11-libs/cairo ~*

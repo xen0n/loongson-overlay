@@ -5,6 +5,5 @@ sys-libs/tdb ~*
 sys-libs/tevent ~*
 sys-libs/libunwind ~*
 app-crypt/mit-krb5 ~*
-dev-util/cmocka ~*
 dev-db/lmdb ~*
 dev-libs/libverto ~*

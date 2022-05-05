@@ -1,5 +1,0 @@
-dev-libs/libnl ~*
-dev-python/m2crypto ~*
-net-wireless/crda ~*
-net-wireless/wireless-regdb ~*
-net-wireless/wpa_supplicant ~*
