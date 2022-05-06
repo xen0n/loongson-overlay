@@ -6,19 +6,15 @@ app-text/gnome-doc-utils ~*
 app-text/iso-codes ~*
 app-text/scrollkeeper-dtd ~*
 <dev-lang/spidermonkey-78 ~* # to avoid rust
-dev-lang/vala ~*
 dev-libs/atk ~*
-dev-libs/dbus-glib ~*
 dev-libs/fribidi ~*
 dev-libs/json-c ~*
-dev-libs/libaio ~*
 dev-libs/libatasmart ~*
 dev-libs/libbytesize ~*
 dev-libs/libcroco ~*
 dev-libs/libdbusmenu ~*
 dev-libs/libgudev ~*
 dev-libs/nspr ~*
-dev-libs/vala-common ~*
 dev-perl/Encode-Locale ~*
 dev-perl/File-Listing ~*
 dev-perl/HTML-Parser ~*
