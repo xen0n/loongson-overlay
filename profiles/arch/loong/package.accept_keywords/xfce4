@@ -1,14 +1,12 @@
 app-accessibility/at-spi2-atk ~*
 app-accessibility/at-spi2-core ~*
 app-crypt/gcr ~*
-app-eselect/eselect-fontconfig ~*
 app-text/gnome-doc-utils ~*
 app-text/iso-codes ~*
 app-text/scrollkeeper-dtd ~*
 <dev-lang/spidermonkey-78 ~* # to avoid rust
 dev-libs/atk ~*
 dev-libs/fribidi ~*
-dev-libs/json-c ~*
 dev-libs/libatasmart ~*
 dev-libs/libbytesize ~*
 dev-libs/libcroco ~*
@@ -47,11 +45,6 @@ gnome-base/gvfs ~*
 gnome-extra/polkit-gnome ~*
 media-fonts/dejavu ~*
 media-fonts/encodings ~*
-media-gfx/graphite2 ~*
-media-libs/fontconfig ~*
-media-libs/freetype ~*
-media-libs/harfbuzz ~*
-media-libs/libpng ~*
 net-libs/glib-networking ~*
 net-libs/libproxy ~*
 sys-block/parted ~*
@@ -59,12 +52,9 @@ sys-block/thin-provisioning-tools ~*
 sys-fs/cryptsetup ~*
 sys-fs/lvm2 ~*
 sys-fs/udisks ~*
-sys-libs/binutils-libs ~*
 sys-libs/libblockdev ~*
 virtual/freedesktop-icon-theme **
-virtual/perl-IO-Compress **
 x11-apps/mkfontscale ~*
-x11-libs/cairo ~*
 x11-libs/gdk-pixbuf ~*
 x11-libs/gtk+ ~*
 x11-libs/libXcomposite ~*
