@@ -3,9 +3,7 @@ app-crypt/mhash ~*
 app-crypt/shash ~*
 app-misc/zisofs-tools ~*
 dev-python/fasteners ~*
-dev-python/lazy-object-proxy ~*
 dev-python/pydecomp ~*
-dev-python/snakeoil ~*
 dev-util/catalyst ~*
 sys-fs/squashfs-tools ~*
 x11-misc/makedepend ~*

@@ -44,23 +44,17 @@ gnome-base/gvfs ~*
 <gnome-base/librsvg-2.41 ** # to avoid rust
 gnome-extra/polkit-gnome ~*
 media-fonts/dejavu ~*
-media-fonts/encodings ~*
 net-libs/glib-networking ~*
 net-libs/libproxy ~*
 sys-block/parted ~*
-sys-block/thin-provisioning-tools ~*
-sys-fs/cryptsetup ~*
-sys-fs/lvm2 ~*
 sys-fs/udisks ~*
 sys-libs/libblockdev ~*
 virtual/freedesktop-icon-theme **
-x11-apps/mkfontscale ~*
 x11-libs/gdk-pixbuf ~*
 x11-libs/gtk+ ~*
 x11-libs/libXcomposite ~*
 x11-libs/libXcursor ~*
 x11-libs/libXdamage ~*
-x11-libs/libXft ~*
 x11-libs/libXi ~*
 x11-libs/libXinerama ~*
 x11-libs/libxklavier ~*

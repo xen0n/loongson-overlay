@@ -3,7 +3,6 @@ media-libs/gstreamer ~*
 media-libs/gst-plugins-base ~*
 media-plugins/gst-plugins-meta ~*
 media-libs/gst-plugins-good ~*
-x11-libs/libXv ~*
 media-libs/graphene ~*
 app-i18n/uchardet ~*
 dev-libs/nss ~*

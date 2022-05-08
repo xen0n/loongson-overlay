@@ -2,7 +2,6 @@ app-accessibility/brltty ~*
 app-accessibility/espeak ~*
 app-accessibility/flite ~*
 app-accessibility/speech-dispatcher ~*
-x11-libs/libXpm ~*
 dev-libs/dotconf ~*
 media-libs/libsndfile ~*
 media-libs/flac ~*
