@@ -61,7 +61,6 @@ media-libs/libmatemixer ~*
 media-libs/libogg ~*
 media-libs/libvorbis ~*
 media-libs/openjpeg ~*
-media-libs/tiff ~*
 net-dns/libidn ~*
 net-wireless/wireless-tools ~*
 sys-apps/pciutils ~*

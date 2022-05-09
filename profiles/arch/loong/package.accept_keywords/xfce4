@@ -6,14 +6,12 @@ app-text/iso-codes ~*
 app-text/scrollkeeper-dtd ~*
 <dev-lang/spidermonkey-78 ~* # to avoid rust
 dev-libs/atk ~*
-dev-libs/fribidi ~*
 dev-libs/libatasmart ~*
 dev-libs/libbytesize ~*
 dev-libs/libcroco ~*
 dev-libs/libdbusmenu ~*
 dev-libs/libgudev ~*
 dev-libs/nspr ~*
-dev-perl/Encode-Locale ~*
 dev-perl/File-Listing ~*
 dev-perl/HTML-Parser ~*
 dev-perl/HTML-Tagset ~*
@@ -29,12 +27,9 @@ dev-perl/LWP-Protocol-https ~*
 dev-perl/Net-HTTP ~*
 dev-perl/Socket6 ~*
 dev-perl/Try-Tiny ~*
-dev-perl/URI ~*
 dev-perl/WWW-RobotRules ~*
 dev-perl/XML-Parser ~*
-dev-util/desktop-file-utils ~*
 dev-util/gdbus-codegen ~*
-dev-util/glib-utils ~*
 dev-util/gtk-update-icon-cache ~*
 dev-util/intltool ~*
 dev-util/itstool ~*
@@ -50,7 +45,6 @@ sys-block/parted ~*
 sys-fs/udisks ~*
 sys-libs/libblockdev ~*
 virtual/freedesktop-icon-theme **
-x11-libs/gdk-pixbuf ~*
 x11-libs/gtk+ ~*
 x11-libs/libXcomposite ~*
 x11-libs/libXcursor ~*
@@ -62,7 +56,6 @@ x11-libs/libXpresent ~*
 x11-libs/libXres ~*
 x11-libs/libXScrnSaver ~*
 x11-libs/libXtst ~*
-x11-libs/pango ~*
 x11-libs/vte ~*
 x11-misc/xdg-user-dirs ~*
 x11-misc/xdg-user-dirs-gtk ~*
