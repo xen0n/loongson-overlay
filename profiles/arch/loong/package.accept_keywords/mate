@@ -73,12 +73,6 @@ x11-libs/gtksourceview ~*
 x11-libs/libfakekey ~*
 x11-libs/libnotify ~*
 x11-libs/startup-notification ~*
-x11-libs/xcb-util ~*
-x11-libs/xcb-util-cursor ~*
-x11-libs/xcb-util-image ~*
-x11-libs/xcb-util-keysyms ~*
-x11-libs/xcb-util-renderutil ~*
-x11-libs/xcb-util-wm ~*
 x11-misc/icon-naming-utils ~*
 x11-misc/mate-notification-daemon ~*
 x11-misc/mozo ~*

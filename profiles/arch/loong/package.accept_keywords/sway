@@ -7,9 +7,3 @@ gui-libs/wlroots ~*
 gui-wm/sway ~*
 sys-auth/seatd ~*
 x11-base/xwayland ~*
-x11-libs/xcb-util ~*
-x11-libs/xcb-util-cursor ~*
-x11-libs/xcb-util-image ~*
-x11-libs/xcb-util-keysyms ~*
-x11-libs/xcb-util-renderutil ~*
-x11-libs/xcb-util-wm ~*
