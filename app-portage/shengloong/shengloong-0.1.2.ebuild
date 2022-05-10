@@ -12,9 +12,17 @@ SRC_URI="https://github.com/xen0n/shengloong/archive/refs/tags/${PV}.tar.gz -> $
 LICENSE="GPL-3+"
 SLOT="0"
 KEYWORDS="~amd64 ~loong"
+IUSE="test"
+
+RESTRICT="!test? ( test )"
 
 DEPEND="
 	dev-libs/popt
 	virtual/libelf:=
 "
 RDEPEND="${DEPEND}"
+BDEPEND="
+	test? (
+		!loong? ( app-emulation/qemu[qemu_user_targets_loongarch64(-)] )
+	)
+"
