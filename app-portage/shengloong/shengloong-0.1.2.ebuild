@@ -26,3 +26,7 @@ BDEPEND="
 		!loong? ( app-emulation/qemu[qemu_user_targets_loongarch64(-)] )
 	)
 "
+
+PATCHES=(
+	"${FILESDIR}/${PV}-fix-sandbox.patch"
+)
