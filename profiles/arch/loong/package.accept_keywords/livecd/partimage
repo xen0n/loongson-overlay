@@ -1,3 +1,2 @@
 sys-block/partimage ~*
 dev-libs/newt ~*
-sys-libs/slang ~*

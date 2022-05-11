@@ -1,4 +1,3 @@
-app-cdr/cdrtools ~*
 app-crypt/mhash ~*
 app-crypt/shash ~*
 app-misc/zisofs-tools ~*

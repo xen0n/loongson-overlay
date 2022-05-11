@@ -66,9 +66,7 @@ net-wireless/wireless-tools ~*
 sys-apps/pciutils ~*
 sys-power/cpupower ~*
 sys-power/upower ~*
-x11-apps/xdpyinfo ~*
 x11-apps/xmodmap ~*
-x11-apps/xrandr ~*
 x11-libs/gtksourceview ~*
 x11-libs/libfakekey ~*
 x11-libs/libnotify ~*

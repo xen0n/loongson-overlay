@@ -4,6 +4,4 @@ sys-libs/ldb ~*
 sys-libs/tdb ~*
 sys-libs/tevent ~*
 sys-libs/libunwind ~*
-app-crypt/mit-krb5 ~*
 dev-db/lmdb ~*
-dev-libs/libverto ~*
