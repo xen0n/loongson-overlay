@@ -4,4 +4,3 @@ sys-libs/ldb ~*
 sys-libs/tdb ~*
 sys-libs/tevent ~*
 sys-libs/libunwind ~*
-dev-db/lmdb ~*

@@ -54,13 +54,11 @@ mate-extra/mate-utils ~*
 media-fonts/urw-fonts ~*
 media-gfx/eom ~*
 media-libs/jbig2dec ~*
-media-libs/lcms ~*
 media-libs/libcanberra ~*
 media-libs/libexif ~*
 media-libs/libmatemixer ~*
 media-libs/libogg ~*
 media-libs/libvorbis ~*
-media-libs/openjpeg ~*
 net-dns/libidn ~*
 net-wireless/wireless-tools ~*
 sys-apps/pciutils ~*
