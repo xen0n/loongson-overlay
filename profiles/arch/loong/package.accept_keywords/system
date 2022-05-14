@@ -13,7 +13,4 @@ dev-perl/Params-Util ~*
 dev-perl/PerlIO-utf8_strict ~*
 dev-perl/Text-Unidecode ~*
 dev-perl/Unicode-EastAsianWidth ~*
-sys-apps/hwids ~*
-sys-devel/systemd-m4 ~*
-sys-libs/e2fsprogs-libs ~*
 sys-libs/musl ~*

@@ -13,10 +13,8 @@
 -gtk3
 -introspection
 
-# dev-lang/lua:5.2 and dev-lang/luajit known not to work here
-lua_single_target_lua5-2
+# dev-lang/luajit known not to work here
 lua_single_target_luajit
-lua_targets_lua5-2
 lua_targets_luajit
 
 # valgrind has no RISCV port.
