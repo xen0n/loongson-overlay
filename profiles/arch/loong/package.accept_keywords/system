@@ -1,8 +1,6 @@
 app-text/mandoc ~*
-dev-perl/Capture-Tiny ~*
 dev-perl/Class-Inspector ~*
 dev-perl/Config-AutoConf ~*
-dev-perl/Devel-CheckLib ~*
 dev-perl/Exporter-Tiny ~*
 dev-perl/File-ShareDir ~*
 dev-perl/File-ShareDir-Install ~*

@@ -4,7 +4,6 @@ media-libs/gst-plugins-base ~*
 media-plugins/gst-plugins-meta ~*
 media-libs/gst-plugins-good ~*
 media-libs/graphene ~*
-app-i18n/uchardet ~*
 dev-libs/nss ~*
 media-plugins/gst-plugins-opus ~*
 sys-apps/bubblewrap ~*

@@ -5,7 +5,6 @@ app-eselect/eselect-notify-send ~*
 app-i18n/unicode-data ~*
 app-text/atril ~*
 app-text/docbook-dsssl-stylesheets ~*
-app-text/docbook-sgml-dtd ~*
 app-text/docbook-xsl-ns-stylesheets ~*
 app-text/ghostscript-gpl ~*
 app-text/libpaper ~*
@@ -18,9 +17,6 @@ dev-libs/json-glib ~*
 dev-libs/libmateweather ~*
 dev-libs/libsigc++ ~*
 dev-libs/tinyxml ~*
-dev-perl/XML-NamespaceSupport ~*
-dev-perl/XML-SAX ~*
-dev-perl/XML-SAX-Base ~*
 dev-perl/XML-SAX-Expat ~*
 dev-perl/XML-Simple ~*
 dev-python/pycairo ~*
