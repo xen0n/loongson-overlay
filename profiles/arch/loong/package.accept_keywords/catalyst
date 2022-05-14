@@ -1,8 +1,5 @@
 app-crypt/mhash ~*
 app-crypt/shash ~*
 app-misc/zisofs-tools ~*
-dev-python/fasteners ~*
-dev-python/pydecomp ~*
 dev-util/catalyst ~*
 sys-fs/squashfs-tools ~*
-x11-misc/makedepend ~*

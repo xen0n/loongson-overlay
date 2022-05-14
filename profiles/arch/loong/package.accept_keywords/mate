@@ -1,5 +1,4 @@
 app-arch/engrampa ~*
-app-arch/rpm2targz ~*
 app-editors/pluma ~*
 app-eselect/eselect-notify-send ~*
 app-i18n/unicode-data ~*
@@ -7,7 +6,6 @@ app-text/atril ~*
 app-text/docbook-dsssl-stylesheets ~*
 app-text/docbook-xsl-ns-stylesheets ~*
 app-text/ghostscript-gpl ~*
-app-text/libpaper ~*
 app-text/libspectre ~*
 app-text/poppler ~*
 app-text/poppler-data ~*
@@ -47,9 +45,7 @@ mate-extra/mate-power-manager ~*
 mate-extra/mate-screensaver ~*
 mate-extra/mate-system-monitor ~*
 mate-extra/mate-utils ~*
-media-fonts/urw-fonts ~*
 media-gfx/eom ~*
-media-libs/jbig2dec ~*
 media-libs/libcanberra ~*
 media-libs/libexif ~*
 media-libs/libmatemixer ~*

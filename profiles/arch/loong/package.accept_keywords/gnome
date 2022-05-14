@@ -18,7 +18,6 @@ media-libs/libnsgif ~*
 media-libs/libraw ~*
 dev-util/netsurf-buildsystem ~*
 media-plugins/gst-plugins-gdkpixbuf ~*
-media-libs/gd ~*
 dev-libs/libgnome-games-support ~*
 media-libs/clutter ~*
 media-libs/clutter-gtk ~*

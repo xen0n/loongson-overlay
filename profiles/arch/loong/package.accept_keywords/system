@@ -1,14 +1,10 @@
 app-text/mandoc ~*
 dev-perl/Class-Inspector ~*
-dev-perl/Config-AutoConf ~*
 dev-perl/Exporter-Tiny ~*
 dev-perl/File-ShareDir ~*
 dev-perl/File-ShareDir-Install ~*
-dev-perl/File-Slurper ~*
 dev-perl/libintl-perl ~*
 dev-perl/List-MoreUtils ~*
-dev-perl/Params-Util ~*
-dev-perl/PerlIO-utf8_strict ~*
 dev-perl/Text-Unidecode ~*
 dev-perl/Unicode-EastAsianWidth ~*
 sys-libs/musl ~*

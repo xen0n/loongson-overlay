@@ -35,7 +35,6 @@ x11-libs/libXpresent ~*
 x11-libs/libXres ~*
 x11-libs/libXScrnSaver ~*
 x11-libs/vte ~*
-x11-misc/xdg-user-dirs ~*
 x11-misc/xdg-user-dirs-gtk ~*
 x11-terms/xfce4-terminal ~*
 <x11-themes/adwaita-icon-theme-40 ** # to avoid rust librsvg
