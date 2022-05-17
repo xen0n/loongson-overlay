@@ -4,11 +4,8 @@ app-eselect/eselect-notify-send ~*
 app-i18n/unicode-data ~*
 app-text/atril ~*
 app-text/docbook-dsssl-stylesheets ~*
-app-text/docbook-xsl-ns-stylesheets ~*
-app-text/ghostscript-gpl ~*
 app-text/libspectre ~*
 app-text/poppler ~*
-app-text/poppler-data ~*
 app-text/rarian ~*
 dev-cpp/glibmm ~*
 dev-libs/json-glib ~*
@@ -17,8 +14,6 @@ dev-libs/libsigc++ ~*
 dev-libs/tinyxml ~*
 dev-perl/XML-SAX-Expat ~*
 dev-perl/XML-Simple ~*
-dev-python/pycairo ~*
-dev-python/pygobject ~*
 dev-util/gtk-doc ~*
 gnome-base/dconf ~*
 gnome-base/gnome-keyring ~*
@@ -48,7 +43,6 @@ mate-extra/mate-utils ~*
 media-gfx/eom ~*
 media-libs/libexif ~*
 media-libs/libmatemixer ~*
-net-dns/libidn ~*
 net-wireless/wireless-tools ~*
 sys-apps/pciutils ~*
 sys-power/cpupower ~*

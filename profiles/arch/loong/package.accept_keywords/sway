@@ -1,8 +1,5 @@
-app-text/scdoc ~*
 gui-apps/swaybg ~*
 gui-apps/swayidle ~*
 gui-apps/swaylock ~*
 gui-libs/wlroots ~*
 gui-wm/sway ~*
-sys-auth/seatd ~*
-x11-base/xwayland ~*

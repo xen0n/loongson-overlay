@@ -3,7 +3,6 @@ media-libs/gstreamer ~*
 media-libs/gst-plugins-base ~*
 media-plugins/gst-plugins-meta ~*
 media-libs/gst-plugins-good ~*
-media-libs/graphene ~*
 dev-libs/nss ~*
 media-plugins/gst-plugins-opus ~*
 sys-apps/bubblewrap ~*
@@ -15,7 +14,6 @@ net-misc/gnome-online-miners ~*
 net-libs/libzapojit ~*
 media-gfx/exiv2 ~*
 media-libs/libnsgif ~*
-media-libs/libraw ~*
 dev-util/netsurf-buildsystem ~*
 media-plugins/gst-plugins-gdkpixbuf ~*
 dev-libs/libgnome-games-support ~*
