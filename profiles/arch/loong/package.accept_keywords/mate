@@ -46,11 +46,8 @@ mate-extra/mate-screensaver ~*
 mate-extra/mate-system-monitor ~*
 mate-extra/mate-utils ~*
 media-gfx/eom ~*
-media-libs/libcanberra ~*
 media-libs/libexif ~*
 media-libs/libmatemixer ~*
-media-libs/libogg ~*
-media-libs/libvorbis ~*
 net-dns/libidn ~*
 net-wireless/wireless-tools ~*
 sys-apps/pciutils ~*
@@ -72,6 +69,5 @@ x11-themes/mate-icon-theme ~*
 x11-themes/mate-themes ~*
 x11-themes/mate-themes-meta ~*
 x11-themes/murrine-themes ~*
-x11-themes/sound-theme-freedesktop ~*
 x11-wm/marco ~*
 virtual/notification-daemon **

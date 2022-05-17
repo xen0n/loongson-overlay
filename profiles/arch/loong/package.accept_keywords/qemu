@@ -2,9 +2,6 @@ app-emulation/spice ~*
 app-emulation/spice-protocol ~*
 dev-lang/orc ~*
 dev-python/sphinx_rtd_theme ~*
-media-libs/alsa-lib ~*
-media-libs/alsa-topology-conf ~*
-media-libs/alsa-ucm-conf ~*
 media-libs/sdl2-image ~*
 net-libs/libslirp ~*
 sys-apps/dtc ~*

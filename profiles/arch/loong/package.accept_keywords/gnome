@@ -25,4 +25,3 @@ media-libs/cogl ~*
 dev-libs/libmanette ~*
 dev-libs/qqwing ~*
 gui-libs/gtk ~*
-gnome-base/librsvg ~*

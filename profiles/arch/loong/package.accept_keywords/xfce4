@@ -1,25 +1,16 @@
-app-accessibility/at-spi2-atk ~*
-app-accessibility/at-spi2-core ~*
 app-crypt/gcr ~*
 app-text/gnome-doc-utils ~*
 app-text/iso-codes ~*
 app-text/scrollkeeper-dtd ~*
 <dev-lang/spidermonkey-78 ~* # to avoid rust
-dev-libs/atk ~*
 dev-libs/libatasmart ~*
 dev-libs/libbytesize ~*
-dev-libs/libcroco ~*
 dev-libs/libdbusmenu ~*
 dev-libs/libgudev ~*
 dev-libs/nspr ~*
-dev-util/gdbus-codegen ~*
-dev-util/gtk-update-icon-cache ~*
-dev-util/intltool ~*
 dev-util/itstool ~*
 dev-util/xfce4-dev-tools ~*
-gnome-base/gsettings-desktop-schemas ~*
 gnome-base/gvfs ~*
-<gnome-base/librsvg-2.41 ** # to avoid rust
 gnome-extra/polkit-gnome ~*
 net-libs/glib-networking ~*
 net-libs/libproxy ~*
@@ -27,9 +18,6 @@ sys-block/parted ~*
 sys-fs/udisks ~*
 sys-libs/libblockdev ~*
 virtual/freedesktop-icon-theme **
-x11-libs/gtk+ ~*
-x11-libs/libXcursor ~*
-x11-libs/libXdamage ~*
 x11-libs/libxklavier ~*
 x11-libs/libXpresent ~*
 x11-libs/libXres ~*
@@ -37,10 +25,8 @@ x11-libs/libXScrnSaver ~*
 x11-libs/vte ~*
 x11-misc/xdg-user-dirs-gtk ~*
 x11-terms/xfce4-terminal ~*
-<x11-themes/adwaita-icon-theme-40 ** # to avoid rust librsvg
 x11-themes/gnome-themes-standard ~*
 x11-themes/gtk-engines-adwaita ~*
-x11-themes/hicolor-icon-theme ~*
 xfce-base/exo ~*
 xfce-base/garcon ~*
 xfce-base/libxfce4ui ~*
