@@ -34,7 +34,7 @@ BDEPEND="
 DOCS=( AUTHORS ChangeLog NEWS MAINTAINERS README.md RELEASE )
 
 PATCHES=(
-  	"${FILESDIR}/add_loongarch.parch"
+  	"${FILESDIR}/add_loongarch_support.patch"
 )
 
 multilib_src_configure() {
