@@ -28,7 +28,7 @@ else
 	SRC_URI="
 		https://download.qemu.org/${MY_P}.tar.xz
 		https://dev.gentoo.org/~xen0n/distfiles/${MY_P}-loongarch-patches-${LOONGARCH_PATCH_VER}.tar.xz"
-	KEYWORDS="~amd64 ~arm64 ~ppc ~ppc64 ~x86"
+	KEYWORDS="amd64 ~arm arm64 ~ppc ppc64 ~riscv x86"
 	S="${WORKDIR}/${MY_P}"
 fi
 
@@ -879,7 +879,7 @@ pkg_postinst() {
 	xdg_icon_cache_update
 
 	[[ -z ${EPREFIX} ]] && [[ -f ${EROOT}/usr/libexec/qemu-bridge-helper ]] && \
-		fcaps cap_net_admin ${EROOT}/usr/libexec/qemu-bridge-helper
+		fcaps cap_net_admin "${EROOT}"/usr/libexec/qemu-bridge-helper
 
 	DISABLE_AUTOFORMATTING=true
 	readme.gentoo_print_elog
