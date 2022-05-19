@@ -1,3 +1,1 @@
-sys-boot/efibootmgr ~*
 sys-boot/grub ~*
-sys-libs/efivar ~*
