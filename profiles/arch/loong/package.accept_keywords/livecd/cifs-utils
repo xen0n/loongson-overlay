@@ -1,6 +1,5 @@
 net-fs/cifs-utils ~*
 sys-libs/talloc ~*
 sys-libs/ldb ~*
-sys-libs/tdb ~*
 sys-libs/tevent ~*
 sys-libs/libunwind ~*

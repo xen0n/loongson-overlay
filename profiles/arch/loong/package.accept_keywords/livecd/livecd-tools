@@ -2,4 +2,3 @@ app-misc/livecd-tools ~*
 dev-util/dialog ~*
 media-sound/alsa-utils ~*
 net-dialup/mingetty ~*
-media-libs/libsamplerate ~*

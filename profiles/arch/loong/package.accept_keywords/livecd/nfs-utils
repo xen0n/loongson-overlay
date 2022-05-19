@@ -1,3 +1,2 @@
 net-fs/nfs-utils ~*
 net-nds/rpcbind ~*
-net-libs/rpcsvc-proto ~*
