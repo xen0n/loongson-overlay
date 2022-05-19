@@ -38,7 +38,6 @@ media-gfx/eom ~*
 media-libs/libexif ~*
 media-libs/libmatemixer ~*
 net-wireless/wireless-tools ~*
-sys-apps/pciutils ~*
 sys-power/cpupower ~*
 sys-power/upower ~*
 x11-apps/xmodmap ~*

@@ -1,4 +1,3 @@
-app-text/mandoc ~*
 dev-perl/Class-Inspector ~*
 dev-perl/Exporter-Tiny ~*
 dev-perl/File-ShareDir ~*
