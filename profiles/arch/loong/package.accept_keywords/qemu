@@ -1,9 +1,1 @@
-app-emulation/spice ~*
-app-emulation/spice-protocol ~*
-dev-lang/orc ~*
 dev-python/sphinx_rtd_theme ~*
-media-libs/sdl2-image ~*
-net-libs/libslirp ~*
-sys-apps/dtc ~*
-sys-firmware/seabios ~*
-sys-firmware/sgabios ~*
