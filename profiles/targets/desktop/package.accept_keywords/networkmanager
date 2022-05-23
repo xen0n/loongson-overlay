@@ -1,0 +1,9 @@
+net-misc/networkmanager ~*
+net-libs/libndp ~*
+dev-libs/nss ~*
+net-misc/modemmanager ~*
+dev-libs/newt ~*
+dev-libs/libgudev ~*
+net-libs/libqmi ~*
+net-libs/libmbim ~*
+dev-libs/nspr ~*
