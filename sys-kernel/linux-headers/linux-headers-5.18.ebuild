@@ -10,11 +10,11 @@ detect_version
 
 PATCH_PV=${PV} # to ease testing new versions against not existing patches
 PATCH_VER="0"
-PATCH_DEV="sam"
+PATCH_DEV="xen0n"
 LOONGARCH_PATCH_VER="20220523"
 LOONGARCH_PATCH_DEV="xen0n"
 SRC_URI="${KERNEL_URI}
-	${PATCH_VER:+https://dev.gentoo.org/~${PATCH_DEV}/distfiles/sys-kernel/linux-headers/gentoo-headers-5.17-${PATCH_VER}.tar.xz}
+	${PATCH_VER:+https://dev.gentoo.org/~${PATCH_DEV}/distfiles/sys-kernel/linux-headers/gentoo-headers-${PATCH_PV}-${PATCH_VER}.tar.xz}
 	experimental-loong? ( ${LOONGARCH_PATCH_VER:+https://dev.gentoo.org/~${LOONGARCH_PATCH_DEV}/distfiles/linux-loongarch-next-on-${PATCH_PV}-${LOONGARCH_PATCH_VER}.tar.xz} )"
 S="${WORKDIR}/linux-${PV}"
 
