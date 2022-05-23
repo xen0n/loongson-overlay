@@ -6,7 +6,7 @@ EAPI=7
 # Bumping notes: https://wiki.gentoo.org/wiki/Project:Toolchain/sys-libs/glibc
 # Please read & adapt the page as necessary if obsolete.
 
-PYTHON_COMPAT=( python3_{8,9,10} )
+PYTHON_COMPAT=( python3_{8..10} )
 TMPFILES_OPTIONAL=1
 
 inherit python-any-r1 prefix preserve-libs toolchain-funcs flag-o-matic gnuconfig \
@@ -20,23 +20,18 @@ SLOT="2.2"
 EMULTILIB_PKG="true"
 
 # Gentoo patchset (ignored for live ebuilds)
-PATCH_VER=1
+PATCH_VER=7
 PATCH_DEV=dilfridge
-
-# LoongArch patchset (also ignored for live ebuilds)
-LOONGARCH_PATCH_VER=20220416-1
-LOONGARCH_PATCH_DEV=xen0n
 
 if [[ ${PV} == 9999* ]]; then
 	inherit git-r3
 else
-	#KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~ia64 ~m68k ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86"
+	#KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~ia64 ~loong ~m68k ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86"
 	KEYWORDS="~loong"
 	SRC_URI="mirror://gnu/glibc/${P}.tar.xz"
 	SRC_URI+=" https://dev.gentoo.org/~${PATCH_DEV}/distfiles/${P}-patches-${PATCH_VER}.tar.xz"
+	SRC_URI+=" experimental-loong? ( https://dev.gentoo.org/~xen0n/distfiles/glibc-2.35-loongarch-patches-20220522.tar.xz )"
 fi
-
-SRC_URI+=" https://dev.gentoo.org/~${LOONGARCH_PATCH_DEV}/distfiles/glibc-2.36-loongarch-patches-${LOONGARCH_PATCH_VER}.tar.xz"
 
 RELEASE_VER=${PV}
 
@@ -50,7 +45,7 @@ SRC_URI+=" https://gitweb.gentoo.org/proj/locale-gen.git/snapshot/locale-gen-${L
 SRC_URI+=" multilib-bootstrap? ( https://dev.gentoo.org/~dilfridge/distfiles/gcc-multilib-bootstrap-${GCC_BOOTSTRAP_VER}.tar.xz )"
 SRC_URI+=" systemd? ( https://gitweb.gentoo.org/proj/toolchain/glibc-systemd.git/snapshot/glibc-systemd-${GLIBC_SYSTEMD_VER}.tar.gz )"
 
-IUSE="audit caps cet compile-locales +crypt custom-cflags doc gd headers-only +multiarch multilib multilib-bootstrap nscd profile selinux +ssp +static-libs suid systemd systemtap test vanilla"
+IUSE="audit caps cet +clone3 compile-locales +crypt custom-cflags doc experimental-loong gd headers-only +multiarch multilib multilib-bootstrap nscd profile selinux +ssp +static-libs suid systemd systemtap test vanilla"
 
 # Minimum kernel version that glibc requires
 MIN_KERN_VER="3.2.0"
@@ -850,13 +845,12 @@ src_unpack() {
 
 		cd "${WORKDIR}" || die
 		unpack glibc-${RELEASE_VER}-patches-${PATCH_VER}.tar.xz
+		use experimental-loong && unpack glibc-2.35-loongarch-patches-20220522.tar.xz
 	fi
 
 	cd "${WORKDIR}" || die
 	unpack locale-gen-${LOCALE_GEN_VER}.tar.gz
 	use systemd && unpack glibc-systemd-${GLIBC_SYSTEMD_VER}.tar.gz
-
-	unpack glibc-2.36-loongarch-patches-${LOONGARCH_PATCH_VER}.tar.xz
 }
 
 src_prepare() {
@@ -870,11 +864,21 @@ src_prepare() {
 		einfo "Applying Gentoo Glibc Patchset ${patchsetname}"
 		eapply "${WORKDIR}"/patches
 		einfo "Done."
+
+		if use experimental-loong ; then
+			einfo "Applying experimental LoongArch patchset"
+			eapply "${WORKDIR}"/loongarch-2.35
+			einfo "Done."
+		fi
 	fi
 
-	einfo "Applying LoongArch support patchset ${LOONGARCH_PATCH_VER}"
-	eapply "${WORKDIR}/loongarch-2.36"
-	einfo "Done."
+	if use clone3 ; then
+		append-cppflags -DGENTOO_USE_CLONE3
+	else
+		# See e.g. bug #827386, bug #819045.
+		elog "Disabling the clone3 syscall for compatibility with older Electron apps."
+		elog "Please re-enable this flag before filing bugs!"
+	fi
 
 	default
 
@@ -1005,11 +1009,6 @@ glibc_do_configure() {
 	# since the glibc build will re-run configure on itself
 	export libc_cv_rootsbindir="$(host_eprefix)/sbin"
 	export libc_cv_slibdir="$(host_eprefix)/$(get_libdir)"
-
-	# We take care of patching our binutils to use both hash styles,
-	# and many people like to force gnu hash style only, so disable
-	# this overriding check.  #347761
-	export libc_cv_hashstyle=no
 
 	local builddir=$(builddir nptl)
 	mkdir -p "${builddir}"
@@ -1285,14 +1284,12 @@ glibc_do_src_install() {
 	# Make sure the non-native interp can be found on multilib systems even
 	# if the main library set isn't installed into the right place.  Maybe
 	# we should query the active gcc for info instead of hardcoding it ?
-	local i ldso_abi ldso_name target_ldso_path
+	local i ldso_abi ldso_name
 	local ldso_abi_list=(
 		# x86
 		amd64   /lib64/ld-linux-x86-64.so.2
 		x32     /libx32/ld-linux-x32.so.2
 		x86     /lib/ld-linux.so.2
-		# loong
-		lp64d   /lib64/ld-linux-loongarch-lp64d.so.1
 		# mips
 		o32     /lib/ld.so.1
 		n32     /lib32/ld.so.1
@@ -1338,8 +1335,7 @@ glibc_do_src_install() {
 
 		ldso_name="$(alt_prefix)${ldso_abi_list[i+1]}"
 		if [[ ! -L ${ED}/${ldso_name} && ! -e ${ED}/${ldso_name} ]] ; then
-			target_ldso_path="../$(get_abi_LIBDIR ${ldso_abi})/${ldso_name##*/}"
-			[[ -e ${target_ldso_path} ]] && dosym ${target_ldso_path} ${ldso_name}
+			dosym ../$(get_abi_LIBDIR ${ldso_abi})/${ldso_name##*/} ${ldso_name}
 		fi
 	done
 
@@ -1578,7 +1574,7 @@ pkg_postinst() {
 	if [[ -e ${EROOT}/etc/nsswitch.conf ]] && ! has_version sys-auth/libnss-nis ; then
 		local entry
 		for entry in passwd group shadow; do
-			if egrep -q "^[ \t]*${entry}:.*nis" "${EROOT}"/etc/nsswitch.conf; then
+			if grep -E -q "^[ \t]*${entry}:.*nis" "${EROOT}"/etc/nsswitch.conf; then
 				ewarn ""
 				ewarn "Your ${EROOT}/etc/nsswitch.conf uses NIS. Support for that has been"
 				ewarn "removed from glibc and is now provided by the package"
