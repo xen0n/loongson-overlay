@@ -4,7 +4,6 @@ app-text/scrollkeeper-dtd ~*
 dev-libs/libatasmart ~*
 dev-libs/libbytesize ~*
 dev-libs/libdbusmenu ~*
-dev-libs/libgudev ~*
 dev-libs/nspr ~*
 dev-util/itstool ~*
 dev-util/xfce4-dev-tools ~*
