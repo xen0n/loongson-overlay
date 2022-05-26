@@ -1,7 +1,1 @@
-app-accessibility/brltty ~*
 app-accessibility/espeak ~*
-app-accessibility/flite ~*
-app-accessibility/speech-dispatcher ~*
-dev-libs/dotconf ~*
-media-sound/sox ~*
-media-sound/gsm ~*
