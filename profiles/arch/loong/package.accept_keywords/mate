@@ -5,7 +5,6 @@ app-text/atril ~*
 app-text/docbook-dsssl-stylesheets ~*
 app-text/libspectre ~*
 app-text/rarian ~*
-dev-libs/json-glib ~*
 dev-libs/libmateweather ~*
 dev-libs/tinyxml ~*
 dev-perl/XML-SAX-Expat ~*
@@ -35,7 +34,6 @@ mate-extra/mate-screensaver ~*
 mate-extra/mate-system-monitor ~*
 mate-extra/mate-utils ~*
 media-gfx/eom ~*
-media-libs/libexif ~*
 media-libs/libmatemixer ~*
 net-wireless/wireless-tools ~*
 sys-power/cpupower ~*

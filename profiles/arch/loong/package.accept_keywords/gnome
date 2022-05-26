@@ -1,9 +1,7 @@
 gnome-base/dconf-editor ~*
 media-plugins/gst-plugins-meta ~*
 media-libs/gst-plugins-good ~*
-dev-libs/nss ~*
 media-plugins/gst-plugins-opus ~*
-sys-apps/bubblewrap ~*
 app-misc/geoclue ~*
 media-libs/babl ~*
 media-libs/gegl ~*
@@ -19,4 +17,3 @@ media-libs/clutter-gtk ~*
 media-libs/cogl ~*
 dev-libs/libmanette ~*
 dev-libs/qqwing ~*
-gui-libs/gtk ~*
