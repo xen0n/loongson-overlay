@@ -1,5 +1,0 @@
-gui-apps/swaybg ~*
-gui-apps/swayidle ~*
-gui-apps/swaylock ~*
-gui-libs/wlroots ~*
-gui-wm/sway ~*
