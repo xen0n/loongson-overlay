@@ -7,7 +7,7 @@ DESCRIPTION="Bootstrap package for dev-lang/go"
 HOMEPAGE="https://golang.org"
 BOOTSTRAP_DIST="https://dev.gentoo.org/~xen0n/distfiles"
 SRC_URI="
-	loong? ( ${BOOTSTRAP_DIST}/go-linux-loong64-bootstrap-1.19-0a1a092c4b.tbz )
+	loong? ( ${BOOTSTRAP_DIST}/go-linux-loong64-bootstrap-1.19-fd0ffedae2.tbz )
 "
 
 LICENSE="BSD"
