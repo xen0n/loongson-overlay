@@ -17,7 +17,7 @@ case ${PV}  in
 	;;
 *)
 	#SRC_URI="https://storage.googleapis.com/golang/go${MY_PV}.src.tar.gz "
-	SRC_URI="https://dev.gentoo.org/~xen0n/distfiles/go1.19-0a1a092c4b.src.tar.gz"
+	SRC_URI="https://dev.gentoo.org/~xen0n/distfiles/go1.19-fd0ffedae2.src.tar.gz"
 	S="${WORKDIR}"/go
 	case ${PV} in
 	*_beta*|*_rc*) ;;
