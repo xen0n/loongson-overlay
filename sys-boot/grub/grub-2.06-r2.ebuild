@@ -1,4 +1,4 @@
-# Copyright 1999-2021 Gentoo Authors
+# Copyright 1999-2022 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=7
@@ -47,18 +47,19 @@ if [[ ${PV} != 9999 ]]; then
 		SRC_URI="mirror://gnu/${PN}/${P}.tar.xz"
 		S=${WORKDIR}/${P%_*}
 	fi
-	KEYWORDS="amd64 ~arm arm64 ~ia64 ppc ppc64 ~riscv sparc x86"
+	KEYWORDS="amd64 ~arm ~arm64 ~ia64 ~ppc ~ppc64 ~riscv ~sparc x86"
 else
 	inherit git-r3
 	EGIT_REPO_URI="https://git.savannah.gnu.org/git/grub.git"
 fi
 
+SRC_URI+=" https://dev.gentoo.org/~floppym/dist/${P}-backports.tar.xz"
+
 PATCHES=(
-	"${FILESDIR}"/grub-2.06-xfs-v4.patch
+	"${WORKDIR}/${P}-backports"
 	"${FILESDIR}"/gfxpayload.patch
 	"${FILESDIR}"/grub-2.02_beta2-KERNEL_GLOBS.patch
 	"${FILESDIR}"/grub-2.06-test-words.patch
-	"${FILESDIR}"/grub-2.06-binutils-2.36.patch
 
 	"${FILESDIR}"/loongarch-2.06/0001-add-LoongArch64-support-for-grub.patch
 	"${FILESDIR}"/loongarch-2.06/0002-Modify-the-li-instruction-to-li.w-to-cooperate-with-.patch
@@ -258,6 +259,9 @@ grub_configure() {
 src_configure() {
 	# Bug 508758.
 	replace-flags -O3 -O2
+
+	# Workaround for bug 829165.
+	filter-ldflags -pie
 
 	# We don't want to leak flags onto boot code.
 	export HOST_CCASFLAGS=${CCASFLAGS}
