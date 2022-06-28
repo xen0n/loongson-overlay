@@ -54,7 +54,6 @@ dev-libs/liblouis ~*
 dev-python/pyatspi ~*
 kde-frameworks/kcmutils ~*
 sys-apps/bolt ~*
-dev-util/umockdev ~*
 kde-frameworks/plasma ~*
 net-firewall/ufw ~*
 dev-qt/qtquickcontrols ~*
@@ -88,9 +87,7 @@ app-arch/gcab ~*
 dev-libs/libjcat ~*
 dev-libs/libxmlb ~*
 app-text/docbook-sgml-utils ~*
-app-text/docbook-dsssl-stylesheets ~*
 app-text/xhtml1 ~*
-app-text/docbook-sgml-dtd ~*
 app-text/docbook-xml-simple-dtd ~*
 kde-frameworks/kfilemetadata ~*
 kde-frameworks/krunner ~*

@@ -1,10 +1,6 @@
 app-text/gnome-doc-utils ~*
-app-text/scrollkeeper-dtd ~*
 dev-libs/libdbusmenu ~*
 dev-util/xfce4-dev-tools ~*
-x11-libs/libxklavier ~*
-x11-libs/libXpresent ~*
-x11-libs/libXres ~*
 x11-terms/xfce4-terminal ~*
 xfce-base/exo ~*
 xfce-base/garcon ~*
