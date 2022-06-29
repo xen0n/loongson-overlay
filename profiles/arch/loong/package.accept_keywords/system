@@ -1,9 +1,0 @@
-dev-perl/Class-Inspector ~*
-dev-perl/Exporter-Tiny ~*
-dev-perl/File-ShareDir ~*
-dev-perl/File-ShareDir-Install ~*
-dev-perl/libintl-perl ~*
-dev-perl/List-MoreUtils ~*
-dev-perl/Text-Unidecode ~*
-dev-perl/Unicode-EastAsianWidth ~*
-sys-libs/musl ~*
