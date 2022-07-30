@@ -1,0 +1,7 @@
+sec-policy/apparmor-profiles ~*
+sys-apps/apparmor ~*
+sys-apps/apparmor-utils ~*
+sys-libs/libapparmor ~*
+<dev-perl/RPC-XML-9999 **
+<dev-python/notify2-9999 **
+virtual/perl-Module-Load ~*
