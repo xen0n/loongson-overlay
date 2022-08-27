@@ -1,5 +1,1 @@
-app-crypt/mhash ~*
-app-crypt/shash ~*
-app-misc/zisofs-tools ~*
 dev-util/catalyst ~*
-sys-fs/squashfs-tools ~*

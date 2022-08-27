@@ -16,7 +16,4 @@ sys-apps/fwupd ~*
 app-arch/gcab ~*
 dev-libs/libjcat ~*
 dev-libs/libxmlb ~*
-app-text/docbook-sgml-utils ~*
-app-text/xhtml1 ~*
-app-text/docbook-xml-simple-dtd ~*
 sys-devel/gdb ~*

@@ -27,9 +27,6 @@ media-libs/libdvdcss ~*
 media-libs/libass ~*
 dev-libs/tinyxml2 ~*
 media-libs/libzen ~*
-dev-libs/libisoburn ~*
-dev-libs/libburn ~*
-dev-libs/libisofs ~*
 app-misc/ddcutil ~*
 sys-apps/i2c-tools ~*
 x11-libs/motif ~*
