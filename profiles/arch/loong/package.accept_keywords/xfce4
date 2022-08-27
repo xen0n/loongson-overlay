@@ -1,6 +1,5 @@
 app-text/gnome-doc-utils ~*
 dev-libs/libdbusmenu ~*
-dev-util/xfce4-dev-tools ~*
 x11-terms/xfce4-terminal ~*
 xfce-base/exo ~*
 xfce-base/garcon ~*

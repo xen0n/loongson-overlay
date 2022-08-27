@@ -1,7 +1,4 @@
 dev-qt/qtchooser ~*
-app-text/ghostscript-gpl ~*
-media-libs/libcanberra ~*
-dev-lang/go ~*
 dev-perl/Config-Tiny ~*
 dev-perl/XML-LibXML ~*
 dev-perl/Alien-Build ~*
@@ -34,10 +31,8 @@ dev-libs/libisoburn ~*
 dev-libs/libburn ~*
 dev-libs/libisofs ~*
 app-misc/ddcutil ~*
-app-misc/jq ~*
 sys-apps/i2c-tools ~*
 x11-libs/motif ~*
 dev-util/byacc ~*
 dev-libs/geoip ~*
 dev-libs/iniparser ~*
-media-plugins/alsa-plugins ~*
