@@ -1,2 +1,3 @@
 net-fs/cifs-utils ~*
 sys-libs/libunwind ~*
+sys-fs/mac-fdisk ~*
