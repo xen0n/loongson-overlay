@@ -12,8 +12,4 @@ dev-libs/liblouis ~*
 dev-python/pyatspi ~*
 sys-apps/bolt ~*
 sys-boot/plymouth ~*
-sys-apps/fwupd ~*
-app-arch/gcab ~*
-dev-libs/libjcat ~*
-dev-libs/libxmlb ~*
 sys-devel/gdb ~*
