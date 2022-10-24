@@ -34,7 +34,7 @@ fi
 
 inherit bash-completion-r1 flag-o-matic multibuild optfeature toolchain-funcs
 
-SRC_URI="https://dev.gentoo.org/~xen0n/distfiles/grub-2.11-loongarch64-20220901.tar.xz"
+SRC_URI="https://dev.gentoo.org/~xen0n/distfiles/${CATEGORY}/${PN}/${PN}-$(ver_cut 1-2)-loongarch64-$(ver_cut 4).tar.xz"
 KEYWORDS="~loong"
 S="${WORKDIR}/${PN}-$(ver_cut 1-2)"
 
