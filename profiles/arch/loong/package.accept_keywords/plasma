@@ -1,4 +1,3 @@
-kde-plasma/kwayland-server ~*
 kde-plasma/bluedevil ~*
 app-accessibility/orca ~*
 dev-python/gst-python ~*
