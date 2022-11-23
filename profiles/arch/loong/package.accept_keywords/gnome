@@ -1,10 +1,8 @@
 gnome-base/dconf-editor ~*
-app-misc/geoclue ~*
 media-libs/babl ~*
 media-libs/gegl ~*
 net-misc/gnome-online-miners ~*
 net-libs/libzapojit ~*
-media-gfx/exiv2 ~*
 media-libs/libnsgif ~*
 dev-util/netsurf-buildsystem ~*
 media-plugins/gst-plugins-gdkpixbuf ~*

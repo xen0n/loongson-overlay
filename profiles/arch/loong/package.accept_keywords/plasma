@@ -1,15 +1,6 @@
 kde-plasma/kwayland-server ~*
 kde-plasma/bluedevil ~*
-kde-plasma/discover ~*
-kde-plasma/breeze-grub ~*
-kde-plasma/breeze-plymouth ~*
-kde-plasma/plymouth-kcm ~*
-kde-plasma/plasma-sdk ~*
-kde-plasma/plasma-thunderbolt ~*
 app-accessibility/orca ~*
 dev-python/gst-python ~*
 dev-libs/liblouis ~*
-dev-python/pyatspi ~*
-sys-apps/bolt ~*
-sys-boot/plymouth ~*
 sys-devel/gdb ~*
