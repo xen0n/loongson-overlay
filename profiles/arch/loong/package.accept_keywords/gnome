@@ -1,10 +1,6 @@
 gnome-base/dconf-editor ~*
-media-libs/babl ~*
-media-libs/gegl ~*
 net-misc/gnome-online-miners ~*
 net-libs/libzapojit ~*
-media-libs/libnsgif ~*
-dev-util/netsurf-buildsystem ~*
 media-plugins/gst-plugins-gdkpixbuf ~*
 dev-libs/libgnome-games-support ~*
 media-libs/clutter ~*
