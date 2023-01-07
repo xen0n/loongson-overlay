@@ -1,0 +1,41 @@
+https://github.com/gentoo/catalyst/commit/2998cce2717052a01861b23b90572fb189d12cdc
+From 2998cce2717052a01861b23b90572fb189d12cdc Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Andreas=20K=2E=20H=C3=BCttel?= <dilfridge@gentoo.org>
+Date: Tue, 11 Oct 2022 14:52:55 +0200
+Subject: [PATCH] arch: Add loong
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Signed-off-by: Andreas K. Hüttel <dilfridge@gentoo.org>
+---
+ catalyst/arch/loong.py | 20 ++++++++++++++++++++
+ 1 file changed, 20 insertions(+)
+ create mode 100644 catalyst/arch/loong.py
+
+diff --git a/catalyst/arch/loong.py b/catalyst/arch/loong.py
+new file mode 100644
+index 00000000..66786dfe
+--- /dev/null
++++ b/catalyst/arch/loong.py
+@@ -0,0 +1,20 @@
++
++from catalyst import builder
++
++class generic_loong(builder.generic):
++	"abstract base class for all loong builders"
++	def __init__(self,myspec):
++		builder.generic.__init__(self,myspec)
++		self.settings["COMMON_FLAGS"]=" -pipe"
++
++class arch_loong(generic_loong):
++	"builder class for generic loong"
++	def __init__(self,myspec):
++		generic_loong.__init__(self,myspec)
++		self.settings["COMMON_FLAGS"]+=" -O2"
++		self.settings["CHOST"]="loongarch64-unknown-linux-gnu"
++
++def register():
++	"Inform main catalyst program of the contents of this plugin."
++	return ({ "loong":arch_loong },
++	("loong", ))
