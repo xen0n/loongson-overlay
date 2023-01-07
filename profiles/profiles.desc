@@ -10,3 +10,4 @@ loong   default/linux/loong/22.0/la64v100/lp64d                  exp
 loong   default/linux/loong/22.0/la64v100/lp64d/desktop          exp
 loong   default/linux/loong/22.0/la64v100/lp64d/desktop/systemd  exp
 loong   default/linux/loong/22.0/la64v100/lp64d/systemd          exp
+loong   default/linux/loong/22.0/la64v100/lp64d/llvm             exp
