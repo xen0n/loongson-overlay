@@ -5,8 +5,7 @@ EAPI=8
 
 DESCRIPTION="Fixed ACPI tables for LoongArch"
 HOMEPAGE="https://github.com/sunhaiyong1978/CLFS-for-LoongArch"
-# TODO: confirm with relevant ppl
-LICENSE="GPL-2"
+LICENSE="all-rights-reserved"
 SLOT="0"
 
 SRC_URI="https://github.com/sunhaiyong1978/CLFS-for-LoongArch/releases/download/20210903/acpi-update-20210905.tar.gz"
