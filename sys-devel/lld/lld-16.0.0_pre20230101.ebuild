@@ -34,6 +34,10 @@ PDEPEND="
 	>=sys-devel/lld-toolchain-symlinks-16-r2:${LLVM_MAJOR}
 "
 
+PATCHES=(
+	"${FILESDIR}/0001-WIP-ELF-Support-LoongArch.patch"
+)
+
 LLVM_COMPONENTS=( lld cmake libunwind/include/mach-o )
 LLVM_TEST_COMPONENTS=( llvm/utils third-party )
 llvm.org_set_globals
