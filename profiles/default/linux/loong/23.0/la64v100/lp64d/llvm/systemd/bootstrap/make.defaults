@@ -1,6 +1,9 @@
 # we're using an ordinary seed stage with no llvm/clang, so revert to gcc for
 # bootstrapping
 
+# revert LDFLAGS changes
+LDFLAGS="-Wl,-O1 -Wl,--as-needed"
+
 # can't use unset it seems
 CC="gcc"
 CXX="g++"
