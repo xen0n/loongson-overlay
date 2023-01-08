@@ -1,0 +1,4 @@
+# we're using an ordinary seed stage with no llvm/clang, so revert to gcc for
+# bootstrapping
+
+undef CC CXX LD AR AS CPP NM STRIP RANLIB OBJCOPY STRINGS OBJDUMP READELF ADDR2LINE
