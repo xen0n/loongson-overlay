@@ -1,0 +1,7 @@
+# breaking cycle
+sys-apps/util-linux systemd udev
+
+# loongarch64-unknown-linux-gnu-clang is not present on the seed-building
+# system
+sys-libs/compiler-rt clang
+sys-libs/compiler-rt-sanitizers clang

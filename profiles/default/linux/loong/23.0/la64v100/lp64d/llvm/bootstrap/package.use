@@ -1,3 +1,0 @@
-sys-libs/llvm-libunwind -clang
-sys-libs/compiler-rt -clang
-sys-libs/compiler-rt-sanitizers -clang
