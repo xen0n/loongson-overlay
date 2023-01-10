@@ -106,6 +106,12 @@ multilib_src_configure() {
 		append-flags -fno-tree-loop-vectorize
 	fi
 
+	# tc-ld-is-bfd needs https://github.com/gentoo/gentoo/pull/28355a
+	# also tc-ld-is-mold (for the record, mold needs this too)
+	if tc-ld-is-gold || tc-ld-is-lld; then
+		append-ldflags -Wl,--undefined-version
+	fi
+
 	local myeconfargs=(
 		CC_FOR_BUILD="$(tc-getBUILD_CC)"
 
