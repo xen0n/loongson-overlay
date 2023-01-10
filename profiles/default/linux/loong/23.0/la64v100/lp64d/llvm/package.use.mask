@@ -1,0 +1,2 @@
+# dev-perl/XS-Parse-Keyword fails to build with clang+lld right now
+sys-apps/man-db nls
