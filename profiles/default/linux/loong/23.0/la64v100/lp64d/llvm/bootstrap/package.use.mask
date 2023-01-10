@@ -1,0 +1,5 @@
+# breaking cycle
+sys-apps/util-linux systemd udev
+
+# fails to build with cross clang
+sys-libs/compiler-rt clang

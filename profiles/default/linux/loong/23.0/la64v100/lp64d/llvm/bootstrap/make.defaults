@@ -19,3 +19,5 @@ STRINGS="loongarch64-unknown-linux-gnu-strings"
 OBJDUMP="loongarch64-unknown-linux-gnu-objdump"
 READELF="loongarch64-unknown-linux-gnu-readelf"
 ADDR2LINE="loongarch64-unknown-linux-gnu-addr2line"
+
+QEMU_LD_PREFIX="/usr/loongarch64-unknown-linux-gnu"
