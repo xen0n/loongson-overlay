@@ -41,7 +41,7 @@ multilib_src_configure() {
 	# tc-ld-is-bfd needs https://github.com/gentoo/gentoo/pull/28355a
 	# also tc-ld-is-mold (for the record, mold needs this too)
 	if tc-ld-is-gold || tc-ld-is-lld; then
-		append_ldflags -Wl,--undefined-version
+		append-ldflags -Wl,--undefined-version
 	fi
 
 	ECONF_SOURCE="${S}" econf "${myeconfargs[@]}"
