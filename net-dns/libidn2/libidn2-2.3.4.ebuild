@@ -3,7 +3,7 @@
 
 EAPI=8
 
-inherit multilib-minimal toolchain-funcs verify-sig
+inherit flag-o-matic multilib-minimal toolchain-funcs verify-sig
 
 DESCRIPTION="An implementation of the IDNA2008 specifications (RFCs 5890, 5891, 5892, 5893)"
 HOMEPAGE="
@@ -37,6 +37,12 @@ BDEPEND="
 VERIFY_SIG_OPENPGP_KEY_PATH="${BROOT}"/usr/share/openpgp-keys/libidn.asc
 
 multilib_src_configure() {
+	# tc-ld-is-bfd needs https://github.com/gentoo/gentoo/pull/28355a
+	# also tc-ld-is-mold (for the record, mold needs this too)
+	if tc-ld-is-gold || tc-ld-is-lld; then
+		append-ldflags -Wl,--undefined-version
+	fi
+
 	local myconf=(
 		CC_FOR_BUILD="$(tc-getBUILD_CC)"
 		$(use_enable static-libs static)
