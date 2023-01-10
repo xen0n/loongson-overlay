@@ -3,7 +3,7 @@
 
 EAPI=8
 
-inherit multilib-minimal usr-ldscript
+inherit flag-o-matic multilib-minimal toolchain-funcs usr-ldscript
 
 DESCRIPTION="Transport Independent RPC library (SunRPC replacement)"
 HOMEPAGE="https://sourceforge.net/projects/libtirpc/ https://git.linux-nfs.org/?p=steved/libtirpc.git"
@@ -37,6 +37,12 @@ multilib_src_configure() {
 		$(use_enable kerberos gssapi)
 		$(use_enable static-libs static)
 	)
+
+	# tc-ld-is-bfd needs https://github.com/gentoo/gentoo/pull/28355a
+	# also tc-ld-is-mold (for the record, mold needs this too)
+	if tc-ld-is-gold || tc-ld-is-lld; then
+		append_ldflags -Wl,--undefined-version
+	fi
 
 	ECONF_SOURCE="${S}" econf "${myeconfargs[@]}"
 }
