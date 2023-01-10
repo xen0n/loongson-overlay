@@ -3,7 +3,7 @@
 
 EAPI=8
 
-inherit multilib-minimal libtool
+inherit flag-o-matic multilib-minimal libtool toolchain-funcs
 
 DESCRIPTION="Parse Options - Command line parser"
 HOMEPAGE="https://github.com/rpm-software-management/popt"
@@ -29,6 +29,12 @@ src_prepare() {
 }
 
 multilib_src_configure() {
+	# tc-ld-is-bfd needs https://github.com/gentoo/gentoo/pull/28355a
+	# also tc-ld-is-mold (for the record, mold needs this too)
+	if tc-ld-is-gold || tc-ld-is-lld; then
+		append-ldflags -Wl,--undefined-version
+	fi
+
 	local myeconfargs=(
 		--disable-werror
 		$(use_enable static-libs static)
