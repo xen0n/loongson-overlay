@@ -3,7 +3,7 @@
 
 EAPI=8
 
-inherit toolchain-funcs multilib-minimal
+inherit flag-o-matic toolchain-funcs multilib-minimal
 
 DESCRIPTION="Console utility and library for computing and verifying file hash sums"
 HOMEPAGE="http://rhash.sourceforge.net/"
@@ -42,6 +42,12 @@ src_prepare() {
 }
 
 multilib_src_configure() {
+	# tc-ld-is-bfd needs https://github.com/gentoo/gentoo/pull/28355a
+	# also tc-ld-is-mold (for the record, mold needs this too)
+	if tc-ld-is-gold || tc-ld-is-lld; then
+		append-ldflags -Wl,--undefined-version
+	fi
+
 	set -- \
 		./configure \
 		--target="${CHOST}" \
