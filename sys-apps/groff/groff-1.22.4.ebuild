@@ -3,7 +3,7 @@
 
 EAPI=7
 
-inherit toolchain-funcs
+inherit flag-o-matic toolchain-funcs
 
 MY_P="${P/_/.}"
 
@@ -69,6 +69,13 @@ src_configure() {
 		# bug #678026
 		export gl_cv_func_signbit_gcc=yes
 	fi
+
+	# 'register' storage class specifier is banned in ISO C++17, but the
+	# current version still contains such usages. Force C++11 everywhere just
+	# in case any compiler defaults to a newer standard (e.g. Clang 16).
+	#
+	# This should be safe to drop on the next release.
+	append-cxxflags -std=c++11
 
 	local myeconfargs=(
 		--with-appresdir="${EPREFIX}"/usr/share/X11/app-defaults
