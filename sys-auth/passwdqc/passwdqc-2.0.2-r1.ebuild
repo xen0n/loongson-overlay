@@ -3,7 +3,7 @@
 
 EAPI=7
 
-inherit pam toolchain-funcs
+inherit flag-o-matic pam toolchain-funcs
 
 DESCRIPTION="Password strength checking library (and PAM module)"
 HOMEPAGE="http://www.openwall.com/passwdqc/"
@@ -38,6 +38,16 @@ src_prepare() {
 		retry=3
 	EOF
 
+}
+
+src_configure() {
+	# tc-ld-is-bfd needs https://github.com/gentoo/gentoo/pull/28355a
+	# also tc-ld-is-mold (for the record, mold needs this too)
+	if tc-ld-is-gold || tc-ld-is-lld; then
+		append-ldflags -Wl,--undefined-version
+	fi
+
+	default
 }
 
 _emake() {
