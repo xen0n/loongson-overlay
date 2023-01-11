@@ -93,6 +93,8 @@ src_prepare() {
 	local PATCHES=(
 		# Upstream patches
 		"${FILESDIR}"/${P}-fix-rename-simple-backups.patch
+		# loong compiler compatibility fix
+		"${FILESDIR}"/${P}-fix-loong-build.patch
 	)
 
 	if ! use vanilla ; then
