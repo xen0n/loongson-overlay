@@ -53,6 +53,7 @@ PATCHES=(
 	"${MY_PATCHES[@]}"
 
 	# Additional patches
+	"${FILESDIR}/fix-loong-build.patch"
 )
 
 HTML_DOCS=( doc/FAQ.html )
