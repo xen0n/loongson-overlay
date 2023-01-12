@@ -124,6 +124,11 @@ PATCHES=(
 	"${FILESDIR}/${PN}-8.9_p1-allow-ppoll_time64.patch" #834019
 	"${FILESDIR}/${PN}-8.9_p1-gss-use-HOST_NAME_MAX.patch" #834044
 	"${FILESDIR}/${PN}-9.1_p1-build-tests.patch"
+	"${FILESDIR}/${PN}-9.1_p1-clang-1.patch"
+	"${FILESDIR}/${PN}-9.1_p1-clang-2.patch"
+	"${FILESDIR}/${PN}-9.1_p1-clang-3.patch"
+	"${FILESDIR}/${PN}-9.1_p1-clang-4.patch"
+	"${FILESDIR}/${PN}-9.1_p1-clang-5.patch"
 )
 
 pkg_pretend() {

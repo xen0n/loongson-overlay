@@ -1,0 +1,27 @@
+From 890e53f46230c2209dd9a7f5bd0b1ede3aea2e82 Mon Sep 17 00:00:00 2001
+From: Darren Tucker <dtucker@dtucker.net>
+Date: Thu, 3 Nov 2022 04:24:39 +1100
+Subject: [PATCH 2/5] Include time.h when defining timegm.
+
+Fixes build on some platforms eg recent AIX.
+
+(cherry picked from commit 96b519726b7944eee3c23a54eee3d5c031ba1533)
+---
+ openbsd-compat/openbsd-compat.h | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/openbsd-compat/openbsd-compat.h b/openbsd-compat/openbsd-compat.h
+index 4af207cd..41532d14 100644
+--- a/openbsd-compat/openbsd-compat.h
++++ b/openbsd-compat/openbsd-compat.h
+@@ -343,6 +343,7 @@ struct tm *localtime_r(const time_t *, struct tm *);
+ #endif
+ 
+ #ifndef HAVE_TIMEGM
++#include <time.h>
+ time_t timegm(struct tm *);
+ #endif
+ 
+-- 
+2.39.0
+

@@ -1,0 +1,32 @@
+From 1407f635acbeed9f5153b0c4f789c8a9e4926d17 Mon Sep 17 00:00:00 2001
+From: Sam James <sam@gentoo.org>
+Date: Sun, 6 Nov 2022 04:47:35 +0000
+Subject: [PATCH 3/5] configure.ac: Add <pty.h> include for openpty
+
+Another Clang 16ish fix (which makes -Wimplicit-function-declaration
+an error by default).  github PR#355.
+
+See: 2efd71da49b9cfeab7987058cf5919e473ff466b
+See: be197635329feb839865fdc738e34e24afd1fca8
+(cherry picked from commit 40b0a5eb6e3edfa2886b60c09c7803353b0cc7f5)
+---
+ configure.ac | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/configure.ac b/configure.ac
+index 165c49de..6dcb33c0 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -2373,6 +2373,9 @@ if test ! -z "$check_for_openpty_ctty_bug"; then
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <unistd.h>
++#ifdef HAVE_PTY_H
++# include <pty.h>
++#endif
+ #include <sys/fcntl.h>
+ #include <sys/types.h>
+ #include <sys/wait.h>
+-- 
+2.39.0
+
