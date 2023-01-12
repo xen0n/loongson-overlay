@@ -171,6 +171,12 @@ src_configure() {
 	# Keep things sane
 	strip-flags
 
+	# tc-ld-is-bfd needs https://github.com/gentoo/gentoo/pull/28355a
+	# also tc-ld-is-mold (for the record, mold needs this too)
+	if tc-ld-is-gold || tc-ld-is-lld; then
+		append-ldflags -Wl,--undefined-version
+	fi
+
 	use elibc_musl && append-ldflags -Wl,-z,stack-size=2097152
 
 	local x
