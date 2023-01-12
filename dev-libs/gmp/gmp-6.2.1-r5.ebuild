@@ -47,6 +47,7 @@ PATCHES=(
 	"${FILESDIR}"/${PN}-6.2.1-no-zarch.patch
 	"${WORKDIR}"/${P}-arm64-darwin.patch
 	"${FILESDIR}"/${P}-CVE-2021-43618.patch
+	"${FILESDIR}"/fix-loong-build.patch
 )
 
 pkg_pretend() {

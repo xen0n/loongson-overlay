@@ -1,0 +1,13 @@
+https://github.com/foxsen/meta-loongson/blob/main/recipes-core/coreutils/coreutils/0001-fix-compilation-on-loongarch-__int128__-to-__int128.patch
+but adjusted back into original gmp project layout
+--- a/longlong.h
++++ b/longlong.h
+@@ -1162,7 +1162,7 @@ extern UWtype __MPN(udiv_qrnnd) (UWtype *, UWtype, UWtype, UWtype);
+   do {									\
+     UDItype __u = (u), __v = (v);					\
+     (w0) = __u * __v;							\
+-    (w1) = (unsigned __int128__) __u * __v >> 64;			\
++    (w1) = (unsigned __int128) __u * __v >> 64;			\
+   } while (0)
+ #endif
+ 
