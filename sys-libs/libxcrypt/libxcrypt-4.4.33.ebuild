@@ -131,6 +131,12 @@ src_configure() {
 	# https://github.com/besser82/libxcrypt/issues/24
 	filter-lto
 
+	# tc-ld-is-bfd needs https://github.com/gentoo/gentoo/pull/28355a
+	# also tc-ld-is-mold (for the record, mold needs this too)
+	if tc-ld-is-lld; then
+		append-ldflags -Wl,--undefined-version
+	fi
+
 	multibuild_foreach_variant multilib-minimal_src_configure
 }
 
