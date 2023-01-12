@@ -1,2 +1,5 @@
+# we actually can have these with ::loongson available and this profile selected
+sys-devel/clang-common -default-libcxx -default-lld
+
 # dev-perl/XS-Parse-Keyword fails to build with clang+lld right now
 sys-apps/man-db nls
