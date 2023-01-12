@@ -1,0 +1,2 @@
+# not sure why stage1 deps fail to resolve w/o this, but anyway
+BOOTSTRAP_USE="${BOOTSTRAP_USE} zstd"
