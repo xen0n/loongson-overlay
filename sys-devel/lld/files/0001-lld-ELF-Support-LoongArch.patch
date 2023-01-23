@@ -1,43 +1,62 @@
-From f088d06a591ee25b71a2a73c4fac59c4f49cb609 Mon Sep 17 00:00:00 2001
+From f749ae8bdecb5a13b5213200b08e6ef95e9e83fc Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <git@xen0n.name>
 Date: Tue, 9 Aug 2022 13:33:31 +0800
-Subject: [PATCH] [WIP][ELF] Support LoongArch
+Subject: [PATCH] [lld][ELF] Support LoongArch
 
-Current status: Fully working now, links QEMU and LLVM itself that
-passes respective testsuites. Test cases TODO.
+This adds support for the LoongArch ELF psABI v2.00 [1] relocation
+model to LLD. The deprecated stack-machine-based psABI v1 relocs are not
+supported.
+
+The code is tested by successfully bootstrapping a Gentoo/LoongArch
+stage3, complete with common GNU userland tools and both the LLVM and
+GNU toolchains (GNU toolchain is present only for building glibc,
+LLVM+Clang+LLD are used for the rest). Large programs like QEMU are
+tested to work as well.
+
+[1]: https://loongson.github.io/LoongArch-Documentation/LoongArch-ELF-ABI-EN.html
 
 Differential Revision: https://reviews.llvm.org/D138135
 ---
- lld/ELF/Arch/LoongArch.cpp            | 607 ++++++++++++++++++++++++++
- lld/ELF/CMakeLists.txt                |   1 +
- lld/ELF/Driver.cpp                    |  12 +-
- lld/ELF/InputFiles.cpp                |   3 +
- lld/ELF/InputSection.cpp              |  26 ++
- lld/ELF/Relocations.cpp               |  30 +-
- lld/ELF/Relocations.h                 |   6 +
- lld/ELF/ScriptParser.cpp              |   2 +
- lld/ELF/Target.cpp                    |   2 +
- lld/ELF/Target.h                      |   2 +
- lld/test/ELF/loongarch-branch-b16.s   |  40 ++
- lld/test/ELF/loongarch-branch-b21.s   |  40 ++
- lld/test/ELF/loongarch-branch-b26.s   |  40 ++
- lld/test/ELF/loongarch-elf-flags.s    |   8 +
- lld/test/ELF/loongarch-relocs-abs64.s |  60 +++
- lld/test/lit.cfg.py                   |   1 +
- 16 files changed, 865 insertions(+), 15 deletions(-)
+ lld/ELF/Arch/LoongArch.cpp                    | 684 ++++++++++++++++++
+ lld/ELF/CMakeLists.txt                        |   1 +
+ lld/ELF/Driver.cpp                            |  12 +-
+ lld/ELF/InputFiles.cpp                        |   3 +
+ lld/ELF/InputSection.cpp                      |  28 +
+ lld/ELF/Relocations.cpp                       |  38 +-
+ lld/ELF/Relocations.h                         |  11 +
+ lld/ELF/ScriptParser.cpp                      |   2 +
+ lld/ELF/Target.cpp                            |   2 +
+ lld/ELF/Target.h                              |   2 +
+ lld/test/ELF/loongarch-abs64.s                |  60 ++
+ lld/test/ELF/loongarch-branch-b16.s           |  40 +
+ lld/test/ELF/loongarch-branch-b21.s           |  40 +
+ lld/test/ELF/loongarch-branch-b26.s           |  40 +
+ lld/test/ELF/loongarch-elf-flags.s            |   8 +
+ lld/test/ELF/loongarch-pc-aligned.s           | 173 +++++
+ .../loongarch-pcala-lo12-jirl-shared-error.s  |  14 +
+ .../ELF/loongarch-pcala-lo12-jirl-shared.s    |  49 ++
+ lld/test/ELF/loongarch-pcala-lo12-jirl.s      |  42 ++
+ lld/test/ELF/loongarch-plt.s                  | 108 +++
+ lld/test/lit.cfg.py                           |   1 +
+ 21 files changed, 1341 insertions(+), 17 deletions(-)
  create mode 100644 lld/ELF/Arch/LoongArch.cpp
+ create mode 100644 lld/test/ELF/loongarch-abs64.s
  create mode 100644 lld/test/ELF/loongarch-branch-b16.s
  create mode 100644 lld/test/ELF/loongarch-branch-b21.s
  create mode 100644 lld/test/ELF/loongarch-branch-b26.s
  create mode 100644 lld/test/ELF/loongarch-elf-flags.s
- create mode 100644 lld/test/ELF/loongarch-relocs-abs64.s
+ create mode 100644 lld/test/ELF/loongarch-pc-aligned.s
+ create mode 100644 lld/test/ELF/loongarch-pcala-lo12-jirl-shared-error.s
+ create mode 100644 lld/test/ELF/loongarch-pcala-lo12-jirl-shared.s
+ create mode 100644 lld/test/ELF/loongarch-pcala-lo12-jirl.s
+ create mode 100644 lld/test/ELF/loongarch-plt.s
 
 diff --git a/lld/ELF/Arch/LoongArch.cpp b/lld/ELF/Arch/LoongArch.cpp
 new file mode 100644
-index 000000000000..98ea544bfb84
+index 000000000000..320fd2246c0a
 --- /dev/null
 +++ b/lld/ELF/Arch/LoongArch.cpp
-@@ -0,0 +1,607 @@
+@@ -0,0 +1,684 @@
 +//===- LoongArch.cpp ------------------------------------------------------===//
 +//
 +// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
@@ -86,12 +105,13 @@ index 000000000000..98ea544bfb84
 +//
 +// in which case the "pc + hi20" part is separately constructed from the rest
 +// which includes the higher 32-bit half and lo12, so the higher 32 bits need a
-+// nudge too, due to the signed addition performed by the ldx/stx.
++// conditional nudge too, due to the signed addition performed by the ldx/stx.
 +uint64_t elf::getLoongArchPageOffset(uint64_t dest, uint64_t pc) {
 +  uint64_t result = getLoongArchPage(dest) - getLoongArchPage(pc);
 +  if ((dest & 0xfff) > 0x7ff) {
 +    result += 0x1000;
-+    result -= 0x100000000;
++    if (static_cast<int64_t>(result) > 0)
++      result -= 0x100000000;
 +  }
 +  return result;
 +}
@@ -182,6 +202,10 @@ index 000000000000..98ea544bfb84
 +  return (insn & 0xfc0003ff) | (extractBits(imm, 15, 0) << 10);
 +}
 +
++static bool isJirl(uint32_t insn) {
++  return (insn & 0xfc000000) == JIRL;
++}
++
 +LoongArch::LoongArch() {
 +  // The LoongArch ISA itself does not have a limit on page sizes. According to
 +  // the ISA manual, the PS (page size) field in MTLB entries and CSR.STLBPS is
@@ -243,8 +267,8 @@ index 000000000000..98ea544bfb84
 +      error(toString(f) +
 +            ": cannot link object files with different ABI");
 +
-+    // We cannot process object ABI v0 files (containing stack relocations),
-+    // unlike ld.bfd.
++    // We cannot process psABI v1.x / object ABI v0 files (containing stack
++    // relocations), unlike ld.bfd.
 +    //
 +    // Instead of blindly accepting every v0 object and only failing at
 +    // relocation processing time, just disallow interlink altogether. We
@@ -320,7 +344,7 @@ index 000000000000..98ea544bfb84
 +  // PC-relative addressing (because `pcaddu12i` is the same as RISCV `auipc`),
 +  // in contrast to the AArch64-like page-offset scheme with `pcalau12i` that
 +  // is used everywhere else involving PC-relative operations in the LoongArch
-+  // ELF psABI v2.0.
++  // ELF psABI v2.00.
 +  // The `pcrel_{hi20,lo12}` operators are illustrative only and not really
 +  // supported by LoongArch assemblers.
 +  //
@@ -382,8 +406,45 @@ index 000000000000..98ea544bfb84
 +  case R_LARCH_ABS_LO12:
 +  case R_LARCH_ABS64_LO20:
 +  case R_LARCH_ABS64_HI12:
-+  case R_LARCH_PCALA_LO12:
 +    return R_ABS;
++  case R_LARCH_PCALA_LO12:
++    // This may well be just R_ABS and nothing more, but unfortunately some
++    // people had the brilliant idea of reusing the R_LARCH_PCALA_LO12 reloc on
++    // JIRLs, for implementing the medium code model, seemingly for avoiding
++    // having to add another reloc type just for that. The intended use case is
++    // for making the libc_nonshared.a of glibc 2.37+ usable with large
++    // applications like Firefox or Chromium, where an R_LARCH_B26 will overflow
++    // otherwise. See [1] for details.
++    //
++    // This is bad for multiple reasons:
++    //
++    // * R_LARCH_PCALA_LO12 just places its computed value unmodified, but JIRL
++    //   expects its immediate to be pre-shifted by 2 bits, making the reloc
++    //   behavior dependent on the underlying input section content;
++    // * R_LARCH_PCALA_LO12 leaves the upper 16-12+2=6 bits of JIRL's immediate
++    //   operand unusable, making the usage forever a kludge: a proper reloc
++    //   type has to be added *anyway*, to be able to leverage the PCADDU18I +
++    //   JIRL combo, for example.
++    //   (In this case an ISA revision (!) is arguably necessary, because there
++    //   is not a PCALAU18I for stylistic consistency with the other psABI v2.00
++    //   relocs. If PCADDU18I is to be used anyway, that would mean the new
++    //   relocs are PCREL-style instead of PCALA; so for consistency, PCREL
++    //   relocs for the other psABI v2.00 relocs should be added as well...)
++    // * Inspection into the input section must be performed for every
++    //   R_LARCH_PCALA_LO12 record, which is one of the most frequently used
++    //   LoongArch reloc types, but usage of the medium code model is not nearly
++    //   as popular, so arguably ~100% of the checks are in fact wasted for very
++    //   little gain.
++    //
++    // The problem is long known, and already reported with a suggested fix
++    // back in September 2022 [2]. But the pull request has not received any
++    // comment since then, and object code with this usage will soon appear with
++    // the release of glibc 2.37, so we have no choice but to carry the same
++    // kind of workaround as the BFD linker does.
++    //
++    // [1]: https://sourceware.org/git/?p=glibc.git;a=commitdiff;h=9f482b73f41a9a1bbfb173aad0733d1c824c788a
++    // [2]: https://github.com/loongson/LoongArch-Documentation/pull/69
++    return isJirl(read32le(loc)) ? R_PLT : R_ABS;
 +  case R_LARCH_TLS_DTPREL32:
 +  case R_LARCH_TLS_DTPREL64:
 +    return R_DTPREL;
@@ -428,6 +489,30 @@ index 000000000000..98ea544bfb84
 +  case R_LARCH_TLS_IE_PC_LO12:
 +    return R_LOONGARCH_GOT_TLSIE;
 +  case R_LARCH_PCALA_HI20:
++    // Why not R_LOONGARCH_PAGE_PC, majority of references don't go through PLT
++    // anyway so why waste time checking only to get everything relaxed back to
++    // it?
++    //
++    // This is again due to the R_LARCH_PCALA_LO12 on JIRL case, where we want
++    // both the HI20 and LO12 to potentially refer to the PLT. But in reality
++    // the HI20 reloc appears earlier, and the relocs don't contain enough
++    // information to let us properly resolve semantics per symbol.
++    // Unlike RISCV, our LO12 relocs *do not* point to their corresponding HI20
++    // relocs, hence it is nearly impossible to 100% accurately determine each
++    // HI20's "flavor" without taking big performance hits, in the presence of
++    // edge cases (e.g. HI20 without pairing LO12, paired LO12 placed so far
++    // apart that relationship is not certain anymore), and programmer mistakes
++    // (e.g. as outlined in https://github.com/loongson/LoongArch-Documentation/pull/69).
++    //
++    // Ideally we would scan in an extra pass for all LO12s on JIRL, then mark
++    // every HI20 reloc referring to the same symbol differently; this is not
++    // feasible with the current function signature of getRelExpr that doesn't
++    // allow for such inter-pass state.
++    //
++    // So, unfortunately we have to again workaround this quirk the same way as
++    // BFD: assuming every R_LARCH_PCALA_HI20 is potentially PLT needing, only
++    // relaxing to R_LOONGARCH_PAGE_PC if it's known not so at a later stage.
++    return R_LOONGARCH_PLT_PAGE_PC;
 +  case R_LARCH_PCALA64_LO20:
 +  case R_LARCH_PCALA64_HI12:
 +    return R_LOONGARCH_PAGE_PC;
@@ -552,6 +637,17 @@ index 000000000000..98ea544bfb84
 +  case R_LARCH_TLS_LE_LO12:
 +  case R_LARCH_TLS_IE_PC_LO12:
 +  case R_LARCH_TLS_IE_LO12: {
++    // Annoyingly, we have to again inspect the insn word to handle the
++    // R_LARCH_PCALA_LO12 on JIRL case: JIRL wants its immediate's 2 lowest
++    // zeroes removed by us, and the immediate slot width is in fact different.
++    // In this case, process like an R_LARCH_B16 without the overflow check, and
++    // only taking the value's lowest 12 bits.
++    if (rel.type == R_LARCH_PCALA_LO12 && isJirl(read32le(loc))) {
++      checkAlignment(loc, val, 4, rel);
++      val = SignExtend64<12>(val);
++      write32le(loc, setK16(read32le(loc), val >> 2));
++      return;
++    }
 +    write32le(loc, setK12(read32le(loc), extractBits(val, 11, 0)));
 +    return;
 +  }
@@ -658,7 +754,7 @@ index 8e6a746d219e..89955db67733 100644
    Arch/MipsArchTree.cpp
    Arch/MSP430.cpp
 diff --git a/lld/ELF/Driver.cpp b/lld/ELF/Driver.cpp
-index 1c2401650fb2..7ff3056c96a4 100644
+index 7e2a72acf8f6..3c1803be6fb9 100644
 --- a/lld/ELF/Driver.cpp
 +++ b/lld/ELF/Driver.cpp
 @@ -167,6 +167,7 @@ static std::tuple<ELFKind, uint16_t, uint8_t> parseEmulation(StringRef emul) {
@@ -702,7 +798,7 @@ index 1c2401650fb2..7ff3056c96a4 100644
    bool checkDynamicRelocsDefault = false;
  #endif
 diff --git a/lld/ELF/InputFiles.cpp b/lld/ELF/InputFiles.cpp
-index 9ecc8982cbc0..3714658619d6 100644
+index 7dacdeb9f042..c43b4afd6cb6 100644
 --- a/lld/ELF/InputFiles.cpp
 +++ b/lld/ELF/InputFiles.cpp
 @@ -1534,6 +1534,9 @@ static uint16_t getBitcodeMachineKind(StringRef path, const Triple &t) {
@@ -716,7 +812,7 @@ index 9ecc8982cbc0..3714658619d6 100644
    case Triple::mipsel:
    case Triple::mips64:
 diff --git a/lld/ELF/InputSection.cpp b/lld/ELF/InputSection.cpp
-index 2bbe6433a7a4..727e46ddb8fb 100644
+index df24f998bff6..cf2cc1a97b8d 100644
 --- a/lld/ELF/InputSection.cpp
 +++ b/lld/ELF/InputSection.cpp
 @@ -21,6 +21,7 @@
@@ -778,7 +874,16 @@ index 2bbe6433a7a4..727e46ddb8fb 100644
    case R_PC:
    case R_ARM_PCA: {
      uint64_t dest;
-@@ -808,6 +832,8 @@ uint64_t InputSectionBase::getRelocTargetVA(const InputFile *file, RelType type,
+@@ -748,6 +772,8 @@ uint64_t InputSectionBase::getRelocTargetVA(const InputFile *file, RelType type,
+   case R_PLT_PC:
+   case R_PPC64_CALL_PLT:
+     return sym.getPltVA() + a - p;
++  case R_LOONGARCH_PLT_PAGE_PC:
++    return getLoongArchPageOffset(sym.getPltVA() + a, p);
+   case R_PLT_GOTPLT:
+     return sym.getPltVA() + a - in.gotPlt->getVA();
+   case R_PPC32_PLTREL:
+@@ -808,6 +834,8 @@ uint64_t InputSectionBase::getRelocTargetVA(const InputFile *file, RelType type,
      return in.got->getGlobalDynAddr(sym) + a - in.gotPlt->getVA();
    case R_TLSGD_PC:
      return in.got->getGlobalDynAddr(sym) + a - p;
@@ -788,9 +893,20 @@ index 2bbe6433a7a4..727e46ddb8fb 100644
      return in.got->getVA() + in.got->getTlsIndexOff() + a - in.gotPlt->getVA();
    case R_TLSLD_GOT:
 diff --git a/lld/ELF/Relocations.cpp b/lld/ELF/Relocations.cpp
-index 6ef7a328e96d..c9d3400fb059 100644
+index 1368d9053125..e6a1a1187aaa 100644
 --- a/lld/ELF/Relocations.cpp
 +++ b/lld/ELF/Relocations.cpp
+@@ -190,8 +190,8 @@ static bool isAbsoluteValue(const Symbol &sym) {
+ 
+ // Returns true if Expr refers a PLT entry.
+ static bool needsPlt(RelExpr expr) {
+-  return oneof<R_PLT, R_PLT_PC, R_PLT_GOTPLT, R_PPC32_PLTREL, R_PPC64_CALL_PLT>(
+-      expr);
++  return oneof<R_PLT, R_PLT_PC, R_PLT_GOTPLT, R_LOONGARCH_PLT_PAGE_PC,
++               R_PPC32_PLTREL, R_PPC64_CALL_PLT>(expr);
+ }
+ 
+ // Returns true if Expr refers a GOT entry. Note that this function
 @@ -200,7 +200,9 @@ static bool needsPlt(RelExpr expr) {
  static bool needsGot(RelExpr expr) {
    return oneof<R_GOT, R_GOT_OFF, R_MIPS_GOT_LOCAL_PAGE, R_MIPS_GOT_OFF,
@@ -802,7 +918,7 @@ index 6ef7a328e96d..c9d3400fb059 100644
  }
  
  // True if this expression is of the form Sym - X, where X is a position in the
-@@ -208,7 +210,8 @@ static bool needsGot(RelExpr expr) {
+@@ -208,12 +210,15 @@ static bool needsGot(RelExpr expr) {
  static bool isRelExpr(RelExpr expr) {
    return oneof<R_PC, R_GOTREL, R_GOTPLTREL, R_MIPS_GOTREL, R_PPC64_CALL,
                 R_PPC64_RELAX_TOC, R_AARCH64_PAGE_PC, R_RELAX_GOT_PC,
@@ -812,18 +928,34 @@ index 6ef7a328e96d..c9d3400fb059 100644
  }
  
  
-@@ -946,7 +949,9 @@ bool RelocationScanner::isStaticLinkTimeConstant(RelExpr e, RelType type,
+ static RelExpr toPlt(RelExpr expr) {
+   switch (expr) {
++  case R_LOONGARCH_PAGE_PC:
++    return R_LOONGARCH_PLT_PAGE_PC;
+   case R_PPC64_CALL:
+     return R_PPC64_CALL_PLT;
+   case R_PC:
+@@ -232,6 +237,8 @@ static RelExpr fromPlt(RelExpr expr) {
+   case R_PLT_PC:
+   case R_PPC32_PLTREL:
+     return R_PC;
++  case R_LOONGARCH_PLT_PAGE_PC:
++    return R_LOONGARCH_PAGE_PC;
+   case R_PPC64_CALL_PLT:
+     return R_PPC64_CALL;
+   case R_PLT:
+@@ -946,7 +953,9 @@ bool RelocationScanner::isStaticLinkTimeConstant(RelExpr e, RelType type,
              R_MIPS_GOTREL, R_MIPS_GOT_OFF, R_MIPS_GOT_OFF32, R_MIPS_GOT_GP_PC,
              R_AARCH64_GOT_PAGE_PC, R_GOT_PC, R_GOTONLY_PC, R_GOTPLTONLY_PC,
              R_PLT_PC, R_PLT_GOTPLT, R_PPC32_PLTREL, R_PPC64_CALL_PLT,
 -            R_PPC64_RELAX_TOC, R_RISCV_ADD, R_AARCH64_GOT_PAGE>(e))
 +            R_PPC64_RELAX_TOC, R_RISCV_ADD, R_AARCH64_GOT_PAGE,
-+            R_LOONGARCH_GOT, R_LOONGARCH_GOT_TLSIE, R_LOONGARCH_GOT_PAGE_PC,
-+            R_LOONGARCH_GOT_TLSIE_PAGE_PC>(e))
++            R_LOONGARCH_PLT_PAGE_PC, R_LOONGARCH_GOT, R_LOONGARCH_GOT_TLSIE,
++            R_LOONGARCH_GOT_PAGE_PC, R_LOONGARCH_GOT_TLSIE_PAGE_PC>(e))
      return true;
  
    // These never do, except if the entire file is position dependent or if
-@@ -1082,7 +1087,8 @@ void RelocationScanner::processAux(RelExpr expr, RelType type, uint64_t offset,
+@@ -1082,7 +1091,8 @@ void RelocationScanner::processAux(RelExpr expr, RelType type, uint64_t offset,
    bool canWrite = (sec->flags & SHF_WRITE) || !config->zText;
    if (canWrite) {
      RelType rel = target->getDynRel(type);
@@ -833,7 +965,7 @@ index 6ef7a328e96d..c9d3400fb059 100644
        addRelativeReloc<true>(*sec, offset, sym, addend, expr, type);
        return;
      } else if (rel != 0) {
-@@ -1234,11 +1240,13 @@ static unsigned handleTlsRelocation(RelType type, Symbol &sym,
+@@ -1234,11 +1244,13 @@ static unsigned handleTlsRelocation(RelType type, Symbol &sym,
      return 1;
    }
  
@@ -849,7 +981,7 @@ index 6ef7a328e96d..c9d3400fb059 100644
                       config->emachine != EM_RISCV &&
                       !c.file->ppc64DisableTLSRelax;
  
-@@ -1255,8 +1263,7 @@ static unsigned handleTlsRelocation(RelType type, Symbol &sym,
+@@ -1255,8 +1267,7 @@ static unsigned handleTlsRelocation(RelType type, Symbol &sym,
    // being suitable for being dynamically loaded via dlopen. GOT[e0] is the
    // module index, with a special value of 0 for the current module. GOT[e1] is
    // unused. There only needs to be one module index entry.
@@ -859,7 +991,7 @@ index 6ef7a328e96d..c9d3400fb059 100644
      // Local-Dynamic relocs can be relaxed to Local-Exec.
      if (toExecRelax) {
        c.addReloc({target->adjustTlsExpr(type, R_RELAX_TLS_LD_TO_LE), type,
-@@ -1287,7 +1294,8 @@ static unsigned handleTlsRelocation(RelType type, Symbol &sym,
+@@ -1287,7 +1298,8 @@ static unsigned handleTlsRelocation(RelType type, Symbol &sym,
    }
  
    if (oneof<R_AARCH64_TLSDESC_PAGE, R_TLSDESC, R_TLSDESC_CALL, R_TLSDESC_PC,
@@ -869,7 +1001,7 @@ index 6ef7a328e96d..c9d3400fb059 100644
      if (!toExecRelax) {
        sym.setFlags(NEEDS_TLSGD);
        c.addReloc({expr, type, offset, addend, &sym});
-@@ -1307,8 +1315,8 @@ static unsigned handleTlsRelocation(RelType type, Symbol &sym,
+@@ -1307,8 +1319,8 @@ static unsigned handleTlsRelocation(RelType type, Symbol &sym,
      return target->getTlsGdRelaxSkip(type);
    }
  
@@ -881,14 +1013,19 @@ index 6ef7a328e96d..c9d3400fb059 100644
      // Initial-Exec relocs can be relaxed to Local-Exec if the symbol is locally
      // defined.
 diff --git a/lld/ELF/Relocations.h b/lld/ELF/Relocations.h
-index 29e3edeca6be..5b51a286bf57 100644
+index 29e3edeca6be..baa359f4a0b7 100644
 --- a/lld/ELF/Relocations.h
 +++ b/lld/ELF/Relocations.h
-@@ -102,6 +102,12 @@ enum RelExpr {
+@@ -102,6 +102,17 @@ enum RelExpr {
    R_PPC64_RELAX_GOT_PC,
    R_RISCV_ADD,
    R_RISCV_PC_INDIRECT,
++  // Same as R_PC but with page-aligned semantics.
 +  R_LOONGARCH_PAGE_PC,
++  // Same as R_PLT_PC but with page-aligned semantics.
++  R_LOONGARCH_PLT_PAGE_PC,
++  // LoongArch GOT relocs are also reused for TLS, so the required semantics
++  // differ from everyone else.
 +  R_LOONGARCH_GOT,
 +  R_LOONGARCH_GOT_TLSIE,
 +  R_LOONGARCH_GOT_PAGE_PC,
@@ -943,167 +1080,15 @@ index e6a78169058a..e883d88c9e76 100644
  void riscvFinalizeRelax(int passes);
  void mergeRISCVAttributesSections();
  
-diff --git a/lld/test/ELF/loongarch-branch-b16.s b/lld/test/ELF/loongarch-branch-b16.s
+diff --git a/lld/test/ELF/loongarch-abs64.s b/lld/test/ELF/loongarch-abs64.s
 new file mode 100644
-index 000000000000..8518e74eb250
+index 000000000000..c94db3228f15
 --- /dev/null
-+++ b/lld/test/ELF/loongarch-branch-b16.s
-@@ -0,0 +1,40 @@
-+# REQUIRES: loongarch
-+
-+# RUN: llvm-mc -filetype=obj -triple=loongarch32-unknown-elf %s -o %t.la32.o
-+# RUN: llvm-mc -filetype=obj -triple=loongarch64-unknown-elf %s -o %t.la64.o
-+
-+# RUN: ld.lld %t.la32.o --defsym foo=_start+4 --defsym bar=_start -o %t.la32
-+# RUN: ld.lld %t.la64.o --defsym foo=_start+4 --defsym bar=_start -o %t.la64
-+# RUN: llvm-objdump -d %t.la32 | FileCheck %s --check-prefix=CHECK-32
-+# RUN: llvm-objdump -d %t.la64 | FileCheck %s --check-prefix=CHECK-64
-+# CHECK-32: 00 04 00 58   beq     $zero, $zero, 4
-+# CHECK-32: 00 fc ff 5f   bne     $zero, $zero, -4
-+# CHECK-64: 00 04 00 58   beq     $zero, $zero, 4
-+# CHECK-64: 00 fc ff 5f   bne     $zero, $zero, -4
-+
-+# RUN: ld.lld %t.la32.o --defsym foo=_start+0x1fffc --defsym bar=_start+4-0x20000 -o %t.la32.limits
-+# RUN: ld.lld %t.la64.o --defsym foo=_start+0x1fffc --defsym bar=_start+4-0x20000 -o %t.la64.limits
-+# RUN: llvm-objdump -d %t.la32.limits | FileCheck --check-prefix=LIMITS-32 %s
-+# RUN: llvm-objdump -d %t.la64.limits | FileCheck --check-prefix=LIMITS-64 %s
-+# LIMITS-32:      00 fc ff 59   beq     $zero, $zero, 131068
-+# LIMITS-32-NEXT: 00 00 00 5e   bne     $zero, $zero, -131072
-+# LIMITS-64:      00 fc ff 59   beq     $zero, $zero, 131068
-+# LIMITS-64-NEXT: 00 00 00 5e   bne     $zero, $zero, -131072
-+
-+# RUN: not ld.lld %t.la32.o --defsym foo=_start+0x20000 --defsym bar=_start+4-0x20004 -o /dev/null 2>&1 | FileCheck --check-prefix=ERROR-RANGE %s
-+# RUN: not ld.lld %t.la64.o --defsym foo=_start+0x20000 --defsym bar=_start+4-0x20004 -o /dev/null 2>&1 | FileCheck --check-prefix=ERROR-RANGE %s
-+# ERROR-RANGE: relocation R_LARCH_B16 out of range: 131072 is not in [-131072, 131071]; references foo
-+# ERROR-RANGE: relocation R_LARCH_B16 out of range: -131076 is not in [-131072, 131071]; references bar
-+
-+# RUN: not ld.lld %t.la32.o --defsym foo=_start+1 --defsym bar=_start-1 -o /dev/null 2>&1 | FileCheck --check-prefix=ERROR-ALIGN-1 %s
-+# RUN: not ld.lld %t.la64.o --defsym foo=_start+1 --defsym bar=_start-1 -o /dev/null 2>&1 | FileCheck --check-prefix=ERROR-ALIGN-1 %s
-+# ERROR-ALIGN-1: improper alignment for relocation R_LARCH_B16: 0xFFFFFFFFFFFFFFFB is not aligned to 4 bytes
-+
-+# RUN: not ld.lld %t.la32.o --defsym foo=_start+2 --defsym bar=_start-2 -o /dev/null 2>&1 | FileCheck --check-prefix=ERROR-ALIGN-2 %s
-+# RUN: not ld.lld %t.la64.o --defsym foo=_start+2 --defsym bar=_start-2 -o /dev/null 2>&1 | FileCheck --check-prefix=ERROR-ALIGN-2 %s
-+# ERROR-ALIGN-2: improper alignment for relocation R_LARCH_B16: 0xFFFFFFFFFFFFFFFA is not aligned to 4 bytes
-+
-+.global _start
-+_start:
-+     beq $zero, $zero, foo
-+     bne $zero, $zero, bar
-diff --git a/lld/test/ELF/loongarch-branch-b21.s b/lld/test/ELF/loongarch-branch-b21.s
-new file mode 100644
-index 000000000000..cbbd858b778d
---- /dev/null
-+++ b/lld/test/ELF/loongarch-branch-b21.s
-@@ -0,0 +1,40 @@
-+# REQUIRES: loongarch
-+
-+# RUN: llvm-mc -filetype=obj -triple=loongarch32-unknown-elf %s -o %t.la32.o
-+# RUN: llvm-mc -filetype=obj -triple=loongarch64-unknown-elf %s -o %t.la64.o
-+
-+# RUN: ld.lld %t.la32.o --defsym foo=_start+4 --defsym bar=_start -o %t.la32
-+# RUN: ld.lld %t.la64.o --defsym foo=_start+4 --defsym bar=_start -o %t.la64
-+# RUN: llvm-objdump -d %t.la32 | FileCheck %s --check-prefix=CHECK-32
-+# RUN: llvm-objdump -d %t.la64 | FileCheck %s --check-prefix=CHECK-64
-+# CHECK-32: e0 07 00 40   beqz    $s8, 4
-+# CHECK-32: ff ff ff 47   bnez    $s8, -4
-+# CHECK-64: e0 07 00 40   beqz    $s8, 4
-+# CHECK-64: ff ff ff 47   bnez    $s8, -4
-+
-+# RUN: ld.lld %t.la32.o --defsym foo=_start+0x3ffffc --defsym bar=_start+4-0x400000 -o %t.la32.limits
-+# RUN: ld.lld %t.la64.o --defsym foo=_start+0x3ffffc --defsym bar=_start+4-0x400000 -o %t.la64.limits
-+# RUN: llvm-objdump -d %t.la32.limits | FileCheck --check-prefix=LIMITS-32 %s
-+# RUN: llvm-objdump -d %t.la64.limits | FileCheck --check-prefix=LIMITS-64 %s
-+# LIMITS-32:      ef ff ff 43   beqz    $s8, 4194300
-+# LIMITS-32-NEXT: f0 03 00 44   bnez    $s8, -4194304
-+# LIMITS-64:      ef ff ff 43   beqz    $s8, 4194300
-+# LIMITS-64-NEXT: f0 03 00 44   bnez    $s8, -4194304
-+
-+# RUN: not ld.lld %t.la32.o --defsym foo=_start+0x400000 --defsym bar=_start+4-0x400004 -o /dev/null 2>&1 | FileCheck --check-prefix=ERROR-RANGE %s
-+# RUN: not ld.lld %t.la64.o --defsym foo=_start+0x400000 --defsym bar=_start+4-0x400004 -o /dev/null 2>&1 | FileCheck --check-prefix=ERROR-RANGE %s
-+# ERROR-RANGE: relocation R_LARCH_B21 out of range: 4194304 is not in [-4194304, 4194303]; references foo
-+# ERROR-RANGE: relocation R_LARCH_B21 out of range: -4194308 is not in [-4194304, 4194303]; references bar
-+
-+# RUN: not ld.lld %t.la32.o --defsym foo=_start+1 --defsym bar=_start-1 -o /dev/null 2>&1 | FileCheck --check-prefix=ERROR-ALIGN-1 %s
-+# RUN: not ld.lld %t.la64.o --defsym foo=_start+1 --defsym bar=_start-1 -o /dev/null 2>&1 | FileCheck --check-prefix=ERROR-ALIGN-1 %s
-+# ERROR-ALIGN-1: improper alignment for relocation R_LARCH_B21: 0xFFFFFFFFFFFFFFFB is not aligned to 4 bytes
-+
-+# RUN: not ld.lld %t.la32.o --defsym foo=_start+2 --defsym bar=_start-2 -o /dev/null 2>&1 | FileCheck --check-prefix=ERROR-ALIGN-2 %s
-+# RUN: not ld.lld %t.la64.o --defsym foo=_start+2 --defsym bar=_start-2 -o /dev/null 2>&1 | FileCheck --check-prefix=ERROR-ALIGN-2 %s
-+# ERROR-ALIGN-2: improper alignment for relocation R_LARCH_B21: 0xFFFFFFFFFFFFFFFA is not aligned to 4 bytes
-+
-+.global _start
-+_start:
-+     beqz $s8, foo
-+     bnez $s8, bar
-diff --git a/lld/test/ELF/loongarch-branch-b26.s b/lld/test/ELF/loongarch-branch-b26.s
-new file mode 100644
-index 000000000000..3acc73c4f233
---- /dev/null
-+++ b/lld/test/ELF/loongarch-branch-b26.s
-@@ -0,0 +1,40 @@
-+# REQUIRES: loongarch
-+
-+# RUN: llvm-mc -filetype=obj -triple=loongarch32-unknown-elf %s -o %t.la32.o
-+# RUN: llvm-mc -filetype=obj -triple=loongarch64-unknown-elf %s -o %t.la64.o
-+
-+# RUN: ld.lld %t.la32.o --defsym foo=_start+4 --defsym bar=_start -o %t.la32
-+# RUN: ld.lld %t.la64.o --defsym foo=_start+4 --defsym bar=_start -o %t.la64
-+# RUN: llvm-objdump -d %t.la32 | FileCheck %s --check-prefix=CHECK-32
-+# RUN: llvm-objdump -d %t.la64 | FileCheck %s --check-prefix=CHECK-64
-+# CHECK-32: 00 04 00 50   b       4
-+# CHECK-32: ff ff ff 57   bl      -4
-+# CHECK-64: 00 04 00 50   b       4
-+# CHECK-64: ff ff ff 57   bl      -4
-+
-+# RUN: ld.lld %t.la32.o --defsym foo=_start+0x7fffffc --defsym bar=_start+4-0x8000000 -o %t.la32.limits
-+# RUN: ld.lld %t.la64.o --defsym foo=_start+0x7fffffc --defsym bar=_start+4-0x8000000 -o %t.la64.limits
-+# RUN: llvm-objdump -d %t.la32.limits | FileCheck --check-prefix=LIMITS-32 %s
-+# RUN: llvm-objdump -d %t.la64.limits | FileCheck --check-prefix=LIMITS-64 %s
-+# LIMITS-32:      ff fd ff 53   b       134217724
-+# LIMITS-32-NEXT: 00 02 00 54   bl      -134217728
-+# LIMITS-64:      ff fd ff 53   b       134217724
-+# LIMITS-64-NEXT: 00 02 00 54   bl      -134217728
-+
-+# RUN: not ld.lld %t.la32.o --defsym foo=_start+0x8000000 --defsym bar=_start+4-0x8000004 -o /dev/null 2>&1 | FileCheck --check-prefix=ERROR-RANGE %s
-+# RUN: not ld.lld %t.la64.o --defsym foo=_start+0x8000000 --defsym bar=_start+4-0x8000004 -o /dev/null 2>&1 | FileCheck --check-prefix=ERROR-RANGE %s
-+# ERROR-RANGE: relocation R_LARCH_B26 out of range: 134217728 is not in [-134217728, 134217727]; references foo
-+# ERROR-RANGE: relocation R_LARCH_B26 out of range: -134217732 is not in [-134217728, 134217727]; references bar
-+
-+# RUN: not ld.lld %t.la32.o --defsym foo=_start+1 --defsym bar=_start-1 -o /dev/null 2>&1 | FileCheck --check-prefix=ERROR-ALIGN-1 %s
-+# RUN: not ld.lld %t.la64.o --defsym foo=_start+1 --defsym bar=_start-1 -o /dev/null 2>&1 | FileCheck --check-prefix=ERROR-ALIGN-1 %s
-+# ERROR-ALIGN-1: improper alignment for relocation R_LARCH_B26: 0xFFFFFFFFFFFFFFFB is not aligned to 4 bytes
-+
-+# RUN: not ld.lld %t.la32.o --defsym foo=_start+2 --defsym bar=_start-2 -o /dev/null 2>&1 | FileCheck --check-prefix=ERROR-ALIGN-2 %s
-+# RUN: not ld.lld %t.la64.o --defsym foo=_start+2 --defsym bar=_start-2 -o /dev/null 2>&1 | FileCheck --check-prefix=ERROR-ALIGN-2 %s
-+# ERROR-ALIGN-2: improper alignment for relocation R_LARCH_B26: 0xFFFFFFFFFFFFFFFA is not aligned to 4 bytes
-+
-+.global _start
-+_start:
-+     b foo
-+     bl bar
-diff --git a/lld/test/ELF/loongarch-elf-flags.s b/lld/test/ELF/loongarch-elf-flags.s
-new file mode 100644
-index 000000000000..4ad0f6faad21
---- /dev/null
-+++ b/lld/test/ELF/loongarch-elf-flags.s
-@@ -0,0 +1,8 @@
-+# REQUIRES: loongarch
-+
-+# RUN: echo -n "BLOB" > %t.binary
-+# RUN: ld.lld -m elf64loongarch -b binary %t.binary -o %t.out
-+# RUN: llvm-readobj -h %t.out | FileCheck %s
-+
-+# CHECK:      Flags [
-+# CHECK-NEXT: ]
-diff --git a/lld/test/ELF/loongarch-relocs-abs64.s b/lld/test/ELF/loongarch-relocs-abs64.s
-new file mode 100644
-index 000000000000..46d49d8f6dfd
---- /dev/null
-+++ b/lld/test/ELF/loongarch-relocs-abs64.s
++++ b/lld/test/ELF/loongarch-abs64.s
 @@ -0,0 +1,60 @@
 +# REQUIRES: loongarch
 +
-+# RUN: llvm-mc -filetype=obj -triple=loongarch64-unknown-elf %s -o %t.la64.o
++# RUN: llvm-mc --filetype=obj --triple=loongarch64-unknown-elf %s -o %t.la64.o
 +
 +# RUN: ld.lld %t.la64.o --defsym foo=0 --defsym bar=42 -o %t.la64.1
 +# RUN: llvm-objdump -d %t.la64.1 | FileCheck --check-prefix=CASE1 %s
@@ -1161,6 +1146,574 @@ index 000000000000..46d49d8f6dfd
 +    ori     $a1, $a1, %abs_lo12(bar)
 +    lu32i.d $a1, %abs64_lo20(bar)
 +    lu52i.d $a1, $a1, %abs64_hi12(bar)
+diff --git a/lld/test/ELF/loongarch-branch-b16.s b/lld/test/ELF/loongarch-branch-b16.s
+new file mode 100644
+index 000000000000..0e79ddc844b6
+--- /dev/null
++++ b/lld/test/ELF/loongarch-branch-b16.s
+@@ -0,0 +1,40 @@
++# REQUIRES: loongarch
++
++# RUN: llvm-mc --filetype=obj --triple=loongarch32-unknown-elf %s -o %t.la32.o
++# RUN: llvm-mc --filetype=obj --triple=loongarch64-unknown-elf %s -o %t.la64.o
++
++# RUN: ld.lld %t.la32.o --defsym foo=_start+4 --defsym bar=_start -o %t.la32
++# RUN: ld.lld %t.la64.o --defsym foo=_start+4 --defsym bar=_start -o %t.la64
++# RUN: llvm-objdump -d %t.la32 | FileCheck %s --check-prefix=CHECK-32
++# RUN: llvm-objdump -d %t.la64 | FileCheck %s --check-prefix=CHECK-64
++# CHECK-32: 00 04 00 58   beq     $zero, $zero, 4
++# CHECK-32: 00 fc ff 5f   bne     $zero, $zero, -4
++# CHECK-64: 00 04 00 58   beq     $zero, $zero, 4
++# CHECK-64: 00 fc ff 5f   bne     $zero, $zero, -4
++
++# RUN: ld.lld %t.la32.o --defsym foo=_start+0x1fffc --defsym bar=_start+4-0x20000 -o %t.la32.limits
++# RUN: ld.lld %t.la64.o --defsym foo=_start+0x1fffc --defsym bar=_start+4-0x20000 -o %t.la64.limits
++# RUN: llvm-objdump -d %t.la32.limits | FileCheck --check-prefix=LIMITS-32 %s
++# RUN: llvm-objdump -d %t.la64.limits | FileCheck --check-prefix=LIMITS-64 %s
++# LIMITS-32:      00 fc ff 59   beq     $zero, $zero, 131068
++# LIMITS-32-NEXT: 00 00 00 5e   bne     $zero, $zero, -131072
++# LIMITS-64:      00 fc ff 59   beq     $zero, $zero, 131068
++# LIMITS-64-NEXT: 00 00 00 5e   bne     $zero, $zero, -131072
++
++# RUN: not ld.lld %t.la32.o --defsym foo=_start+0x20000 --defsym bar=_start+4-0x20004 -o /dev/null 2>&1 | FileCheck --check-prefix=ERROR-RANGE %s
++# RUN: not ld.lld %t.la64.o --defsym foo=_start+0x20000 --defsym bar=_start+4-0x20004 -o /dev/null 2>&1 | FileCheck --check-prefix=ERROR-RANGE %s
++# ERROR-RANGE: relocation R_LARCH_B16 out of range: 131072 is not in [-131072, 131071]; references foo
++# ERROR-RANGE: relocation R_LARCH_B16 out of range: -131076 is not in [-131072, 131071]; references bar
++
++# RUN: not ld.lld %t.la32.o --defsym foo=_start+1 --defsym bar=_start-1 -o /dev/null 2>&1 | FileCheck --check-prefix=ERROR-ALIGN-1 %s
++# RUN: not ld.lld %t.la64.o --defsym foo=_start+1 --defsym bar=_start-1 -o /dev/null 2>&1 | FileCheck --check-prefix=ERROR-ALIGN-1 %s
++# ERROR-ALIGN-1: improper alignment for relocation R_LARCH_B16: 0xFFFFFFFFFFFFFFFB is not aligned to 4 bytes
++
++# RUN: not ld.lld %t.la32.o --defsym foo=_start+2 --defsym bar=_start-2 -o /dev/null 2>&1 | FileCheck --check-prefix=ERROR-ALIGN-2 %s
++# RUN: not ld.lld %t.la64.o --defsym foo=_start+2 --defsym bar=_start-2 -o /dev/null 2>&1 | FileCheck --check-prefix=ERROR-ALIGN-2 %s
++# ERROR-ALIGN-2: improper alignment for relocation R_LARCH_B16: 0xFFFFFFFFFFFFFFFA is not aligned to 4 bytes
++
++.global _start
++_start:
++     beq $zero, $zero, foo
++     bne $zero, $zero, bar
+diff --git a/lld/test/ELF/loongarch-branch-b21.s b/lld/test/ELF/loongarch-branch-b21.s
+new file mode 100644
+index 000000000000..e05ad12f6f0d
+--- /dev/null
++++ b/lld/test/ELF/loongarch-branch-b21.s
+@@ -0,0 +1,40 @@
++# REQUIRES: loongarch
++
++# RUN: llvm-mc --filetype=obj --triple=loongarch32-unknown-elf %s -o %t.la32.o
++# RUN: llvm-mc --filetype=obj --triple=loongarch64-unknown-elf %s -o %t.la64.o
++
++# RUN: ld.lld %t.la32.o --defsym foo=_start+4 --defsym bar=_start -o %t.la32
++# RUN: ld.lld %t.la64.o --defsym foo=_start+4 --defsym bar=_start -o %t.la64
++# RUN: llvm-objdump -d %t.la32 | FileCheck %s --check-prefix=CHECK-32
++# RUN: llvm-objdump -d %t.la64 | FileCheck %s --check-prefix=CHECK-64
++# CHECK-32: e0 07 00 40   beqz    $s8, 4
++# CHECK-32: ff ff ff 47   bnez    $s8, -4
++# CHECK-64: e0 07 00 40   beqz    $s8, 4
++# CHECK-64: ff ff ff 47   bnez    $s8, -4
++
++# RUN: ld.lld %t.la32.o --defsym foo=_start+0x3ffffc --defsym bar=_start+4-0x400000 -o %t.la32.limits
++# RUN: ld.lld %t.la64.o --defsym foo=_start+0x3ffffc --defsym bar=_start+4-0x400000 -o %t.la64.limits
++# RUN: llvm-objdump -d %t.la32.limits | FileCheck --check-prefix=LIMITS-32 %s
++# RUN: llvm-objdump -d %t.la64.limits | FileCheck --check-prefix=LIMITS-64 %s
++# LIMITS-32:      ef ff ff 43   beqz    $s8, 4194300
++# LIMITS-32-NEXT: f0 03 00 44   bnez    $s8, -4194304
++# LIMITS-64:      ef ff ff 43   beqz    $s8, 4194300
++# LIMITS-64-NEXT: f0 03 00 44   bnez    $s8, -4194304
++
++# RUN: not ld.lld %t.la32.o --defsym foo=_start+0x400000 --defsym bar=_start+4-0x400004 -o /dev/null 2>&1 | FileCheck --check-prefix=ERROR-RANGE %s
++# RUN: not ld.lld %t.la64.o --defsym foo=_start+0x400000 --defsym bar=_start+4-0x400004 -o /dev/null 2>&1 | FileCheck --check-prefix=ERROR-RANGE %s
++# ERROR-RANGE: relocation R_LARCH_B21 out of range: 4194304 is not in [-4194304, 4194303]; references foo
++# ERROR-RANGE: relocation R_LARCH_B21 out of range: -4194308 is not in [-4194304, 4194303]; references bar
++
++# RUN: not ld.lld %t.la32.o --defsym foo=_start+1 --defsym bar=_start-1 -o /dev/null 2>&1 | FileCheck --check-prefix=ERROR-ALIGN-1 %s
++# RUN: not ld.lld %t.la64.o --defsym foo=_start+1 --defsym bar=_start-1 -o /dev/null 2>&1 | FileCheck --check-prefix=ERROR-ALIGN-1 %s
++# ERROR-ALIGN-1: improper alignment for relocation R_LARCH_B21: 0xFFFFFFFFFFFFFFFB is not aligned to 4 bytes
++
++# RUN: not ld.lld %t.la32.o --defsym foo=_start+2 --defsym bar=_start-2 -o /dev/null 2>&1 | FileCheck --check-prefix=ERROR-ALIGN-2 %s
++# RUN: not ld.lld %t.la64.o --defsym foo=_start+2 --defsym bar=_start-2 -o /dev/null 2>&1 | FileCheck --check-prefix=ERROR-ALIGN-2 %s
++# ERROR-ALIGN-2: improper alignment for relocation R_LARCH_B21: 0xFFFFFFFFFFFFFFFA is not aligned to 4 bytes
++
++.global _start
++_start:
++     beqz $s8, foo
++     bnez $s8, bar
+diff --git a/lld/test/ELF/loongarch-branch-b26.s b/lld/test/ELF/loongarch-branch-b26.s
+new file mode 100644
+index 000000000000..8fd80937a5b1
+--- /dev/null
++++ b/lld/test/ELF/loongarch-branch-b26.s
+@@ -0,0 +1,40 @@
++# REQUIRES: loongarch
++
++# RUN: llvm-mc --filetype=obj --triple=loongarch32-unknown-elf %s -o %t.la32.o
++# RUN: llvm-mc --filetype=obj --triple=loongarch64-unknown-elf %s -o %t.la64.o
++
++# RUN: ld.lld %t.la32.o --defsym foo=_start+4 --defsym bar=_start -o %t.la32
++# RUN: ld.lld %t.la64.o --defsym foo=_start+4 --defsym bar=_start -o %t.la64
++# RUN: llvm-objdump -d %t.la32 | FileCheck %s --check-prefix=CHECK-32
++# RUN: llvm-objdump -d %t.la64 | FileCheck %s --check-prefix=CHECK-64
++# CHECK-32: 00 04 00 50   b       4
++# CHECK-32: ff ff ff 57   bl      -4
++# CHECK-64: 00 04 00 50   b       4
++# CHECK-64: ff ff ff 57   bl      -4
++
++# RUN: ld.lld %t.la32.o --defsym foo=_start+0x7fffffc --defsym bar=_start+4-0x8000000 -o %t.la32.limits
++# RUN: ld.lld %t.la64.o --defsym foo=_start+0x7fffffc --defsym bar=_start+4-0x8000000 -o %t.la64.limits
++# RUN: llvm-objdump -d %t.la32.limits | FileCheck --check-prefix=LIMITS-32 %s
++# RUN: llvm-objdump -d %t.la64.limits | FileCheck --check-prefix=LIMITS-64 %s
++# LIMITS-32:      ff fd ff 53   b       134217724
++# LIMITS-32-NEXT: 00 02 00 54   bl      -134217728
++# LIMITS-64:      ff fd ff 53   b       134217724
++# LIMITS-64-NEXT: 00 02 00 54   bl      -134217728
++
++# RUN: not ld.lld %t.la32.o --defsym foo=_start+0x8000000 --defsym bar=_start+4-0x8000004 -o /dev/null 2>&1 | FileCheck --check-prefix=ERROR-RANGE %s
++# RUN: not ld.lld %t.la64.o --defsym foo=_start+0x8000000 --defsym bar=_start+4-0x8000004 -o /dev/null 2>&1 | FileCheck --check-prefix=ERROR-RANGE %s
++# ERROR-RANGE: relocation R_LARCH_B26 out of range: 134217728 is not in [-134217728, 134217727]; references foo
++# ERROR-RANGE: relocation R_LARCH_B26 out of range: -134217732 is not in [-134217728, 134217727]; references bar
++
++# RUN: not ld.lld %t.la32.o --defsym foo=_start+1 --defsym bar=_start-1 -o /dev/null 2>&1 | FileCheck --check-prefix=ERROR-ALIGN-1 %s
++# RUN: not ld.lld %t.la64.o --defsym foo=_start+1 --defsym bar=_start-1 -o /dev/null 2>&1 | FileCheck --check-prefix=ERROR-ALIGN-1 %s
++# ERROR-ALIGN-1: improper alignment for relocation R_LARCH_B26: 0xFFFFFFFFFFFFFFFB is not aligned to 4 bytes
++
++# RUN: not ld.lld %t.la32.o --defsym foo=_start+2 --defsym bar=_start-2 -o /dev/null 2>&1 | FileCheck --check-prefix=ERROR-ALIGN-2 %s
++# RUN: not ld.lld %t.la64.o --defsym foo=_start+2 --defsym bar=_start-2 -o /dev/null 2>&1 | FileCheck --check-prefix=ERROR-ALIGN-2 %s
++# ERROR-ALIGN-2: improper alignment for relocation R_LARCH_B26: 0xFFFFFFFFFFFFFFFA is not aligned to 4 bytes
++
++.global _start
++_start:
++     b foo
++     bl bar
+diff --git a/lld/test/ELF/loongarch-elf-flags.s b/lld/test/ELF/loongarch-elf-flags.s
+new file mode 100644
+index 000000000000..4ad0f6faad21
+--- /dev/null
++++ b/lld/test/ELF/loongarch-elf-flags.s
+@@ -0,0 +1,8 @@
++# REQUIRES: loongarch
++
++# RUN: echo -n "BLOB" > %t.binary
++# RUN: ld.lld -m elf64loongarch -b binary %t.binary -o %t.out
++# RUN: llvm-readobj -h %t.out | FileCheck %s
++
++# CHECK:      Flags [
++# CHECK-NEXT: ]
+diff --git a/lld/test/ELF/loongarch-pc-aligned.s b/lld/test/ELF/loongarch-pc-aligned.s
+new file mode 100644
+index 000000000000..2bbeb71cd828
+--- /dev/null
++++ b/lld/test/ELF/loongarch-pc-aligned.s
+@@ -0,0 +1,173 @@
++# REQUIRES: loongarch
++# RUN: rm -rf %t && split-file %s %t
++
++# RUN: llvm-mc --filetype=obj --triple=loongarch32 %t/a.s -o %t/a.la32.o
++# RUN: llvm-mc --filetype=obj --triple=loongarch64 %t/a.s -o %t/a.la64.o
++# RUN: llvm-mc --filetype=obj --triple=loongarch64 %t/extreme.s -o %t/extreme.o
++
++# RUN: ld.lld %t/a.la32.o -T %t/case1.t -o %t/case1.la32
++# RUN: ld.lld %t/a.la64.o -T %t/case1.t -o %t/case1.la64
++# RUN: llvm-objdump -d --no-show-raw-insn %t/case1.la32 | FileCheck %s --check-prefix=CASE1
++# RUN: llvm-objdump -d --no-show-raw-insn %t/case1.la64 | FileCheck %s --check-prefix=CASE1
++# CASE1:      pcalau12i $a0, 0
++# CASE1-NEXT: ld.w      $a0, $a0, 0
++#--- case1.t
++SECTIONS {
++ .rodata 0x1000: { *(.rodata) }
++ .text   0x1ffc: { *(.text) }
++}
++
++# RUN: ld.lld %t/a.la32.o -T %t/case2.t -o %t/case2.la32
++# RUN: ld.lld %t/a.la64.o -T %t/case2.t -o %t/case2.la64
++# RUN: llvm-objdump -d --no-show-raw-insn %t/case2.la32 | FileCheck %s --check-prefix=CASE2
++# RUN: llvm-objdump -d --no-show-raw-insn %t/case2.la64 | FileCheck %s --check-prefix=CASE2
++# CASE2:      pcalau12i $a0, -1
++# CASE2-NEXT: ld.w      $a0, $a0, 0
++#--- case2.t
++SECTIONS {
++ .rodata 0x1000: { *(.rodata) }
++ .text   0x2000: { *(.text) }
++}
++
++# RUN: ld.lld %t/a.la32.o -T %t/case3.t -o %t/case3.la32
++# RUN: ld.lld %t/a.la64.o -T %t/case3.t -o %t/case3.la64
++# RUN: llvm-objdump -d --no-show-raw-insn %t/case3.la32 | FileCheck %s --check-prefix=CASE3
++# RUN: llvm-objdump -d --no-show-raw-insn %t/case3.la64 | FileCheck %s --check-prefix=CASE3
++# CASE3:      pcalau12i $a0, -1
++# CASE3-NEXT: ld.w      $a0, $a0, 2047
++#--- case3.t
++SECTIONS {
++ .rodata 0x17ff: { *(.rodata) }
++ .text   0x2000: { *(.text) }
++}
++
++# RUN: ld.lld %t/a.la32.o -T %t/case4.t -o %t/case4.la32
++# RUN: ld.lld %t/a.la64.o -T %t/case4.t -o %t/case4.la64
++# RUN: llvm-objdump -d --no-show-raw-insn %t/case4.la32 | FileCheck %s --check-prefix=CASE4
++# RUN: llvm-objdump -d --no-show-raw-insn %t/case4.la64 | FileCheck %s --check-prefix=CASE4
++# CASE4:      pcalau12i $a0, 0
++# CASE4-NEXT: ld.w      $a0, $a0, -2048
++#--- case4.t
++SECTIONS {
++ .rodata 0x1800: { *(.rodata) }
++ .text   0x2000: { *(.text) }
++}
++
++# RUN: ld.lld %t/a.la32.o -T %t/case5.t -o %t/case5.la32
++# RUN: ld.lld %t/a.la64.o -T %t/case5.t -o %t/case5.la64
++# RUN: llvm-objdump -d --no-show-raw-insn %t/case5.la32 | FileCheck %s --check-prefix=CASE5
++# RUN: llvm-objdump -d --no-show-raw-insn %t/case5.la64 | FileCheck %s --check-prefix=CASE5
++# CASE5:      pcalau12i $a0, 1
++# CASE5-NEXT: ld.w      $a0, $a0, 4
++#--- case5.t
++SECTIONS {
++ .text   0x001ffc: { *(.text) }
++ .rodata 0x002004: { *(.rodata) }
++}
++
++# RUN: ld.lld %t/a.la32.o -T %t/case6.t -o %t/case6.la32
++# RUN: ld.lld %t/a.la64.o -T %t/case6.t -o %t/case6.la64
++# RUN: llvm-objdump -d --no-show-raw-insn %t/case6.la32 | FileCheck %s --check-prefix=CASE6
++# RUN: llvm-objdump -d --no-show-raw-insn %t/case6.la64 | FileCheck %s --check-prefix=CASE6
++# CASE6:      pcalau12i $a0, 2
++# CASE6-NEXT: ld.w      $a0, $a0, -2048
++#--- case6.t
++SECTIONS {
++ .text   0x001ffc: { *(.text) }
++ .rodata 0x002800: { *(.rodata) }
++}
++
++# RUN: ld.lld %t/a.la32.o -T %t/case7.t -o %t/case7.la32
++# RUN: ld.lld %t/a.la64.o -T %t/case7.t -o %t/case7.la64
++# RUN: llvm-objdump -d --no-show-raw-insn %t/case7.la32 | FileCheck %s --check-prefix=CASE7
++# RUN: llvm-objdump -d --no-show-raw-insn %t/case7.la64 | FileCheck %s --check-prefix=CASE7
++# CASE7:      pcalau12i $a0, 524287
++# CASE7-NEXT: ld.w      $a0, $a0, 291
++#--- case7.t
++SECTIONS {
++ .text   0x0: { *(.text) }
++ .rodata 0x7ffff123: { *(.rodata) }
++}
++
++# RUN: ld.lld %t/a.la32.o -T %t/case8.t -o %t/case8.la32
++# RUN: ld.lld %t/a.la64.o -T %t/case8.t -o %t/case8.la64
++# RUN: llvm-objdump -d --no-show-raw-insn %t/case8.la32 | FileCheck %s --check-prefix=CASE8
++# RUN: llvm-objdump -d --no-show-raw-insn %t/case8.la64 | FileCheck %s --check-prefix=CASE8
++# CASE8:      pcalau12i $a0, -524288
++# CASE8-NEXT: ld.w      $a0, $a0, -1348
++#--- case8.t
++SECTIONS {
++ .text   0x0: { *(.text) }
++ .rodata 0x7ffffabc: { *(.rodata) }
++}
++
++# RUN: ld.lld %t/a.la32.o -T %t/case9.t -o %t/case9.la32
++# RUN: ld.lld %t/a.la64.o -T %t/case9.t -o %t/case9.la64
++# RUN: llvm-objdump -d --no-show-raw-insn %t/case9.la32 | FileCheck %s --check-prefix=CASE9
++# RUN: llvm-objdump -d --no-show-raw-insn %t/case9.la64 | FileCheck %s --check-prefix=CASE9
++# CASE9:      pcalau12i $a0, -524288
++# CASE9-NEXT: ld.w      $a0, $a0, 291
++#--- case9.t
++SECTIONS {
++ .rodata 0x123: { *(.rodata) }
++ .text   0x80000000: { *(.text) }
++}
++
++# RUN: ld.lld %t/extreme.o -T %t/extreme1.t -o %t/extreme1
++# RUN: llvm-objdump -d --no-show-raw-insn %t/extreme1 | FileCheck %s --check-prefix=EXTREME1
++# EXTREME1:      addi.d    $t0, $zero, 291
++# EXTREME1-NEXT: lu32i.d   $t0, -284281
++# EXTREME1-NEXT: lu52i.d   $t0, $t0, -292
++# EXTREME1-NEXT: pcalau12i $t1, 414771
++#--- extreme1.t
++SECTIONS {
++ .rodata 0x123: { *(.rodata) }
++ .text   0x123456789abcdef0: { *(.text) }
++}
++
++# RUN: ld.lld %t/extreme.o -T %t/extreme2.t -o %t/extreme2
++# RUN: llvm-objdump -d --no-show-raw-insn %t/extreme2 | FileCheck %s --check-prefix=EXTREME2
++# EXTREME2:      addi.d    $t0, $zero, -820
++# EXTREME2-NEXT: lu32i.d   $t0, -69907
++# EXTREME2-NEXT: lu52i.d   $t0, $t0, 2047
++# EXTREME2-NEXT: pcalau12i $t1, -139810
++#--- extreme2.t
++SECTIONS {
++ .text   0x0: { *(.text) }
++ .rodata 0x7ffeeeeedddddccc: { *(.rodata) }
++}
++
++# RUN: ld.lld %t/extreme.o -T %t/extreme3.t -o %t/extreme3
++# RUN: llvm-objdump -d --no-show-raw-insn %t/extreme3 | FileCheck %s --check-prefix=EXTREME3
++# EXTREME3:      addi.d    $t0, $zero, -820
++# EXTREME3-NEXT: lu32i.d   $t0, -69906
++# EXTREME3-NEXT: lu52i.d   $t0, $t0, -2048
++# EXTREME3-NEXT: pcalau12i $t1, -139810
++#--- extreme3.t
++SECTIONS {
++ .text   0x0: { *(.text) }
++ .rodata 0x800eeeeedddddccc: { *(.rodata) }
++}
++
++#--- a.s
++.rodata
++x:
++.word 10
++.text
++.global _start
++_start:
++  pcalau12i $a0, %pc_hi20(x)
++  ld.w      $a0, $a0, %pc_lo12(x)
++
++#--- extreme.s
++.rodata
++x:
++.word 10
++.text
++.global _start
++_start:
++  addi.d    $t0, $zero, %pc_lo12(x)
++  lu32i.d   $t0, %pc64_lo20(x)
++  lu52i.d   $t0, $t0, %pc64_hi12(x)
++  pcalau12i $t1, %pc_hi20(x)
++  add.d     $t0, $t0, $t1
+diff --git a/lld/test/ELF/loongarch-pcala-lo12-jirl-shared-error.s b/lld/test/ELF/loongarch-pcala-lo12-jirl-shared-error.s
+new file mode 100644
+index 000000000000..33889223214a
+--- /dev/null
++++ b/lld/test/ELF/loongarch-pcala-lo12-jirl-shared-error.s
+@@ -0,0 +1,14 @@
++# REQUIRES: loongarch
++
++# RUN: llvm-mc --filetype=obj --triple=loongarch32-unknown-elf %s -o %t.la32.o
++# RUN: llvm-mc --filetype=obj --triple=loongarch64-unknown-elf %s -o %t.la64.o
++
++# RUN: not ld.lld %t.la32.o -shared -o %t.la32.so 2>&1 | FileCheck %s
++# RUN: not ld.lld %t.la64.o -shared -o %t.la64.so 2>&1 | FileCheck %s
++
++.global foo
++foo:
++    pcalau12i   $t0, %pc_hi20(bar)
++    ld.w        $t0, $t0, %pc_lo12(bar)
++
++# CHECK: error: relocation R_LARCH_PCALA_LO12 cannot be used against symbol 'bar'; recompile with -fPIC
+diff --git a/lld/test/ELF/loongarch-pcala-lo12-jirl-shared.s b/lld/test/ELF/loongarch-pcala-lo12-jirl-shared.s
+new file mode 100644
+index 000000000000..e963e5b1297b
+--- /dev/null
++++ b/lld/test/ELF/loongarch-pcala-lo12-jirl-shared.s
+@@ -0,0 +1,49 @@
++# REQUIRES: loongarch
++# RUN: rm -rf %t && split-file %s %t
++
++# RUN: llvm-mc --filetype=obj --triple=loongarch32-unknown-elf %t/a.s -o %t/a.la32.o
++# RUN: llvm-mc --filetype=obj --triple=loongarch64-unknown-elf %t/a.s -o %t/a.la64.o
++
++# RUN: ld.lld %t/a.la32.o -shared -T %t/a.t -o %t/a.la32.so
++# RUN: ld.lld %t/a.la64.o -shared -T %t/a.t -o %t/a.la64.so
++
++# RUN: llvm-objdump -d --no-show-raw-insn %t/a.la32.so | FileCheck --check-prefixes=DIS,DIS32 %s
++# RUN: llvm-objdump -d --no-show-raw-insn %t/a.la64.so | FileCheck --check-prefixes=DIS,DIS64 %s
++
++## PLT should be present in this case.
++# DIS:        Disassembly of section .plt:
++# DIS:        <.plt>:
++# DIS:        234020:   pcaddu12i   $t3, 510
++# DIS32-NEXT: 234024:   ld.w    $t3, $t3, 84
++# DIS64-NEXT: 234024:   ld.d    $t3, $t3, 184
++# DIS-NEXT:   234028:   jirl    $t1, $t3, 0
++# DIS-NEXT:   23402c:   nop
++
++# DIS:      Disassembly of section .text:
++# DIS:      <foo>:
++# DIS-NEXT: nop
++# DIS-NEXT: nop
++# DIS-NEXT: nop
++# DIS-NEXT: pcalau12i $t0, -510
++# DIS-NEXT: jirl  $zero, $t0, 32
++
++
++#--- a.t
++SECTIONS {
++ .plt   0x234000: { *(.plt) }
++ .text  0x432000: { *(.text) }
++}
++
++#--- a.s
++.p2align 12
++.global foo
++foo:
++## The nops are for pushing the relocs off page boundary, to better see the
++## page-aligned semantics in action.
++    nop
++    nop
++    nop
++    ## The offsets should be -510 (0x234 - 0x432) and 32 (PLT header size + 0)
++    ## respectively.
++    pcalau12i   $t0, %pc_hi20(bar)
++    jirl        $zero, $t0, %pc_lo12(bar)
+diff --git a/lld/test/ELF/loongarch-pcala-lo12-jirl.s b/lld/test/ELF/loongarch-pcala-lo12-jirl.s
+new file mode 100644
+index 000000000000..1a03152aaa2a
+--- /dev/null
++++ b/lld/test/ELF/loongarch-pcala-lo12-jirl.s
+@@ -0,0 +1,42 @@
++# REQUIRES: loongarch
++
++# RUN: llvm-mc --filetype=obj --triple=loongarch32-unknown-elf %s -o %t.la32.o
++# RUN: llvm-mc --filetype=obj --triple=loongarch64-unknown-elf %s -o %t.la64.o
++
++# RUN: ld.lld %t.la32.o -o %t.la32
++# RUN: ld.lld %t.la64.o -o %t.la64
++# RUN: llvm-objdump -d --no-show-raw-insn %t.la32 | FileCheck %s
++# RUN: llvm-objdump -d --no-show-raw-insn %t.la64 | FileCheck %s
++# CHECK:      pcalau12i $t0, -1
++# CHECK-NEXT: jirl  $ra, $t0, 564
++# CHECK-NEXT: pcalau12i $t0, 0
++# CHECK-NEXT: jirl  $zero, $t0, -1348
++
++## PLT shouldn't get generated in this case.
++# CHECK-NOT:  Disassembly of section .plt:
++
++.p2align 12
++.org 0x234
++.global foo
++foo:
++    li.w    $a0, 42
++    ret
++
++.org 0xabc
++.global bar
++bar:
++    li.w    $a7, 94
++    syscall 0
++
++.org 0x1000
++.global _start
++_start:
++## The nops are for pushing the relocs off page boundary, to better see the
++## page-aligned semantics in action.
++    nop
++    nop
++    nop
++    pcalau12i   $t0, %pc_hi20(foo)
++    jirl        $ra, $t0, %pc_lo12(foo)
++    pcalau12i   $t0, %pc_hi20(bar)
++    jirl        $zero, $t0, %pc_lo12(bar)
+diff --git a/lld/test/ELF/loongarch-plt.s b/lld/test/ELF/loongarch-plt.s
+new file mode 100644
+index 000000000000..fa7d5e2a8344
+--- /dev/null
++++ b/lld/test/ELF/loongarch-plt.s
+@@ -0,0 +1,108 @@
++# REQUIRES: loongarch
++# RUN: echo '.globl bar, weak; .type bar,@function; .type weak,@function; bar: weak:' > %t1.s
++
++# RUN: llvm-mc --filetype=obj --triple=loongarch32 %t1.s -o %t1.32.o
++# RUN: ld.lld -shared %t1.32.o -soname=t1.32.so -o %t1.32.so
++# RUN: llvm-mc --filetype=obj --triple=loongarch32 %s -o %t.32.o
++# RUN: ld.lld %t.32.o %t1.32.so -z separate-code -o %t.32
++# RUN: llvm-readelf -S -s %t.32 | FileCheck --check-prefixes=SEC,NM %s
++# RUN: llvm-readobj -r %t.32 | FileCheck --check-prefix=RELOC32 %s
++# RUN: llvm-readelf -x .got.plt %t.32 | FileCheck --check-prefix=GOTPLT32 %s
++# RUN: llvm-objdump -d --no-show-raw-insn %t.32 | FileCheck --check-prefixes=DIS,DIS32 %s
++
++# RUN: llvm-mc --filetype=obj --triple=loongarch64 %t1.s -o %t1.64.o
++# RUN: ld.lld -shared %t1.64.o -soname=t1.64.so -o %t1.64.so
++# RUN: llvm-mc --filetype=obj --triple=loongarch64 %s -o %t.64.o
++# RUN: ld.lld %t.64.o %t1.64.so -z separate-code -o %t.64
++# RUN: llvm-readelf -S -s %t.64 | FileCheck --check-prefixes=SEC,NM %s
++# RUN: llvm-readobj -r %t.64 | FileCheck --check-prefix=RELOC64 %s
++# RUN: llvm-readelf -x .got.plt %t.64 | FileCheck --check-prefix=GOTPLT64 %s
++# RUN: llvm-objdump -d --no-show-raw-insn %t.64 | FileCheck --check-prefixes=DIS,DIS64 %s
++
++# SEC: .plt PROGBITS {{0*}}00020020
++
++## A canonical PLT has a non-zero st_value. bar and weak are called but their
++## addresses are not taken, so a canonical PLT is not necessary.
++# NM: {{0*}}00000000 0 FUNC GLOBAL DEFAULT UND bar
++# NM: {{0*}}00000000 0 FUNC WEAK   DEFAULT UND weak
++
++## The .got.plt slots relocated by .rela.plt point to .plt
++## This is required by glibc.
++# RELOC32:      .rela.plt {
++# RELOC32-NEXT:   0x40070 R_LARCH_JUMP_SLOT bar 0x0
++# RELOC32-NEXT:   0x40074 R_LARCH_JUMP_SLOT weak 0x0
++# RELOC32-NEXT: }
++# GOTPLT32:      section '.got.plt'
++# GOTPLT32-NEXT: 0x00040068 00000000 00000000 20000200 20000200
++
++# RELOC64:      .rela.plt {
++# RELOC64-NEXT:   0x400E0 R_LARCH_JUMP_SLOT bar 0x0
++# RELOC64-NEXT:   0x400E8 R_LARCH_JUMP_SLOT weak 0x0
++# RELOC64-NEXT: }
++# GOTPLT64:      section '.got.plt'
++# GOTPLT64-NEXT: 0x000400d0 00000000 00000000 00000000 00000000
++# GOTPLT64-NEXT: 0x000400e0 20000200 00000000 20000200 00000000
++
++# DIS:      <_start>:
++## Direct call
++## foo - . = 0x20010-0x20000 = 16
++# DIS-NEXT:   20000: bl 16
++## bar@plt - . = 0x20040-0x20004 = 60
++# DIS-NEXT:   20004: bl 60
++## bar@plt - . = 0x20040-0x20008 = 56
++# DIS-NEXT:   20008: bl 56
++## weak@plt - . = 0x20050-0x2000c = 68
++# DIS-NEXT:   2000c: bl 68
++# DIS:      <foo>:
++# DIS-NEXT:   20010:
++
++# DIS:      Disassembly of section .plt:
++# DIS:      <.plt>:
++## 32-bit: .got.plt - .plt = 0x40068 - 0x20020 = 4096*32+72
++# DIS32-NEXT:   pcaddu12i $t2, 32
++# DIS32-NEXT:   sub.w   $t1, $t1, $t3
++# DIS32-NEXT:   ld.w    $t3, $t2, 72
++# DIS32-NEXT:   addi.w  $t1, $t1, -44
++# DIS32-NEXT:   addi.w  $t0, $t2, 72
++# DIS32-NEXT:   srli.w  $t1, $t1, 2
++# DIS32-NEXT:   ld.w    $t0, $t0, 4
++# DIS32-NEXT:   jr      $t3
++
++## 64-bit: .got.plt - .plt = 0x400d0 - 0x20020 = 4096*32+176
++# DIS64-NEXT:   pcaddu12i $t2, 32
++# DIS64-NEXT:   sub.d   $t1, $t1, $t3
++# DIS64-NEXT:   ld.d    $t3, $t2, 176
++# DIS64-NEXT:   addi.d  $t1, $t1, -44
++# DIS64-NEXT:   addi.d  $t0, $t2, 176
++# DIS64-NEXT:   srli.d  $t1, $t1, 1
++# DIS64-NEXT:   ld.d    $t0, $t0, 8
++# DIS64-NEXT:   jr      $t3
++
++## 32-bit: &.got.plt[bar]-. = 0x40070-0x20040 = 4096*32+48
++## 64-bit: &.got.plt[bar]-. = 0x400e0-0x20040 = 4096*32+160
++# DIS:   20040: pcaddu12i $t3, 32
++# DIS32-NEXT:   ld.w    $t3, $t3, 48
++# DIS64-NEXT:   ld.d    $t3, $t3, 160
++# DIS-NEXT:     jirl    $t1, $t3, 0
++# DIS-NEXT:     nop
++
++## 32-bit: &.got.plt[weak]-. = 0x40074-0x20050 = 4096*32+36
++## 64-bit: &.got.plt[weak]-. = 0x400e8-0x20050 = 4096*32+152
++# DIS:   20050: pcaddu12i $t3, 32
++# DIS32-NEXT:   ld.w    $t3, $t3, 36
++# DIS64-NEXT:   ld.d    $t3, $t3, 152
++# DIS-NEXT:     jirl    $t1, $t3, 0
++# DIS-NEXT:     nop
++
++.global _start, foo, bar
++.weak weak
++
++_start:
++  bl foo
++  bl bar
++  bl %plt(bar)
++  bl weak
++
++## foo is local and non-preemptible, no PLT is generated.
++foo:
++  ret
 diff --git a/lld/test/lit.cfg.py b/lld/test/lit.cfg.py
 index 96a1d652573f..1b1f1e781240 100644
 --- a/lld/test/lit.cfg.py
