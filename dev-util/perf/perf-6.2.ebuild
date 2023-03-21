@@ -146,6 +146,7 @@ src_prepare() {
 	eapply "${FILESDIR}"/loong-1.patch
 	eapply "${FILESDIR}"/loong-2.patch
 	eapply "${FILESDIR}"/loong-3.patch
+	eapply "${FILESDIR}"/loong-idle-symbol.patch
 	popd || die
 
 	# Drop some upstream too-developer-oriented flags and fix the
