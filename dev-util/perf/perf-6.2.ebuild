@@ -205,7 +205,7 @@ perf_make() {
 		NO_LIBBIONIC=1 \
 		NO_LIBBPF= \
 		NO_LIBCRYPTO=$(puse crypt) \
-		NO_LIBDW_DWARF_UNWIND=$(puse loong) \
+		NO_LIBDW_DWARF_UNWIND=$(usex loong no "") \
 		NO_LIBELF= \
 		NO_LIBNUMA=$(puse numa) \
 		NO_LIBPERL=$(puse perl) \
