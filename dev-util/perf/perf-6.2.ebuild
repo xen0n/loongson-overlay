@@ -143,6 +143,9 @@ src_prepare() {
 
 	pushd "${S_K}" >/dev/null || die
 	eapply "${FILESDIR}"/perf-6.0-clang.patch
+	eapply "${FILESDIR}"/loong-1.patch
+	eapply "${FILESDIR}"/loong-2.patch
+	eapply "${FILESDIR}"/loong-3.patch
 	popd || die
 
 	# Drop some upstream too-developer-oriented flags and fix the

@@ -1,0 +1,49 @@
+https://github.com/loongson/linux/commit/121ff07bdee06555835e26499f5c125223a6beb3
+
+From: Huacai Chen <chenhuacai@loongson.cn>
+Date: Sat, 25 Feb 2023 15:52:57 +0800
+Subject: [PATCH] tools: Add LoongArch build infrastructure
+
+We will add tools support for LoongArch (bpf, perf, objtool, etc.), add
+build infrastructure and common headers for preparation.
+
+Signed-off-by: Huacai Chen <chenhuacai@loongson.cn>
+--- /dev/null
++++ b/tools/arch/loongarch/include/uapi/asm/bitsperlong.h
+@@ -0,0 +1,9 @@
++/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
++#ifndef __ASM_LOONGARCH_BITSPERLONG_H
++#define __ASM_LOONGARCH_BITSPERLONG_H
++
++#define __BITS_PER_LONG (__SIZEOF_POINTER__ * 8)
++
++#include <asm-generic/bitsperlong.h>
++
++#endif /* __ASM_LOONGARCH_BITSPERLONG_H */
+--- a/tools/scripts/Makefile.arch
++++ b/tools/scripts/Makefile.arch
+@@ -5,7 +5,7 @@ HOSTARCH := $(shell uname -m | sed -e s/i.86/x86/ -e s/x86_64/x86/ \
+                                   -e s/s390x/s390/ -e s/parisc64/parisc/ \
+                                   -e s/ppc.*/powerpc/ -e s/mips.*/mips/ \
+                                   -e s/sh[234].*/sh/ -e s/aarch64.*/arm64/ \
+-                                  -e s/riscv.*/riscv/)
++                                  -e s/riscv.*/riscv/ -e s/loongarch.*/loongarch/)
+ 
+ ifndef ARCH
+ ARCH := $(HOSTARCH)
+@@ -34,6 +34,15 @@ ifeq ($(ARCH),sh64)
+        SRCARCH := sh
+ endif
+ 
++# Additional ARCH settings for loongarch
++ifeq ($(ARCH),loongarch32)
++       SRCARCH := loongarch
++endif
++
++ifeq ($(ARCH),loongarch64)
++       SRCARCH := loongarch
++endif
++
+ LP64 := $(shell echo __LP64__ | ${CC} ${CFLAGS} -E -x c - | tail -n 1)
+ ifeq ($(LP64), 1)
+   IS_64_BIT := 1
