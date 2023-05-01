@@ -1,0 +1,176 @@
+From d6d063b6520d17851db53fdeaac5c458b2ee1f00 Mon Sep 17 00:00:00 2001
+From: WANG Xuerui <git@xen0n.name>
+Date: Tue, 28 Mar 2023 19:58:17 +0800
+Subject: [PATCH 26/48] internal/bytealg, runtime: align some loong64 asm loops
+ to 16-byte boundaries
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The LA464 micro-architecture is very sensitive to alignment of loops,
+so the final performance of linked binaries can vary wildly due to
+uncontrolled alignment of certain performance-critical loops. Now that
+PCALIGN is available on loong64, let's make use of it and manually align
+some assembly loops. The functions are identified based on perf records
+of some easily regressed go1 benchmark cases (e.g. FmtFprintfPrefixedInt,
+RegexpMatchEasy0_1K and Revcomp are particularly sensitive; even those
+optimizations purely reducing dynamic instruction counts can regress
+those cases by 6~12%, making the numbers almost useless).
+
+Benchmark results on Loongson 3A5000 (which is an LA464 implementation):
+
+goos: linux
+goarch: loong64
+pkg: test/bench/go1
+                      │  CL 416154  │               this CL               │
+                      │   sec/op    │   sec/op     vs base                │
+BinaryTree17             14.10 ± 1%    14.10 ± 1%        ~ (p=1.000 n=10)
+Fannkuch11               3.672 ± 0%    3.579 ± 0%   -2.53% (p=0.000 n=10)
+FmtFprintfEmpty         94.72n ± 0%   94.73n ± 0%   +0.01% (p=0.000 n=10)
+FmtFprintfString        149.9n ± 0%   151.9n ± 0%   +1.33% (p=0.000 n=10)
+FmtFprintfInt           154.1n ± 0%   158.3n ± 0%   +2.73% (p=0.000 n=10)
+FmtFprintfIntInt        236.2n ± 0%   241.4n ± 0%   +2.20% (p=0.000 n=10)
+FmtFprintfPrefixedInt   314.2n ± 0%   320.2n ± 0%   +1.91% (p=0.000 n=10)
+FmtFprintfFloat         405.0n ± 0%   414.3n ± 0%   +2.30% (p=0.000 n=10)
+FmtManyArgs             933.6n ± 0%   949.9n ± 0%   +1.75% (p=0.000 n=10)
+GobDecode               15.51m ± 1%   15.24m ± 0%   -1.77% (p=0.000 n=10)
+GobEncode               18.42m ± 4%   18.10m ± 2%        ~ (p=0.631 n=10)
+Gzip                    423.6m ± 0%   429.9m ± 0%   +1.49% (p=0.000 n=10)
+Gunzip                  88.75m ± 0%   88.31m ± 0%   -0.50% (p=0.000 n=10)
+HTTPClientServer        85.44µ ± 0%   85.71µ ± 0%   +0.31% (p=0.035 n=10)
+JSONEncode              18.65m ± 0%   19.74m ± 0%   +5.81% (p=0.000 n=10)
+JSONDecode              77.75m ± 0%   78.60m ± 1%   +1.09% (p=0.000 n=10)
+Mandelbrot200           7.214m ± 0%   7.208m ± 0%        ~ (p=0.481 n=10)
+GoParse                 7.616m ± 2%   7.616m ± 1%        ~ (p=0.739 n=10)
+RegexpMatchEasy0_32     142.9n ± 0%   133.0n ± 0%   -6.93% (p=0.000 n=10)
+RegexpMatchEasy0_1K     1.535µ ± 0%   1.362µ ± 0%  -11.27% (p=0.000 n=10)
+RegexpMatchEasy1_32     161.8n ± 0%   161.8n ± 0%        ~ (p=0.628 n=10)
+RegexpMatchEasy1_1K     1.635µ ± 0%   1.497µ ± 0%   -8.41% (p=0.000 n=10)
+RegexpMatchMedium_32    1.429µ ± 0%   1.420µ ± 0%   -0.63% (p=0.000 n=10)
+RegexpMatchMedium_1K    41.86µ ± 0%   42.25µ ± 0%   +0.93% (p=0.000 n=10)
+RegexpMatchHard_32      2.144µ ± 0%   2.108µ ± 0%   -1.68% (p=0.000 n=10)
+RegexpMatchHard_1K      63.83µ ± 0%   62.65µ ± 0%   -1.86% (p=0.000 n=10)
+Revcomp                  1.337 ± 0%    1.192 ± 0%  -10.89% (p=0.000 n=10)
+Template                116.4m ± 1%   115.6m ± 2%        ~ (p=0.579 n=10)
+TimeParse               421.4n ± 2%   418.1n ± 1%   -0.78% (p=0.001 n=10)
+TimeFormat              515.1n ± 0%   517.9n ± 0%   +0.54% (p=0.001 n=10)
+geomean                 104.5µ        103.5µ        -0.99%
+
+                     │  CL 416154   │               this CL                │
+                     │     B/s      │     B/s       vs base                │
+GobDecode              47.19Mi ± 1%   48.04Mi ± 0%   +1.80% (p=0.000 n=10)
+GobEncode              39.73Mi ± 4%   40.44Mi ± 2%        ~ (p=0.631 n=10)
+Gzip                   43.68Mi ± 0%   43.04Mi ± 0%   -1.47% (p=0.000 n=10)
+Gunzip                 208.5Mi ± 0%   209.6Mi ± 0%   +0.50% (p=0.000 n=10)
+JSONEncode             99.21Mi ± 0%   93.76Mi ± 0%   -5.49% (p=0.000 n=10)
+JSONDecode             23.80Mi ± 0%   23.55Mi ± 1%   -1.08% (p=0.000 n=10)
+GoParse                7.253Mi ± 2%   7.253Mi ± 1%        ~ (p=0.810 n=10)
+RegexpMatchEasy0_32    213.6Mi ± 0%   229.4Mi ± 0%   +7.41% (p=0.000 n=10)
+RegexpMatchEasy0_1K    636.3Mi ± 0%   717.3Mi ± 0%  +12.73% (p=0.000 n=10)
+RegexpMatchEasy1_32    188.6Mi ± 0%   188.6Mi ± 0%        ~ (p=0.810 n=10)
+RegexpMatchEasy1_1K    597.4Mi ± 0%   652.2Mi ± 0%   +9.17% (p=0.000 n=10)
+RegexpMatchMedium_32   21.35Mi ± 0%   21.49Mi ± 0%   +0.63% (p=0.000 n=10)
+RegexpMatchMedium_1K   23.33Mi ± 0%   23.11Mi ± 0%   -0.94% (p=0.000 n=10)
+RegexpMatchHard_32     14.24Mi ± 0%   14.48Mi ± 0%   +1.67% (p=0.000 n=10)
+RegexpMatchHard_1K     15.30Mi ± 0%   15.59Mi ± 0%   +1.93% (p=0.000 n=10)
+Revcomp                181.3Mi ± 0%   203.4Mi ± 0%  +12.21% (p=0.000 n=10)
+Template               15.89Mi ± 1%   16.00Mi ± 2%        ~ (p=0.542 n=10)
+geomean                59.33Mi        60.72Mi        +2.33%
+
+Change-Id: I9ac28d936e03d21c46bb19fa100018f61ace6b42
+Reviewed-on: https://go-review.googlesource.com/c/go/+/479816
+TryBot-Result: Gopher Robot <gobot@golang.org>
+Reviewed-by: Ian Lance Taylor <iant@google.com>
+Auto-Submit: Ian Lance Taylor <iant@google.com>
+Run-TryBot: WANG Xuerui <git@xen0n.name>
+Reviewed-by: Keith Randall <khr@google.com>
+Run-TryBot: Ian Lance Taylor <iant@google.com>
+Reviewed-by: Keith Randall <khr@golang.org>
+(cherry picked from commit 157999f51260a36d9078e4aa2d711695e4c0c66d)
+---
+ src/internal/bytealg/compare_loong64.s   | 1 +
+ src/internal/bytealg/equal_loong64.s     | 1 +
+ src/internal/bytealg/indexbyte_loong64.s | 2 ++
+ src/runtime/memclr_loong64.s             | 1 +
+ src/runtime/memmove_loong64.s            | 2 ++
+ 5 files changed, 7 insertions(+)
+
+diff --git a/src/internal/bytealg/compare_loong64.s b/src/internal/bytealg/compare_loong64.s
+index 54c2daba69..c89c5a9256 100644
+--- a/src/internal/bytealg/compare_loong64.s
++++ b/src/internal/bytealg/compare_loong64.s
+@@ -48,6 +48,7 @@ entry:
+ 	AND	$7, R15
+ 	BNE	R0, R15, byte_loop
+ 
++	PCALIGN	$16
+ chunk16_loop:
+ 	BEQ	R0, R14, byte_loop
+ 	MOVV	(R6), R8
+diff --git a/src/internal/bytealg/equal_loong64.s b/src/internal/bytealg/equal_loong64.s
+index dcdde89b25..ba2a5578c3 100644
+--- a/src/internal/bytealg/equal_loong64.s
++++ b/src/internal/bytealg/equal_loong64.s
+@@ -14,6 +14,7 @@ TEXT runtime·memequal(SB),NOSPLIT|NOFRAME,$0-25
+ 	BEQ	R4, R5, eq
+ 	MOVV	size+16(FP), R6
+ 	ADDV	R4, R6, R7
++	PCALIGN	$16
+ loop:
+ 	BNE	R4, R7, test
+ 	MOVV	$1, R4
+diff --git a/src/internal/bytealg/indexbyte_loong64.s b/src/internal/bytealg/indexbyte_loong64.s
+index baa9c86be2..604970549f 100644
+--- a/src/internal/bytealg/indexbyte_loong64.s
++++ b/src/internal/bytealg/indexbyte_loong64.s
+@@ -13,6 +13,7 @@ TEXT ·IndexByte(SB),NOSPLIT,$0-40
+ 	ADDV	R4, R5		// end
+ 	ADDV	$-1, R4
+ 
++	PCALIGN	$16
+ loop:
+ 	ADDV	$1, R4
+ 	BEQ	R4, R5, notfound
+@@ -36,6 +37,7 @@ TEXT ·IndexByteString(SB),NOSPLIT,$0-32
+ 	ADDV	R4, R5		// end
+ 	ADDV	$-1, R4
+ 
++	PCALIGN	$16
+ loop:
+ 	ADDV	$1, R4
+ 	BEQ	R4, R5, notfound
+diff --git a/src/runtime/memclr_loong64.s b/src/runtime/memclr_loong64.s
+index e4f20587b7..7bb6f3dfc9 100644
+--- a/src/runtime/memclr_loong64.s
++++ b/src/runtime/memclr_loong64.s
+@@ -26,6 +26,7 @@ words:
+ 	// do 8 bytes at a time if there is room
+ 	ADDV	$-7, R4, R7
+ 
++	PCALIGN	$16
+ 	SGTU	R7, R6, R8
+ 	BEQ	R8, out
+ 	MOVV	R0, (R6)
+diff --git a/src/runtime/memmove_loong64.s b/src/runtime/memmove_loong64.s
+index b7b9c56627..0f139bcc13 100644
+--- a/src/runtime/memmove_loong64.s
++++ b/src/runtime/memmove_loong64.s
+@@ -42,6 +42,7 @@ words:
+ 	// do 8 bytes at a time if there is room
+ 	ADDV	$-7, R9, R6 // R6 is end pointer-7
+ 
++	PCALIGN	$16
+ 	SGTU	R6, R4, R8
+ 	BEQ	R8, out
+ 	MOVV	(R5), R7
+@@ -86,6 +87,7 @@ words1:
+ 	// do 8 bytes at a time if there is room
+ 	ADDV	$7, R4, R6 // R6 is start pointer+7
+ 
++	PCALIGN	$16
+ 	SGTU	R9, R6, R8
+ 	BEQ	R8, out1
+ 	ADDV	$-8, R5
+-- 
+2.40.0
+

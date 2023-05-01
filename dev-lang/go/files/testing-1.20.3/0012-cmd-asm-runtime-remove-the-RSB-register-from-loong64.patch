@@ -1,0 +1,128 @@
+From c92783d35e1522f2c614cd964ec00f7e76ff670b Mon Sep 17 00:00:00 2001
+From: WANG Xuerui <git@xen0n.name>
+Date: Mon, 13 Mar 2023 16:20:50 +0800
+Subject: [PATCH 12/48] cmd/asm, runtime: remove the RSB register from loong64
+
+It was carryover from the mips64 port (where it represented the platform
+GP register) but LoongArch platform ABI doesn't have the GP concept.
+
+Change-Id: Iea326ae13676e95b040b52aaadc08d311b507bd3
+Reviewed-on: https://go-review.googlesource.com/c/go/+/475815
+Reviewed-by: abner chenc <chenguoqi@loongson.cn>
+TryBot-Result: Gopher Robot <gobot@golang.org>
+Run-TryBot: Cherry Mui <cherryyz@google.com>
+Reviewed-by: Cherry Mui <cherryyz@google.com>
+Reviewed-by: Dmitri Shuralyov <dmitshur@google.com>
+(cherry picked from commit 6f2ef5ec98e1a14ee7a2805f68241cfa5feff8bd)
+---
+ src/cmd/asm/internal/arch/arch.go        | 1 -
+ src/cmd/asm/internal/asm/operand_test.go | 4 ++--
+ src/runtime/mkpreempt.go                 | 8 +++-----
+ src/runtime/preempt_loong64.s            | 4 ++--
+ src/runtime/signal_loong64.go            | 4 +---
+ 5 files changed, 8 insertions(+), 13 deletions(-)
+
+diff --git a/src/cmd/asm/internal/arch/arch.go b/src/cmd/asm/internal/arch/arch.go
+index 740711c40c..11bb7af899 100644
+--- a/src/cmd/asm/internal/arch/arch.go
++++ b/src/cmd/asm/internal/arch/arch.go
+@@ -536,7 +536,6 @@ func archLoong64(linkArch *obj.LinkArch) *Arch {
+ 	// Avoid unintentionally clobbering g using R22.
+ 	delete(register, "R22")
+ 	register["g"] = loong64.REG_R22
+-	register["RSB"] = loong64.REG_R31
+ 	registerPrefix := map[string]bool{
+ 		"F":    true,
+ 		"FCSR": true,
+diff --git a/src/cmd/asm/internal/asm/operand_test.go b/src/cmd/asm/internal/asm/operand_test.go
+index 29371d6199..c7e251f50f 100644
+--- a/src/cmd/asm/internal/asm/operand_test.go
++++ b/src/cmd/asm/internal/asm/operand_test.go
+@@ -915,8 +915,9 @@ var loong64OperandTests = []operandTest{
+ 	{"R27", "R27"},
+ 	{"R28", "R28"},
+ 	{"R29", "R29"},
+-	{"R30", "R30"},
+ 	{"R3", "R3"},
++	{"R30", "R30"},
++	{"R31", "R31"},
+ 	{"R4", "R4"},
+ 	{"R5", "R5"},
+ 	{"R6", "R6"},
+@@ -925,7 +926,6 @@ var loong64OperandTests = []operandTest{
+ 	{"R9", "R9"},
+ 	{"a(FP)", "a(FP)"},
+ 	{"g", "g"},
+-	{"RSB", "R31"},
+ 	{"ret+8(FP)", "ret+8(FP)"},
+ 	{"runtime·abort(SB)", "runtime.abort(SB)"},
+ 	{"·AddUint32(SB)", "\"\".AddUint32(SB)"},
+diff --git a/src/runtime/mkpreempt.go b/src/runtime/mkpreempt.go
+index 61d2d0247e..b4915f3789 100644
+--- a/src/runtime/mkpreempt.go
++++ b/src/runtime/mkpreempt.go
+@@ -462,20 +462,18 @@ func genLoong64() {
+ 	movf := "MOVD"
+ 	add := "ADDV"
+ 	sub := "SUBV"
+-	r31 := "RSB"
+ 	regsize := 8
+ 
+ 	// Add integer registers r4-r21 r23-r29 r31
+ 	// R0 (zero), R30 (REGTMP), R2 (tp), R3 (SP), R22 (g), R1 (LR) are special,
+ 	var l = layout{sp: "R3", stack: regsize} // add slot to save PC of interrupted instruction (in LR)
+-	for i := 4; i <= 29; i++ {
+-		if i == 22 {
+-			continue // R3 is REGSP  R22 is g
++	for i := 4; i <= 31; i++ {
++		if i == 22 || i == 30 {
++			continue
+ 		}
+ 		reg := fmt.Sprintf("R%d", i)
+ 		l.add(mov, reg, regsize)
+ 	}
+-	l.add(mov, r31, regsize)
+ 
+ 	// Add floating point registers F0-F31.
+ 	for i := 0; i <= 31; i++ {
+diff --git a/src/runtime/preempt_loong64.s b/src/runtime/preempt_loong64.s
+index ba59a07b7f..f97a8860dc 100644
+--- a/src/runtime/preempt_loong64.s
++++ b/src/runtime/preempt_loong64.s
+@@ -31,7 +31,7 @@ TEXT ·asyncPreempt(SB),NOSPLIT|NOFRAME,$0-0
+ 	MOVV R27, 184(R3)
+ 	MOVV R28, 192(R3)
+ 	MOVV R29, 200(R3)
+-	MOVV RSB, 208(R3)
++	MOVV R31, 208(R3)
+ 	MOVD F0, 216(R3)
+ 	MOVD F1, 224(R3)
+ 	MOVD F2, 232(R3)
+@@ -97,7 +97,7 @@ TEXT ·asyncPreempt(SB),NOSPLIT|NOFRAME,$0-0
+ 	MOVD 232(R3), F2
+ 	MOVD 224(R3), F1
+ 	MOVD 216(R3), F0
+-	MOVV 208(R3), RSB
++	MOVV 208(R3), R31
+ 	MOVV 200(R3), R29
+ 	MOVV 192(R3), R28
+ 	MOVV 184(R3), R27
+diff --git a/src/runtime/signal_loong64.go b/src/runtime/signal_loong64.go
+index 26717a6e59..ac842c0c94 100644
+--- a/src/runtime/signal_loong64.go
++++ b/src/runtime/signal_loong64.go
+@@ -77,10 +77,8 @@ func (c *sigctxt) preparePanic(sig uint32, gp *g) {
+ 	}
+ 
+ 	// In case we are panicking from external C code
+-	sigpanicPC := uint64(abi.FuncPCABIInternal(sigpanic))
+-	c.set_r31(sigpanicPC >> 32 << 32) // RSB register
+ 	c.set_r22(uint64(uintptr(unsafe.Pointer(gp))))
+-	c.set_pc(sigpanicPC)
++	c.set_pc(uint64(abi.FuncPCABIInternal(sigpanic)))
+ }
+ 
+ func (c *sigctxt) pushCall(targetPC, resumePC uintptr) {
+-- 
+2.40.0
+

@@ -1,0 +1,134 @@
+From 37db71e370cbae3979bf8b2047a4189f868155ce Mon Sep 17 00:00:00 2001
+From: WANG Xuerui <git@xen0n.name>
+Date: Wed, 5 Apr 2023 15:56:42 +0800
+Subject: [PATCH 40/48] internal/cpu, runtime: make linux/loong64 HWCAP data
+ available
+
+This can be used to toggle runtime usages of ISA extensions as such
+usages appear.
+
+Only the CRC32 bit is exposed for now, as the others are not going to be
+utilized in the standard library for a while.
+
+Change-Id: I774032ca84dc8bcf1c9f17558917315af07c7314
+(cherry picked from commit 109d9c3806e0e8dcfddba820144e040b51afb425)
+---
+ src/internal/cpu/cpu.go               |  8 +++++++
+ src/internal/cpu/cpu_loong64.go       |  8 ++++++-
+ src/internal/cpu/cpu_loong64_hwcap.go | 30 +++++++++++++++++++++++++++
+ src/internal/cpu/cpu_loong64_linux.go | 11 ++++++++++
+ src/runtime/os_linux_loong64.go       |  9 +++++++-
+ 5 files changed, 64 insertions(+), 2 deletions(-)
+ create mode 100644 src/internal/cpu/cpu_loong64_hwcap.go
+ create mode 100644 src/internal/cpu/cpu_loong64_linux.go
+
+diff --git a/src/internal/cpu/cpu.go b/src/internal/cpu/cpu.go
+index aef9fb3be7..c8de6c7de4 100644
+--- a/src/internal/cpu/cpu.go
++++ b/src/internal/cpu/cpu.go
+@@ -71,6 +71,14 @@ var ARM64 struct {
+ 	_            CacheLinePad
+ }
+ 
++// The booleans in Loong64 contain the correspondingly named cpu feature bit.
++// The struct is padded to avoid false sharing.
++var Loong64 struct {
++	_        CacheLinePad
++	HasCRC32 bool
++	_        CacheLinePad
++}
++
+ var MIPS64X struct {
+ 	_      CacheLinePad
+ 	HasMSA bool // MIPS SIMD architecture
+diff --git a/src/internal/cpu/cpu_loong64.go b/src/internal/cpu/cpu_loong64.go
+index 1c90c24fe3..c4709cc158 100644
+--- a/src/internal/cpu/cpu_loong64.go
++++ b/src/internal/cpu/cpu_loong64.go
+@@ -10,4 +10,10 @@ package cpu
+ // We choose 64 because Loongson 3A5000 the L1 Dcache is 4-way 256-line 64-byte-per-line.
+ const CacheLinePadSize = 64
+ 
+-func doinit() {}
++func doinit() {
++	options = []option{
++		{Name: "crc32", Feature: &Loong64.HasCRC32},
++	}
++
++	osInit()
++}
+diff --git a/src/internal/cpu/cpu_loong64_hwcap.go b/src/internal/cpu/cpu_loong64_hwcap.go
+new file mode 100644
+index 0000000000..b55fde6761
+--- /dev/null
++++ b/src/internal/cpu/cpu_loong64_hwcap.go
+@@ -0,0 +1,30 @@
++// Copyright 2023 The Go Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style
++// license that can be found in the LICENSE file.
++
++//go:build loong64 && linux
++
++package cpu
++
++// This is initialized by archauxv and should not be changed after it is
++// initialized.
++var HWCap uint
++
++// HWCAP bits. These are exposed by the Linux kernel.
++const (
++	hwcap_LOONGARCH_CRC32 = 1 << 6
++)
++
++func hwcapInit() {
++	// It is not taken from CPUCFG data regardless of availability of
++	// CPUCFG, because the CPUCFG data only reflects capabilities of the
++	// hardware, but not kernel support.
++	//
++	// As of 2023, we do not know for sure if the CPUCFG data can be
++	// patched in software, nor does any known LoongArch kernel do that.
++	Loong64.HasCRC32 = isSet(HWCap, hwcap_LOONGARCH_CRC32)
++}
++
++func isSet(hwc uint, value uint) bool {
++	return hwc&value != 0
++}
+diff --git a/src/internal/cpu/cpu_loong64_linux.go b/src/internal/cpu/cpu_loong64_linux.go
+new file mode 100644
+index 0000000000..73bc384a54
+--- /dev/null
++++ b/src/internal/cpu/cpu_loong64_linux.go
+@@ -0,0 +1,11 @@
++// Copyright 2023 The Go Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style
++// license that can be found in the LICENSE file.
++
++//go:build loong64 && linux
++
++package cpu
++
++func osInit() {
++	hwcapInit()
++}
+diff --git a/src/runtime/os_linux_loong64.go b/src/runtime/os_linux_loong64.go
+index 61213dadf8..03926feb8c 100644
+--- a/src/runtime/os_linux_loong64.go
++++ b/src/runtime/os_linux_loong64.go
+@@ -6,6 +6,13 @@
+ 
+ package runtime
+ 
+-func archauxv(tag, val uintptr) {}
++import "internal/cpu"
++
++func archauxv(tag, val uintptr) {
++	switch tag {
++	case _AT_HWCAP:
++		cpu.HWCap = uint(val)
++	}
++}
+ 
+ func osArchInit() {}
+-- 
+2.40.0
+

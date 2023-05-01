@@ -1,0 +1,44 @@
+From c33fba08c2c88f6b7e16f92734afe866e3bc963a Mon Sep 17 00:00:00 2001
+From: Guoqi Chen <chenguoqi@loongson.cn>
+Date: Fri, 4 Nov 2022 13:27:23 +0800
+Subject: [PATCH 07/48] runtime: mark morestack_noctxt SPWRITE for
+ linux/loong64
+
+ref. CL 425396
+
+Updates #54332.
+
+Change-Id: I1a235b0cca4dbf79cf61cf5f40b594fc2d940857
+Reviewed-on: https://go-review.googlesource.com/c/go/+/446895
+Reviewed-by: Cherry Mui <cherryyz@google.com>
+Reviewed-by: WANG Xuerui <git@xen0n.name>
+Run-TryBot: Wayne Zuo <wdvxdr@golangcn.org>
+TryBot-Result: Gopher Robot <gobot@golang.org>
+Reviewed-by: Ian Lance Taylor <iant@google.com>
+Reviewed-by: xiaodong liu <teaofmoli@gmail.com>
+(cherry picked from commit b5c8ae9816e705f2202242de9d570a33dabd3a0a)
+---
+ src/runtime/asm_loong64.s | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/src/runtime/asm_loong64.s b/src/runtime/asm_loong64.s
+index c97371fefd..3ae98c02bf 100644
+--- a/src/runtime/asm_loong64.s
++++ b/src/runtime/asm_loong64.s
+@@ -266,6 +266,13 @@ TEXT runtime·morestack(SB),NOSPLIT|NOFRAME,$0-0
+ 	UNDEF
+ 
+ TEXT runtime·morestack_noctxt(SB),NOSPLIT|NOFRAME,$0-0
++	// Force SPWRITE. This function doesn't actually write SP,
++	// but it is called with a special calling convention where
++	// the caller doesn't save LR on stack but passes it as a
++	// register (R5), and the unwinder currently doesn't understand.
++	// Make it SPWRITE to stop unwinding. (See issue 54332)
++	MOVV    R3, R3
++
+ 	MOVV	R0, REGCTXT
+ 	JMP	runtime·morestack(SB)
+ 
+-- 
+2.40.0
+

@@ -1,0 +1,206 @@
+From 0abecf3baedea6546aa3bdecf8839547b0603676 Mon Sep 17 00:00:00 2001
+From: WANG Xuerui <git@xen0n.name>
+Date: Sun, 19 Mar 2023 01:08:52 +0800
+Subject: [PATCH 37/48] cmd/asm: add support for loong64 FMA instructions
+
+Add support for assembling the FMA instructions present in the LoongArch
+base ISA v1.00. This requires adding a new instruction format and making
+use of a third source operand, which is put in RestArgs[0].
+
+The single-precision instructions have the `.s` prefix in their official
+mnemonics, and similar Go asm instructions all have `S` prefix for the
+other architectures having FMA support, but in this change they instead
+have `F` prefix in Go asm because loong64 currently follows the mips
+backends in the naming convention. This could be changed later because
+FMA is fully expressible in pure Go, making it unlikely to have to hand-
+write such assembly in the wild.
+
+Example mapping between actual encoding and Go asm syntax:
+
+fmadd.s fd, fj, fk, fa -> FMADDF fa, fk, fj, fd
+(prog.From = fa, prog.Reg = fk, prog.RestArgs[0] = fj and prog.To = fd)
+
+fmadd.s fd, fd, fk, fa -> FMADDF fa, fk, fd
+(prog.From = fa, prog.Reg = fk and prog.To = fd)
+
+Change-Id: If3131405c125026f8b9b99638fd4694550fe67f9
+(cherry picked from commit 95a6122e0081bbc77f497c1748e8da4c8c20e452)
+---
+ src/cmd/asm/internal/asm/asm.go               |  7 +++
+ .../asm/internal/asm/testdata/loong64enc1.s   | 17 +++++++
+ src/cmd/internal/obj/loong64/a.out.go         |  9 ++++
+ src/cmd/internal/obj/loong64/anames.go        |  8 ++++
+ src/cmd/internal/obj/loong64/asm.go           | 47 +++++++++++++++++++
+ 5 files changed, 88 insertions(+)
+
+diff --git a/src/cmd/asm/internal/asm/asm.go b/src/cmd/asm/internal/asm/asm.go
+index 4d0eeacc74..eed49bac33 100644
+--- a/src/cmd/asm/internal/asm/asm.go
++++ b/src/cmd/asm/internal/asm/asm.go
+@@ -815,6 +815,13 @@ func (p *Parser) asmInstruction(op obj.As, cond string, a []obj.Addr) {
+ 			prog.To = a[3]
+ 			break
+ 		}
++		if p.arch.Family == sys.Loong64 {
++			prog.From = a[0]
++			prog.Reg = p.getRegister(prog, op, &a[1])
++			prog.SetRestArgs([]obj.Addr{a[2]})
++			prog.To = a[3]
++			break
++		}
+ 		if p.arch.Family == sys.PPC64 {
+ 			prog.From = a[0]
+ 			prog.To = a[3]
+diff --git a/src/cmd/asm/internal/asm/testdata/loong64enc1.s b/src/cmd/asm/internal/asm/testdata/loong64enc1.s
+index ea6c569f9d..c0abf31f7c 100644
+--- a/src/cmd/asm/internal/asm/testdata/loong64enc1.s
++++ b/src/cmd/asm/internal/asm/testdata/loong64enc1.s
+@@ -233,3 +233,20 @@ lable2:
+ 
+ 	MOVV    FCC0, R4		// 04dc1401
+ 	MOVV    R4, FCC0		// 80d81401
++
++	FMADDF	F2, F14, F9, F16	// 30391108
++	FMADDD	F11, F20, F23, F12	// ecd22508
++	FMSUBF	F3, F11, F31, F22	// f6af5108
++	FMSUBD	F13, F30, F9, F15	// 2ff96608
++	FNMADDF	F27, F11, F5, F21	// b5ac9d08
++	FNMADDD	F29, F14, F27, F6	// 66bbae08
++	FNMSUBF	F17, F8, F12, F8	// 88a1d808
++	FNMSUBD	F29, F21, F3, F17	// 71d4ee08
++	FMADDF	F2, F14, F9		// 29391108
++	FMADDD	F11, F20, F23		// f7d22508
++	FMSUBF	F3, F11, F31		// ffaf5108
++	FMSUBD	F13, F30, F9		// 29f96608
++	FNMADDF	F27, F11, F5		// a5ac9d08
++	FNMADDD	F29, F14, F27		// 7bbbae08
++	FNMSUBF	F17, F8, F12		// 8ca1d808
++	FNMSUBD	F29, F21, F3		// 63d4ee08
+diff --git a/src/cmd/internal/obj/loong64/a.out.go b/src/cmd/internal/obj/loong64/a.out.go
+index 99a7da388f..679912242a 100644
+--- a/src/cmd/internal/obj/loong64/a.out.go
++++ b/src/cmd/internal/obj/loong64/a.out.go
+@@ -393,6 +393,15 @@ const (
+ 	AMOVVF
+ 	AMOVVD
+ 
++	AFMADDF
++	AFMADDD
++	AFMSUBF
++	AFMSUBD
++	AFNMADDF
++	AFNMADDD
++	AFNMSUBF
++	AFNMSUBD
++
+ 	// 2.2.10. Other Miscellaneous Instructions
+ 	ARDTIMELW
+ 	ARDTIMEHW
+diff --git a/src/cmd/internal/obj/loong64/anames.go b/src/cmd/internal/obj/loong64/anames.go
+index f61756e7a8..c6342438b1 100644
+--- a/src/cmd/internal/obj/loong64/anames.go
++++ b/src/cmd/internal/obj/loong64/anames.go
+@@ -131,6 +131,14 @@ var Anames = []string{
+ 	"MOVDV",
+ 	"MOVVF",
+ 	"MOVVD",
++	"FMADDF",
++	"FMADDD",
++	"FMSUBF",
++	"FMSUBD",
++	"FNMADDF",
++	"FNMADDD",
++	"FNMSUBF",
++	"FNMSUBD",
+ 	"RDTIMELW",
+ 	"RDTIMEHW",
+ 	"RDTIMED",
+diff --git a/src/cmd/internal/obj/loong64/asm.go b/src/cmd/internal/obj/loong64/asm.go
+index 0ab0caafae..5f18e88923 100644
+--- a/src/cmd/internal/obj/loong64/asm.go
++++ b/src/cmd/internal/obj/loong64/asm.go
+@@ -89,6 +89,9 @@ var optab = []Optab{
+ 	{AMOVF, C_FREG, C_NONE, C_NONE, C_FREG, C_NONE, 33, 4, 0, 0},
+ 	{AMOVD, C_FREG, C_NONE, C_NONE, C_FREG, C_NONE, 33, 4, 0, 0},
+ 
++	{AFMADDF, C_FREG, C_REG, C_NONE, C_FREG, C_NONE, 65, 4, 0, 0},
++	{AFMADDF, C_FREG, C_REG, C_FREG, C_FREG, C_NONE, 65, 4, 0, 0},
++
+ 	{AMOVW, C_REG, C_NONE, C_NONE, C_SEXT, C_NONE, 7, 4, 0, 0},
+ 	{AMOVWU, C_REG, C_NONE, C_NONE, C_SEXT, C_NONE, 7, 4, 0, 0},
+ 	{AMOVV, C_REG, C_NONE, C_NONE, C_SEXT, C_NONE, 7, 4, 0, 0},
+@@ -1053,6 +1056,15 @@ func buildop(ctxt *obj.Link) {
+ 			opset(ASUBD, r0)
+ 			opset(AADDD, r0)
+ 
++		case AFMADDF:
++			opset(AFMADDD, r0)
++			opset(AFMSUBF, r0)
++			opset(AFMSUBD, r0)
++			opset(AFNMADDF, r0)
++			opset(AFNMADDD, r0)
++			opset(AFNMSUBF, r0)
++			opset(AFNMSUBD, r0)
++
+ 		case AAND:
+ 			opset(AOR, r0)
+ 			opset(AXOR, r0)
+@@ -1190,6 +1202,10 @@ func OP_RRR(op uint32, r1 uint32, r2 uint32, r3 uint32) uint32 {
+ 	return op | (r1&0x1F)<<10 | (r2&0x1F)<<5 | (r3&0x1F)<<0
+ }
+ 
++func OP_RRRR(op uint32, r1 uint32, r2 uint32, r3 uint32, r4 uint32) uint32 {
++	return op | (r1&0x1F)<<15 | (r2&0x1F)<<10 | (r3&0x1F)<<5 | (r4 & 0x1F)
++}
++
+ // r2 -> rj
+ // r3 -> rd
+ func OP_RR(op uint32, r2 uint32, r3 uint32) uint32 {
+@@ -1776,6 +1792,13 @@ func (c *ctxt0) asmout(p *obj.Prog, o *Optab, out []uint32) {
+ 	case 64: // movv c_reg, c_fcc0 ==> movgr2cf cd, rj
+ 		a := OP_TEN(8, 1334)
+ 		o1 = OP_RR(a, uint32(p.From.Reg), uint32(p.To.Reg))
++
++	case 65: // fmadd r1, r2, [r3], r4
++		r := int(p.To.Reg)
++		if len(p.RestArgs) > 0 {
++			r = int(p.RestArgs[0].Reg)
++		}
++		o1 = OP_RRRR(c.oprrrr(p.As), uint32(p.From.Reg), uint32(p.Reg), uint32(r), uint32(p.To.Reg))
+ 	}
+ 
+ 	out[0] = o1
+@@ -1995,6 +2018,30 @@ func (c *ctxt0) oprr(a obj.As) uint32 {
+ 	return 0
+ }
+ 
++func (c *ctxt0) oprrrr(a obj.As) uint32 {
++	switch a {
++	case AFMADDF:
++		return 0x81 << 20
++	case AFMADDD:
++		return 0x82 << 20
++	case AFMSUBF:
++		return 0x85 << 20
++	case AFMSUBD:
++		return 0x86 << 20
++	case AFNMADDF:
++		return 0x89 << 20
++	case AFNMADDD:
++		return 0x8a << 20
++	case AFNMSUBF:
++		return 0x8d << 20
++	case AFNMSUBD:
++		return 0x8e << 20
++	}
++
++	c.ctxt.Diag("bad rrrr opcode %v", a)
++	return 0
++}
++
+ func (c *ctxt0) opir(a obj.As) uint32 {
+ 	switch a {
+ 	case ALU12IW:
+-- 
+2.40.0
+

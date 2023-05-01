@@ -1,0 +1,321 @@
+From 36d54c03ba50de7afeed880ada2b5b11e259ebd1 Mon Sep 17 00:00:00 2001
+From: WANG Xuerui <git@xen0n.name>
+Date: Thu, 23 Mar 2023 01:27:29 +0800
+Subject: [PATCH 41/48] hash/crc32: optimize the loong64 crc32 implementation
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Make use of the newly added LA64 CRC32 instructions to accelerate
+computation of CRC32 with IEEE and Castagnoli polynomials.
+
+Benchmark results on Loongson 3A5000 (1-way, 2.5GHz):
+
+goos: linux
+goarch: loong64
+pkg: hash/crc32
+                                        │  CL 478377   │                after                │
+                                        │    sec/op    │   sec/op     vs base                │
+CRC32/poly=IEEE/size=15/align=0           104.50n ± 0%   65.71n ± 0%  -37.12% (p=0.000 n=20)
+CRC32/poly=IEEE/size=15/align=1           104.50n ± 0%   68.62n ± 0%  -34.33% (p=0.000 n=20)
+CRC32/poly=IEEE/size=40/align=0           115.50n ± 0%   82.83n ± 0%  -28.29% (p=0.000 n=20)
+CRC32/poly=IEEE/size=40/align=1           115.50n ± 0%   93.09n ± 0%  -19.40% (p=0.000 n=20)
+CRC32/poly=IEEE/size=512/align=0           660.4n ± 0%   533.9n ± 0%  -19.16% (p=0.000 n=20)
+CRC32/poly=IEEE/size=512/align=1           660.4n ± 0%   540.8n ± 0%  -18.12% (p=0.000 n=20)
+CRC32/poly=IEEE/size=1kB/align=0           1.256µ ± 0%   1.020µ ± 0%  -18.79% (p=0.000 n=20)
+CRC32/poly=IEEE/size=1kB/align=1           1.256µ ± 0%   1.029µ ± 0%  -18.07% (p=0.000 n=20)
+CRC32/poly=IEEE/size=4kB/align=0           4.801µ ± 0%   3.947µ ± 0%  -17.79% (p=0.000 n=20)
+CRC32/poly=IEEE/size=4kB/align=1           4.801µ ± 0%   3.955µ ± 0%  -17.62% (p=0.000 n=20)
+CRC32/poly=IEEE/size=32kB/align=0          37.99µ ± 0%   31.27µ ± 0%  -17.70% (p=0.000 n=20)
+CRC32/poly=IEEE/size=32kB/align=1          37.99µ ± 0%   31.27µ ± 0%  -17.68% (p=0.000 n=20)
+CRC32/poly=Castagnoli/size=15/align=0     104.70n ± 0%   65.55n ± 0%  -37.40% (p=0.000 n=20)
+CRC32/poly=Castagnoli/size=15/align=1     104.70n ± 0%   66.96n ± 0%  -36.05% (p=0.000 n=20)
+CRC32/poly=Castagnoli/size=40/align=0     117.30n ± 0%   84.85n ± 0%  -27.66% (p=0.000 n=20)
+CRC32/poly=Castagnoli/size=40/align=1     117.30n ± 0%   91.89n ± 0%  -21.66% (p=0.000 n=20)
+CRC32/poly=Castagnoli/size=512/align=0     685.2n ± 0%   534.1n ± 0%  -22.05% (p=0.000 n=20)
+CRC32/poly=Castagnoli/size=512/align=1     685.2n ± 0%   541.3n ± 0%  -21.00% (p=0.000 n=20)
+CRC32/poly=Castagnoli/size=1kB/align=0     1.307µ ± 0%   1.021µ ± 0%  -21.88% (p=0.000 n=20)
+CRC32/poly=Castagnoli/size=1kB/align=1     1.307µ ± 0%   1.029µ ± 0%  -21.27% (p=0.000 n=20)
+CRC32/poly=Castagnoli/size=4kB/align=0     5.004µ ± 0%   3.948µ ± 0%  -21.10% (p=0.000 n=20)
+CRC32/poly=Castagnoli/size=4kB/align=1     5.005µ ± 0%   3.956µ ± 0%  -20.96% (p=0.000 n=20)
+CRC32/poly=Castagnoli/size=32kB/align=0    39.51µ ± 0%   31.27µ ± 0%  -20.86% (p=0.000 n=20)
+CRC32/poly=Castagnoli/size=32kB/align=1    39.50µ ± 0%   31.28µ ± 0%  -20.83% (p=0.000 n=20)
+geomean                                    1.122µ        858.3n       -23.49%
+
+                                        │  CL 478377   │                after                 │
+                                        │     B/s      │     B/s       vs base                │
+CRC32/poly=IEEE/size=15/align=0           136.8Mi ± 0%   217.7Mi ± 0%  +59.09% (p=0.000 n=20)
+CRC32/poly=IEEE/size=15/align=1           136.8Mi ± 0%   208.5Mi ± 0%  +52.35% (p=0.000 n=20)
+CRC32/poly=IEEE/size=40/align=0           330.1Mi ± 0%   460.6Mi ± 0%  +39.51% (p=0.000 n=20)
+CRC32/poly=IEEE/size=40/align=1           330.1Mi ± 0%   409.8Mi ± 0%  +24.12% (p=0.000 n=20)
+CRC32/poly=IEEE/size=512/align=0          739.4Mi ± 0%   914.5Mi ± 0%  +23.69% (p=0.000 n=20)
+CRC32/poly=IEEE/size=512/align=1          739.4Mi ± 0%   903.0Mi ± 0%  +22.13% (p=0.000 n=20)
+CRC32/poly=IEEE/size=1kB/align=0          777.7Mi ± 0%   957.1Mi ± 0%  +23.06% (p=0.000 n=20)
+CRC32/poly=IEEE/size=1kB/align=1          777.8Mi ± 0%   949.4Mi ± 0%  +22.08% (p=0.000 n=20)
+CRC32/poly=IEEE/size=4kB/align=0          813.6Mi ± 0%   989.6Mi ± 0%  +21.63% (p=0.000 n=20)
+CRC32/poly=IEEE/size=4kB/align=1          813.6Mi ± 0%   987.6Mi ± 0%  +21.38% (p=0.000 n=20)
+CRC32/poly=IEEE/size=32kB/align=0         822.6Mi ± 0%   999.5Mi ± 0%  +21.50% (p=0.000 n=20)
+CRC32/poly=IEEE/size=32kB/align=1         822.6Mi ± 0%   999.2Mi ± 0%  +21.47% (p=0.000 n=20)
+CRC32/poly=Castagnoli/size=15/align=0     136.6Mi ± 0%   218.2Mi ± 0%  +59.79% (p=0.000 n=20)
+CRC32/poly=Castagnoli/size=15/align=1     136.6Mi ± 0%   213.6Mi ± 0%  +56.40% (p=0.000 n=20)
+CRC32/poly=Castagnoli/size=40/align=0     325.1Mi ± 0%   449.6Mi ± 0%  +38.28% (p=0.000 n=20)
+CRC32/poly=Castagnoli/size=40/align=1     325.1Mi ± 0%   415.1Mi ± 0%  +27.68% (p=0.000 n=20)
+CRC32/poly=Castagnoli/size=512/align=0    712.6Mi ± 0%   914.1Mi ± 0%  +28.28% (p=0.000 n=20)
+CRC32/poly=Castagnoli/size=512/align=1    712.6Mi ± 0%   902.1Mi ± 0%  +26.59% (p=0.000 n=20)
+CRC32/poly=Castagnoli/size=1kB/align=0    747.0Mi ± 0%   956.1Mi ± 0%  +27.99% (p=0.000 n=20)
+CRC32/poly=Castagnoli/size=1kB/align=1    747.0Mi ± 0%   949.0Mi ± 0%  +27.03% (p=0.000 n=20)
+CRC32/poly=Castagnoli/size=4kB/align=0    780.6Mi ± 0%   989.4Mi ± 0%  +26.75% (p=0.000 n=20)
+CRC32/poly=Castagnoli/size=4kB/align=1    780.5Mi ± 0%   987.4Mi ± 0%  +26.50% (p=0.000 n=20)
+CRC32/poly=Castagnoli/size=32kB/align=0   791.0Mi ± 0%   999.5Mi ± 0%  +26.36% (p=0.000 n=20)
+CRC32/poly=Castagnoli/size=32kB/align=1   791.1Mi ± 0%   999.2Mi ± 0%  +26.31% (p=0.000 n=20)
+geomean                                   501.6Mi        655.7Mi       +30.71%
+
+Performance of poly=Koopman is not affected.
+
+Change-Id: Iaa7a0b3108089c6249cea1deae05c7d91d051fe3
+(cherry picked from commit 0d42f3c8d1d5bac69a540f1fd2e270625c5a5ecc)
+---
+ src/hash/crc32/crc32_loong64.go   |  50 ++++++++++
+ src/hash/crc32/crc32_loong64.s    | 159 ++++++++++++++++++++++++++++++
+ src/hash/crc32/crc32_otherarch.go |   2 +-
+ 3 files changed, 210 insertions(+), 1 deletion(-)
+ create mode 100644 src/hash/crc32/crc32_loong64.go
+ create mode 100644 src/hash/crc32/crc32_loong64.s
+
+diff --git a/src/hash/crc32/crc32_loong64.go b/src/hash/crc32/crc32_loong64.go
+new file mode 100644
+index 0000000000..dfa6c16905
+--- /dev/null
++++ b/src/hash/crc32/crc32_loong64.go
+@@ -0,0 +1,50 @@
++// Copyright 2023 The Go Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style
++// license that can be found in the LICENSE file.
++
++// LoongArch64-specific hardware-assisted CRC32 algorithms. See crc32.go for a
++// description of the interface that each architecture-specific file
++// implements.
++
++package crc32
++
++import "internal/cpu"
++
++func castagnoliUpdate(crc uint32, p []byte) uint32
++func ieeeUpdate(crc uint32, p []byte) uint32
++
++func archAvailableCastagnoli() bool {
++	return cpu.Loong64.HasCRC32
++}
++
++func archInitCastagnoli() {
++	if !cpu.Loong64.HasCRC32 {
++		panic("arch-specific crc32 instruction for Castagnoli not available")
++	}
++}
++
++func archUpdateCastagnoli(crc uint32, p []byte) uint32 {
++	if !cpu.Loong64.HasCRC32 {
++		panic("arch-specific crc32 instruction for Castagnoli not available")
++	}
++
++	return ^castagnoliUpdate(^crc, p)
++}
++
++func archAvailableIEEE() bool {
++	return cpu.Loong64.HasCRC32
++}
++
++func archInitIEEE() {
++	if !cpu.Loong64.HasCRC32 {
++		panic("arch-specific crc32 instruction for IEEE not available")
++	}
++}
++
++func archUpdateIEEE(crc uint32, p []byte) uint32 {
++	if !cpu.Loong64.HasCRC32 {
++		panic("arch-specific crc32 instruction for IEEE not available")
++	}
++
++	return ^ieeeUpdate(^crc, p)
++}
+diff --git a/src/hash/crc32/crc32_loong64.s b/src/hash/crc32/crc32_loong64.s
+new file mode 100644
+index 0000000000..3af9a5a25b
+--- /dev/null
++++ b/src/hash/crc32/crc32_loong64.s
+@@ -0,0 +1,159 @@
++// Copyright 2023 The Go Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style
++// license that can be found in the LICENSE file.
++
++#include "textflag.h"
++
++// castagnoliUpdate updates the non-inverted crc with the given data.
++
++// func castagnoliUpdate(crc uint32, p []byte) uint32
++TEXT ·castagnoliUpdate(SB),NOSPLIT,$0-36
++	MOVWU	crc+0(FP), R4		// a0 = CRC value
++	MOVV	p+8(FP), R5		// a1 = data pointer
++	MOVV	p_len+16(FP), R6	// a2 = len(p)
++
++	SGT	$8, R6, R12
++	BNE	R12, less_than_8
++	AND	$7, R5, R12
++	BEQ	R12, aligned
++
++	// Process the first few bytes to 8-byte align the input.
++	// t0 = 8 - t0. We need to process this many bytes to align.
++	SUB	$1, R12
++	XOR	$7, R12
++
++	AND	$1, R12, R13
++	BEQ	R13, align_2
++	MOVB	(R5), R13
++	CRCCWBW	R4, R13, R4
++	ADDV	$1, R5
++	ADDV	$-1, R6
++
++align_2:
++	AND	$2, R12, R13
++	BEQ	R13, align_4
++	MOVH	(R5), R13
++	CRCCWHW	R4, R13, R4
++	ADDV	$2, R5
++	ADDV	$-2, R6
++
++align_4:
++	AND	$4, R12, R13
++	BEQ	R13, aligned
++	MOVW	(R5), R13
++	CRCCWWW	R4, R13, R4
++	ADDV	$4, R5
++	ADDV	$-4, R6
++
++aligned:
++	// The input is now 8-byte aligned and we can process 8-byte chunks.
++	SGT	$8, R6, R12
++	BNE	R12, less_than_8
++	MOVV	(R5), R13
++	CRCCWVW	R4, R13, R4
++	ADDV	$8, R5
++	ADDV	$-8, R6
++	JMP	aligned
++
++less_than_8:
++	// We may have some bytes left over; process 4 bytes, then 2, then 1.
++	AND	$4, R6, R12
++	BEQ	R12, less_than_4
++	MOVW	(R5), R13
++	CRCCWWW	R4, R13, R4
++	ADDV	$4, R5
++	ADDV	$-4, R6
++
++less_than_4:
++	AND	$2, R6, R12
++	BEQ	R12, less_than_2
++	MOVH	(R5), R13
++	CRCCWHW	R4, R13, R4
++	ADDV	$2, R5
++	ADDV	$-2, R6
++
++less_than_2:
++	BEQ	R6, done
++	MOVB	(R5), R13
++	CRCCWBW	R4, R13, R4
++
++done:
++	MOVW	R4, ret+32(FP)
++	RET
++
++// ieeeUpdate updates the non-inverted crc with the given data.
++
++// func ieeeUpdate(crc uint32, p []byte) uint32
++TEXT ·ieeeUpdate(SB),NOSPLIT,$0-36
++	MOVWU	crc+0(FP), R4		// a0 = CRC value
++	MOVV	p+8(FP), R5		// a1 = data pointer
++	MOVV	p_len+16(FP), R6	// a2 = len(p)
++
++	SGT	$8, R6, R12
++	BNE	R12, less_than_8
++	AND	$7, R5, R12
++	BEQ	R12, aligned
++
++	// Process the first few bytes to 8-byte align the input.
++	// t0 = 8 - t0. We need to process this many bytes to align.
++	SUB	$1, R12
++	XOR	$7, R12
++
++	AND	$1, R12, R13
++	BEQ	R13, align_2
++	MOVB	(R5), R13
++	CRCWBW	R4, R13, R4
++	ADDV	$1, R5
++	ADDV	$-1, R6
++
++align_2:
++	AND	$2, R12, R13
++	BEQ	R13, align_4
++	MOVH	(R5), R13
++	CRCWHW	R4, R13, R4
++	ADDV	$2, R5
++	ADDV	$-2, R6
++
++align_4:
++	AND	$4, R12, R13
++	BEQ	R13, aligned
++	MOVW	(R5), R13
++	CRCWWW	R4, R13, R4
++	ADDV	$4, R5
++	ADDV	$-4, R6
++
++aligned:
++	// The input is now 8-byte aligned and we can process 8-byte chunks.
++	SGT	$8, R6, R12
++	BNE	R12, less_than_8
++	MOVV	(R5), R13
++	CRCWVW	R4, R13, R4
++	ADDV	$8, R5
++	ADDV	$-8, R6
++	JMP	aligned
++
++less_than_8:
++	// We may have some bytes left over; process 4 bytes, then 2, then 1.
++	AND	$4, R6, R12
++	BEQ	R12, less_than_4
++	MOVW	(R5), R13
++	CRCWWW	R4, R13, R4
++	ADDV	$4, R5
++	ADDV	$-4, R6
++
++less_than_4:
++	AND	$2, R6, R12
++	BEQ	R12, less_than_2
++	MOVH	(R5), R13
++	CRCWHW	R4, R13, R4
++	ADDV	$2, R5
++	ADDV	$-2, R6
++
++less_than_2:
++	BEQ	R6, done
++	MOVB	(R5), R13
++	CRCWBW	R4, R13, R4
++
++done:
++	MOVW	R4, ret+32(FP)
++	RET
+diff --git a/src/hash/crc32/crc32_otherarch.go b/src/hash/crc32/crc32_otherarch.go
+index 762515257d..f900968ad3 100644
+--- a/src/hash/crc32/crc32_otherarch.go
++++ b/src/hash/crc32/crc32_otherarch.go
+@@ -2,7 +2,7 @@
+ // Use of this source code is governed by a BSD-style
+ // license that can be found in the LICENSE file.
+ 
+-//go:build !amd64 && !s390x && !ppc64le && !arm64
++//go:build !amd64 && !s390x && !ppc64le && !arm64 && !loong64
+ 
+ package crc32
+ 
+-- 
+2.40.0
+

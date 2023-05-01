@@ -1,0 +1,75 @@
+From b3f4adf7578191ff9973cd57c8207954953db989 Mon Sep 17 00:00:00 2001
+From: WANG Xuerui <git@xen0n.name>
+Date: Sat, 3 Dec 2022 20:57:52 +0800
+Subject: [PATCH 10/48] cmd/internal/obj/loong64: add the PCALAU12I instruction
+ for reloc use
+
+The LoongArch ELF psABI v2.00 revamped the relocation design, largely
+moving to using the `pcalau12i + addi/ld/st` pair for PC-relative
+addressing within +/- 32 bits. The "pcala" in `pcalau12i` stands for
+"PC-aligned add"; the instruction's semantics happen to coincide with
+arm64's `adrp`.
+
+Add support for emitting this instruction as part of the relevant
+addressing ops, for use with new reloc types later.
+
+Updates #58784
+
+Change-Id: Ic1747cd9745aad0d1abb9bd78400cd5ff5978bc8
+Reviewed-on: https://go-review.googlesource.com/c/go/+/455016
+Reviewed-by: abner chenc <chenguoqi@loongson.cn>
+Auto-Submit: Wayne Zuo <wdvxdr@golangcn.org>
+Reviewed-by: Ian Lance Taylor <iant@google.com>
+Run-TryBot: Wayne Zuo <wdvxdr@golangcn.org>
+Reviewed-by: Dmitri Shuralyov <dmitshur@google.com>
+Reviewed-by: Wayne Zuo <wdvxdr@golangcn.org>
+Reviewed-by: xiaodong liu <teaofmoli@gmail.com>
+Reviewed-by: Meidan Li <limeidan@loongson.cn>
+TryBot-Result: Gopher Robot <gobot@golang.org>
+(cherry picked from commit b4ac4b4b42bd2b8014cba57991d43f09eb6292f6)
+---
+ src/cmd/internal/obj/loong64/a.out.go  | 1 +
+ src/cmd/internal/obj/loong64/anames.go | 1 +
+ src/cmd/internal/obj/loong64/asm.go    | 2 ++
+ 3 files changed, 4 insertions(+)
+
+diff --git a/src/cmd/internal/obj/loong64/a.out.go b/src/cmd/internal/obj/loong64/a.out.go
+index 10cf396669..e7ac592b8b 100644
+--- a/src/cmd/internal/obj/loong64/a.out.go
++++ b/src/cmd/internal/obj/loong64/a.out.go
+@@ -265,6 +265,7 @@ const (
+ 	ALU12IW
+ 	ALU32ID
+ 	ALU52ID
++	APCALAU12I
+ 	APCADDU12I
+ 	AJIRL
+ 	ABGE
+diff --git a/src/cmd/internal/obj/loong64/anames.go b/src/cmd/internal/obj/loong64/anames.go
+index eb13da20c3..f61756e7a8 100644
+--- a/src/cmd/internal/obj/loong64/anames.go
++++ b/src/cmd/internal/obj/loong64/anames.go
+@@ -33,6 +33,7 @@ var Anames = []string{
+ 	"LU12IW",
+ 	"LU32ID",
+ 	"LU52ID",
++	"PCALAU12I",
+ 	"PCADDU12I",
+ 	"JIRL",
+ 	"BGE",
+diff --git a/src/cmd/internal/obj/loong64/asm.go b/src/cmd/internal/obj/loong64/asm.go
+index 02e44ee0a1..f4311c4c07 100644
+--- a/src/cmd/internal/obj/loong64/asm.go
++++ b/src/cmd/internal/obj/loong64/asm.go
+@@ -1847,6 +1847,8 @@ func (c *ctxt0) opir(a obj.As) uint32 {
+ 		return 0x0a << 25
+ 	case ALU32ID:
+ 		return 0x0b << 25
++	case APCALAU12I:
++		return 0x0d << 25
+ 	case APCADDU12I:
+ 		return 0x0e << 25
+ 	}
+-- 
+2.40.0
+

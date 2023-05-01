@@ -1,0 +1,170 @@
+From bfa5836ebf7fe41e23b5fb89446a4a5077d1b314 Mon Sep 17 00:00:00 2001
+From: WANG Xuerui <git@xen0n.name>
+Date: Tue, 21 Mar 2023 18:23:44 +0800
+Subject: [PATCH 14/48] cmd/internal/obj/loong64: realize all unconditional
+ jumps with B/BL
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The current practice of using the "PC-relative" `BEQ ZERO, ZERO` for
+short jumps is inherited from the MIPS port, where the pre-R6 long
+jumps are PC-regional instead of PC-relative. This quirk is not
+present in LoongArch from the very beginning so there is no reason to
+keep the behavior any more.
+
+While at it, simplify the code to not place anything in the jump offset
+field if a relocation is to take place. (It may be relic of a previous
+REL-era treatment where the addend is to be stored in the instruction
+word, but again, loong64 is exclusively RELA from day 1 so no point in
+doing so either.)
+
+Benchmark shows very slight improvement on a 3A5000 box, indicating the
+LA464 micro-architecture presumably *not* seeing the always-true BEQs as
+equivalent to B:
+
+goos: linux
+goarch: loong64
+pkg: test/bench/go1
+                      │  2ef70d9d0f  │                this CL                │
+                      │    sec/op    │    sec/op     vs base                 │
+BinaryTree17             14.57 ±  4%    14.54 ±  1%       ~ (p=0.353 n=10)
+Fannkuch11               3.570 ±  0%    3.570 ±  0%       ~ (p=0.529 n=10)
+FmtFprintfEmpty         92.84n ±  0%   92.84n ±  0%       ~ (p=0.970 n=10)
+FmtFprintfString        150.0n ±  0%   149.9n ±  0%       ~ (p=0.350 n=10)
+FmtFprintfInt           153.3n ±  0%   153.3n ±  0%       ~ (p=1.000 n=10) ¹
+FmtFprintfIntInt        235.8n ±  0%   235.8n ±  0%       ~ (p=0.963 n=10)
+FmtFprintfPrefixedInt   318.5n ±  0%   318.5n ±  0%       ~ (p=0.474 n=10)
+FmtFprintfFloat         410.4n ±  0%   410.4n ±  0%       ~ (p=0.628 n=10)
+FmtManyArgs             944.9n ±  0%   945.0n ±  0%       ~ (p=0.240 n=10)
+GobDecode               13.97m ± 12%   12.83m ± 21%       ~ (p=0.165 n=10)
+GobEncode               17.84m ±  5%   18.60m ±  4%       ~ (p=0.123 n=10)
+Gzip                    421.0m ±  0%   421.0m ±  0%       ~ (p=0.579 n=10)
+Gunzip                  89.80m ±  0%   89.77m ±  0%       ~ (p=0.529 n=10)
+HTTPClientServer        86.54µ ±  1%   86.25µ ±  0%  -0.33% (p=0.003 n=10)
+JSONEncode              18.57m ±  0%   18.57m ±  0%       ~ (p=0.353 n=10)
+JSONDecode              77.48m ±  0%   77.30m ±  0%  -0.23% (p=0.035 n=10)
+Mandelbrot200           7.217m ±  0%   7.217m ±  0%       ~ (p=0.436 n=10)
+GoParse                 7.599m ±  2%   7.632m ±  1%       ~ (p=0.353 n=10)
+RegexpMatchEasy0_32     140.1n ±  0%   140.1n ±  0%       ~ (p=0.582 n=10)
+RegexpMatchEasy0_1K     1.538µ ±  0%   1.538µ ±  0%       ~ (p=1.000 n=10) ¹
+RegexpMatchEasy1_32     161.7n ±  0%   161.7n ±  0%       ~ (p=1.000 n=10) ¹
+RegexpMatchEasy1_1K     1.632µ ±  0%   1.632µ ±  0%       ~ (p=1.000 n=10) ¹
+RegexpMatchMedium_32    1.369µ ±  0%   1.369µ ±  0%       ~ (p=1.000 n=10)
+RegexpMatchMedium_1K    39.96µ ±  0%   39.96µ ±  0%  +0.01% (p=0.010 n=10)
+RegexpMatchHard_32      2.099µ ±  0%   2.099µ ±  0%       ~ (p=1.000 n=10) ¹
+RegexpMatchHard_1K      62.50µ ±  0%   62.50µ ±  0%       ~ (p=0.099 n=10)
+Revcomp                  1.349 ±  0%    1.347 ±  0%  -0.14% (p=0.001 n=10)
+Template                118.4m ±  0%   118.0m ±  0%  -0.36% (p=0.023 n=10)
+TimeParse               407.8n ±  0%   407.9n ±  0%  +0.02% (p=0.000 n=10)
+TimeFormat              508.0n ±  0%   507.9n ±  0%       ~ (p=0.421 n=10)
+geomean                 103.5µ         103.3µ        -0.17%
+¹ all samples are equal
+
+                     │  2ef70d9d0f   │                this CL                 │
+                     │      B/s      │      B/s       vs base                 │
+GobDecode              52.67Mi ± 11%   57.04Mi ± 17%       ~ (p=0.149 n=10)
+GobEncode              41.03Mi ±  4%   39.35Mi ±  4%       ~ (p=0.118 n=10)
+Gzip                   43.95Mi ±  0%   43.95Mi ±  0%       ~ (p=0.428 n=10)
+Gunzip                 206.1Mi ±  0%   206.1Mi ±  0%       ~ (p=0.399 n=10)
+JSONEncode             99.64Mi ±  0%   99.66Mi ±  0%       ~ (p=0.304 n=10)
+JSONDecode             23.88Mi ±  0%   23.94Mi ±  0%  +0.22% (p=0.030 n=10)
+GoParse                7.267Mi ±  2%   7.238Mi ±  1%       ~ (p=0.360 n=10)
+RegexpMatchEasy0_32    217.8Mi ±  0%   217.8Mi ±  0%  -0.00% (p=0.006 n=10)
+RegexpMatchEasy0_1K    635.0Mi ±  0%   635.0Mi ±  0%       ~ (p=0.194 n=10)
+RegexpMatchEasy1_32    188.7Mi ±  0%   188.7Mi ±  0%       ~ (p=0.338 n=10)
+RegexpMatchEasy1_1K    598.5Mi ±  0%   598.5Mi ±  0%  -0.00% (p=0.000 n=10)
+RegexpMatchMedium_32   22.30Mi ±  0%   22.30Mi ±  0%       ~ (p=0.211 n=10)
+RegexpMatchMedium_1K   24.43Mi ±  0%   24.43Mi ±  0%       ~ (p=1.000 n=10)
+RegexpMatchHard_32     14.54Mi ±  0%   14.54Mi ±  0%       ~ (p=0.474 n=10)
+RegexpMatchHard_1K     15.62Mi ±  0%   15.62Mi ±  0%       ~ (p=1.000 n=10) ¹
+Revcomp                179.7Mi ±  0%   180.0Mi ±  0%  +0.14% (p=0.001 n=10)
+Template               15.63Mi ±  0%   15.68Mi ±  0%  +0.34% (p=0.022 n=10)
+geomean                60.29Mi         60.44Mi        +0.24%
+¹ all samples are equal
+
+Change-Id: I112dd663c49567386ea75dd4966a9f8127ffb90e
+Reviewed-on: https://go-review.googlesource.com/c/go/+/478075
+Run-TryBot: Ian Lance Taylor <iant@google.com>
+Reviewed-by: Ian Lance Taylor <iant@google.com>
+Run-TryBot: Cherry Mui <cherryyz@google.com>
+Auto-Submit: Ian Lance Taylor <iant@google.com>
+Reviewed-by: Cherry Mui <cherryyz@google.com>
+Reviewed-by: Heschi Kreinick <heschi@google.com>
+TryBot-Result: Gopher Robot <gobot@golang.org>
+(cherry picked from commit 09f1ddb1589eb1b5b20d80e5e818f6d491791c38)
+---
+ src/cmd/asm/internal/asm/testdata/loong64.s   |  5 +++--
+ .../asm/internal/asm/testdata/loong64enc1.s   |  6 ++++--
+ src/cmd/internal/obj/loong64/asm.go           | 20 +++++--------------
+ 3 files changed, 12 insertions(+), 19 deletions(-)
+
+diff --git a/src/cmd/asm/internal/asm/testdata/loong64.s b/src/cmd/asm/internal/asm/testdata/loong64.s
+index 133cf48db4..51b195b4b0 100644
+--- a/src/cmd/asm/internal/asm/testdata/loong64.s
++++ b/src/cmd/asm/internal/asm/testdata/loong64.s
+@@ -6,6 +6,7 @@
+ // TODO: cover more instruction
+ 
+ TEXT foo(SB),DUPOK|NOSPLIT,$0
+-	JAL	1(PC)	//CALL 1(PC)	//000c0054
++	JAL	1(PC)	//CALL 1(PC)	//00040054
+ 	JAL	(R4)	//CALL (R4)	//8100004c
+-	JAL	foo(SB)	//CALL foo(SB)	//00100054
++	// relocation in play so the assembled offset should be 0
++	JAL	foo(SB)	//CALL foo(SB)	//00000054
+diff --git a/src/cmd/asm/internal/asm/testdata/loong64enc1.s b/src/cmd/asm/internal/asm/testdata/loong64enc1.s
+index 4f3cb2b2ee..f5a80d5d17 100644
+--- a/src/cmd/asm/internal/asm/testdata/loong64enc1.s
++++ b/src/cmd/asm/internal/asm/testdata/loong64enc1.s
+@@ -13,9 +13,11 @@ lable2:
+ 	BFPF	1(PC)			// 00040048
+ 	BFPF	lable2	// BFPF 4 	// 1ffcff4b
+ 
+-	JMP	foo(SB)			// 00100050
++	// relocation in play so the assembled offset should be 0
++	JMP	foo(SB)			// 00000050
++
+ 	JMP	(R4)			// 8000004c
+-	JMP	1(PC)			// 00040058
++	JMP	1(PC)			// 00040050
+ 	MOVW	$65536, R4		// 04020014
+ 	MOVW	$4096, R4		// 24000014
+ 	MOVV	$65536, R4		// 04020014
+diff --git a/src/cmd/internal/obj/loong64/asm.go b/src/cmd/internal/obj/loong64/asm.go
+index 086cad4aa4..4e1c36e11b 100644
+--- a/src/cmd/internal/obj/loong64/asm.go
++++ b/src/cmd/internal/obj/loong64/asm.go
+@@ -1243,24 +1243,14 @@ func (c *ctxt0) asmout(p *obj.Prog, o *Optab, out []uint32) {
+ 
+ 	case 11: // jmp lbra
+ 		v := int32(0)
+-		if c.aclass(&p.To) == C_SBRA && p.To.Sym == nil && p.As == AJMP {
+-			// use PC-relative branch for short branches
+-			// BEQ	R0, R0, sbra
+-			if p.To.Target() != nil {
+-				v = int32(p.To.Target().Pc-p.Pc) >> 2
+-			}
+-			if (v<<16)>>16 == v {
+-				o1 = OP_16IRR(c.opirr(ABEQ), uint32(v), uint32(REGZERO), uint32(REGZERO))
+-				break
+-			}
+-		}
+-		if p.To.Target() == nil {
+-			v = int32(p.Pc) >> 2
+-		} else {
+-			v = int32(p.To.Target().Pc) >> 2
++		if p.To.Target() != nil {
++			v = int32(p.To.Target().Pc-p.Pc) >> 2
+ 		}
+ 		o1 = OP_B_BL(c.opirr(p.As), uint32(v))
+ 		if p.To.Sym == nil {
++			if p.As == AJMP {
++				break
++			}
+ 			p.To.Sym = c.cursym.Func().Text.From.Sym
+ 			p.To.Offset = p.To.Target().Pc
+ 		}
+-- 
+2.40.0
+

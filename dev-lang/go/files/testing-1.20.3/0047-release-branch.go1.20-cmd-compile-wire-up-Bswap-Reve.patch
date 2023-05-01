@@ -1,0 +1,210 @@
+From ad002c7923f9af020bbcf7420c96aa5f577e38a2 Mon Sep 17 00:00:00 2001
+From: WANG Xuerui <git@xen0n.name>
+Date: Tue, 21 Mar 2023 01:02:47 +0800
+Subject: [PATCH 47/48] [release-branch.go1.20] cmd/compile: wire up
+ Bswap/ReverseBytes intrinsics for loong64
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Micro-benchmark results on Loongson 3A5000:
+
+goos: linux
+goarch: loong64
+pkg: math/bits
+               │    before    │                after                 │
+               │    sec/op    │    sec/op     vs base                │
+ReverseBytes     3.0130n ± 0%   0.6517n ± 2%  -78.37% (p=0.000 n=10)
+ReverseBytes16   0.9027n ± 0%   0.6526n ± 2%  -27.71% (p=0.000 n=10)
+ReverseBytes32   1.7040n ± 0%   0.6511n ± 1%  -61.79% (p=0.000 n=10)
+ReverseBytes64   2.7080n ± 0%   0.6499n ± 1%  -76.00% (p=0.000 n=10)
+geomean           1.882n        0.6513n       -65.40%
+
+Go1 benchmark results indicate no meaningful change except for
+micro-architecture-related fluctuations.
+
+Updates #59120
+
+Change-Id: I39c1edbd7363f454ad1e848a25abeced722b16ac
+
+[xen0n: removed Bswap16 because go1.20 seemingly doesn't support this op]
+(cherry picked from commit 4e0bacc50e09ea7defbf1e769b6ee5467e82e881)
+---
+ src/cmd/compile/internal/loong64/ssa.go       |  2 ++
+ .../compile/internal/ssa/_gen/LOONG64.rules   |  1 +
+ .../compile/internal/ssa/_gen/LOONG64Ops.go   | 20 +++++++------
+ src/cmd/compile/internal/ssa/opGen.go         | 28 +++++++++++++++++++
+ .../compile/internal/ssa/rewriteLOONG64.go    |  6 ++++
+ src/cmd/compile/internal/ssagen/ssa.go        |  4 +--
+ test/codegen/mathbits.go                      |  3 ++
+ 7 files changed, 53 insertions(+), 11 deletions(-)
+
+diff --git a/src/cmd/compile/internal/loong64/ssa.go b/src/cmd/compile/internal/loong64/ssa.go
+index 51d318a21d..a95ec90c96 100644
+--- a/src/cmd/compile/internal/loong64/ssa.go
++++ b/src/cmd/compile/internal/loong64/ssa.go
+@@ -352,6 +352,8 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
+ 		ssa.OpLOONG64CTZV,
+ 		ssa.OpLOONG64CLZW,
+ 		ssa.OpLOONG64CLZV,
++		ssa.OpLOONG64REVB2W,
++		ssa.OpLOONG64REVBV,
+ 		ssa.OpLOONG64SQRTD,
+ 		ssa.OpLOONG64SQRTF:
+ 		p := s.Prog(v.Op.Asm())
+diff --git a/src/cmd/compile/internal/ssa/_gen/LOONG64.rules b/src/cmd/compile/internal/ssa/_gen/LOONG64.rules
+index 960cd26eab..d5f6d4d98e 100644
+--- a/src/cmd/compile/internal/ssa/_gen/LOONG64.rules
++++ b/src/cmd/compile/internal/ssa/_gen/LOONG64.rules
+@@ -133,6 +133,7 @@
+ (Ctz(32|64) ...) => (CTZ(W|V) ...)
+ (BitLen64 <t> x) => (NEGV <t> (SUBVconst <t> [64] (CLZV <t> x)))
+ (BitLen32 <t> x) => (NEGV <t> (SUBVconst <t> [32] (CLZW <t> x)))
++(Bswap(32|64) ...) => (REVB(2W|V) ...)
+ 
+ (Sqrt ...) => (SQRTD ...)
+ (Sqrt32 ...) => (SQRTF ...)
+diff --git a/src/cmd/compile/internal/ssa/_gen/LOONG64Ops.go b/src/cmd/compile/internal/ssa/_gen/LOONG64Ops.go
+index c601b0d517..a69362b99e 100644
+--- a/src/cmd/compile/internal/ssa/_gen/LOONG64Ops.go
++++ b/src/cmd/compile/internal/ssa/_gen/LOONG64Ops.go
+@@ -197,15 +197,17 @@ func init() {
+ 		{name: "FNMSUBF", argLength: 3, reg: fp31, asm: "FNMSUBF", commutative: true, typ: "Float32"}, // -((arg0 * arg1) - arg2)
+ 		{name: "FNMSUBD", argLength: 3, reg: fp31, asm: "FNMSUBD", commutative: true, typ: "Float64"}, // -((arg0 * arg1) - arg2)
+ 
+-		{name: "NEGV", argLength: 1, reg: gp11},                // -arg0
+-		{name: "NEGF", argLength: 1, reg: fp11, asm: "NEGF"},   // -arg0, float32
+-		{name: "NEGD", argLength: 1, reg: fp11, asm: "NEGD"},   // -arg0, float64
+-		{name: "SQRTD", argLength: 1, reg: fp11, asm: "SQRTD"}, // sqrt(arg0), float64
+-		{name: "SQRTF", argLength: 1, reg: fp11, asm: "SQRTF"}, // sqrt(arg0), float32
+-		{name: "CTZW", argLength: 1, reg: gp11, asm: "CTZW"},   // Count trailing (low order) zeroes (returns 0-32)
+-		{name: "CTZV", argLength: 1, reg: gp11, asm: "CTZV"},   // Count trailing (low order) zeroes (returns 0-64)
+-		{name: "CLZW", argLength: 1, reg: gp11, asm: "CLZW"},   // Count leading (high order) zeroes (returns 0-32)
+-		{name: "CLZV", argLength: 1, reg: gp11, asm: "CLZV"},   // Count leading (high order) zeroes (returns 0-64)
++		{name: "NEGV", argLength: 1, reg: gp11},                  // -arg0
++		{name: "NEGF", argLength: 1, reg: fp11, asm: "NEGF"},     // -arg0, float32
++		{name: "NEGD", argLength: 1, reg: fp11, asm: "NEGD"},     // -arg0, float64
++		{name: "SQRTD", argLength: 1, reg: fp11, asm: "SQRTD"},   // sqrt(arg0), float64
++		{name: "SQRTF", argLength: 1, reg: fp11, asm: "SQRTF"},   // sqrt(arg0), float32
++		{name: "CTZW", argLength: 1, reg: gp11, asm: "CTZW"},     // Count trailing (low order) zeroes (returns 0-32)
++		{name: "CTZV", argLength: 1, reg: gp11, asm: "CTZV"},     // Count trailing (low order) zeroes (returns 0-64)
++		{name: "CLZW", argLength: 1, reg: gp11, asm: "CLZW"},     // Count leading (high order) zeroes (returns 0-32)
++		{name: "CLZV", argLength: 1, reg: gp11, asm: "CLZV"},     // Count leading (high order) zeroes (returns 0-64)
++		{name: "REVB2W", argLength: 1, reg: gp11, asm: "REVB2W"}, // Swap bytes: 0x1122334455667788 -> 0x4433221188776655
++		{name: "REVBV", argLength: 1, reg: gp11, asm: "REVBV"},   // Swap bytes: 0x1122334455667788 -> 0x8877665544332211
+ 
+ 		{name: "MASKEQZ", argLength: 2, reg: gp21, asm: "MASKEQZ"}, // returns 0 if arg1 == 0, otherwise returns arg0
+ 		{name: "MASKNEZ", argLength: 2, reg: gp21, asm: "MASKNEZ"}, // returns 0 if arg1 != 0, otherwise returns arg0
+diff --git a/src/cmd/compile/internal/ssa/opGen.go b/src/cmd/compile/internal/ssa/opGen.go
+index 54748ccbe0..e69c744caf 100644
+--- a/src/cmd/compile/internal/ssa/opGen.go
++++ b/src/cmd/compile/internal/ssa/opGen.go
+@@ -1755,6 +1755,8 @@ const (
+ 	OpLOONG64CTZV
+ 	OpLOONG64CLZW
+ 	OpLOONG64CLZV
++	OpLOONG64REVB2W
++	OpLOONG64REVBV
+ 	OpLOONG64MASKEQZ
+ 	OpLOONG64MASKNEZ
+ 	OpLOONG64SLLV
+@@ -23506,6 +23508,32 @@ var opcodeTable = [...]opInfo{
+ 			},
+ 		},
+ 	},
++	{
++		name:   "REVB2W",
++		argLen: 1,
++		asm:    loong64.AREVB2W,
++		reg: regInfo{
++			inputs: []inputInfo{
++				{0, 1072693240}, // R4 R5 R6 R7 R8 R9 R10 R11 R12 R13 R14 R15 R16 R17 R18 R19 R20 g R23 R24 R25 R26 R27 R28 R29 R31
++			},
++			outputs: []outputInfo{
++				{0, 1070596088}, // R4 R5 R6 R7 R8 R9 R10 R11 R12 R13 R14 R15 R16 R17 R18 R19 R20 R23 R24 R25 R26 R27 R28 R29 R31
++			},
++		},
++	},
++	{
++		name:   "REVBV",
++		argLen: 1,
++		asm:    loong64.AREVBV,
++		reg: regInfo{
++			inputs: []inputInfo{
++				{0, 1072693240}, // R4 R5 R6 R7 R8 R9 R10 R11 R12 R13 R14 R15 R16 R17 R18 R19 R20 g R23 R24 R25 R26 R27 R28 R29 R31
++			},
++			outputs: []outputInfo{
++				{0, 1070596088}, // R4 R5 R6 R7 R8 R9 R10 R11 R12 R13 R14 R15 R16 R17 R18 R19 R20 R23 R24 R25 R26 R27 R28 R29 R31
++			},
++		},
++	},
+ 	{
+ 		name:   "MASKEQZ",
+ 		argLen: 2,
+diff --git a/src/cmd/compile/internal/ssa/rewriteLOONG64.go b/src/cmd/compile/internal/ssa/rewriteLOONG64.go
+index f4a5f788dc..1402529ab1 100644
+--- a/src/cmd/compile/internal/ssa/rewriteLOONG64.go
++++ b/src/cmd/compile/internal/ssa/rewriteLOONG64.go
+@@ -92,6 +92,12 @@ func rewriteValueLOONG64(v *Value) bool {
+ 		return rewriteValueLOONG64_OpBitLen32(v)
+ 	case OpBitLen64:
+ 		return rewriteValueLOONG64_OpBitLen64(v)
++	case OpBswap32:
++		v.Op = OpLOONG64REVB2W
++		return true
++	case OpBswap64:
++		v.Op = OpLOONG64REVBV
++		return true
+ 	case OpClosureCall:
+ 		v.Op = OpLOONG64CALLclosure
+ 		return true
+diff --git a/src/cmd/compile/internal/ssagen/ssa.go b/src/cmd/compile/internal/ssagen/ssa.go
+index a4b0772fed..3c9f4da0cc 100644
+--- a/src/cmd/compile/internal/ssagen/ssa.go
++++ b/src/cmd/compile/internal/ssagen/ssa.go
+@@ -4008,12 +4008,12 @@ func InitTables() {
+ 		func(s *state, n *ir.CallExpr, args []*ssa.Value) *ssa.Value {
+ 			return s.newValue1(ssa.OpBswap32, types.Types[types.TUINT32], args[0])
+ 		},
+-		sys.AMD64, sys.ARM64, sys.ARM, sys.S390X)
++		sys.AMD64, sys.ARM64, sys.ARM, sys.Loong64, sys.S390X)
+ 	addF("runtime/internal/sys", "Bswap64",
+ 		func(s *state, n *ir.CallExpr, args []*ssa.Value) *ssa.Value {
+ 			return s.newValue1(ssa.OpBswap64, types.Types[types.TUINT64], args[0])
+ 		},
+-		sys.AMD64, sys.ARM64, sys.ARM, sys.S390X)
++		sys.AMD64, sys.ARM64, sys.ARM, sys.Loong64, sys.S390X)
+ 
+ 	/****** Prefetch ******/
+ 	makePrefetchFunc := func(op ssa.Op) func(s *state, n *ir.CallExpr, args []*ssa.Value) *ssa.Value {
+diff --git a/test/codegen/mathbits.go b/test/codegen/mathbits.go
+index ca0fa3b938..befd27a564 100644
+--- a/test/codegen/mathbits.go
++++ b/test/codegen/mathbits.go
+@@ -223,6 +223,7 @@ func ReverseBytes(n uint) uint {
+ 	// amd64:"BSWAPQ"
+ 	// s390x:"MOVDBR"
+ 	// arm64:"REV"
++	// loong64:"REVBV"
+ 	return bits.ReverseBytes(n)
+ }
+ 
+@@ -230,6 +231,7 @@ func ReverseBytes64(n uint64) uint64 {
+ 	// amd64:"BSWAPQ"
+ 	// s390x:"MOVDBR"
+ 	// arm64:"REV"
++	// loong64:"REVBV"
+ 	return bits.ReverseBytes64(n)
+ }
+ 
+@@ -237,6 +239,7 @@ func ReverseBytes32(n uint32) uint32 {
+ 	// amd64:"BSWAPL"
+ 	// s390x:"MOVWBR"
+ 	// arm64:"REVW"
++	// loong64:"REVB2W"
+ 	return bits.ReverseBytes32(n)
+ }
+ 
+-- 
+2.40.0
+

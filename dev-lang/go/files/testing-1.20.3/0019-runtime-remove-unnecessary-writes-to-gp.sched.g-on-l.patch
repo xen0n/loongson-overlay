@@ -1,0 +1,38 @@
+From aa59038da9cb04cc798788448ed84b12e75e2a88 Mon Sep 17 00:00:00 2001
+From: Guoqi Chen <chenguoqi@loongson.cn>
+Date: Wed, 15 Mar 2023 07:35:43 +0800
+Subject: [PATCH 19/48] runtime: remove unnecessary writes to gp.sched.g on
+ loong64
+
+Same as CL 292109, A g's sched.g is set in newproc1, After that, it never changes.
+Yet lots of assembly code does "g.sched.g = g" unnecessarily. Remove it to avoid
+confusion about whether it ever changes.
+
+Change-Id: I3d3b18267a80bdd9ef5487c1d1d29de4c5a2d5cc
+Reviewed-on: https://go-review.googlesource.com/c/go/+/476375
+Reviewed-by: Ian Lance Taylor <iant@google.com>
+Auto-Submit: Wayne Zuo <wdvxdr@golangcn.org>
+Reviewed-by: WANG Xuerui <git@xen0n.name>
+Run-TryBot: Wayne Zuo <wdvxdr@golangcn.org>
+TryBot-Result: Gopher Robot <gobot@golang.org>
+Reviewed-by: Cherry Mui <cherryyz@google.com>
+(cherry picked from commit 579109789fbb03132ae43c501add94f295d1642e)
+---
+ src/runtime/asm_loong64.s | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/src/runtime/asm_loong64.s b/src/runtime/asm_loong64.s
+index a2e5928195..e87f0156a2 100644
+--- a/src/runtime/asm_loong64.s
++++ b/src/runtime/asm_loong64.s
+@@ -128,7 +128,6 @@ TEXT runtime·mcall(SB), NOSPLIT|NOFRAME, $0-8
+ 	MOVV	R3, (g_sched+gobuf_sp)(g)
+ 	MOVV	R1, (g_sched+gobuf_pc)(g)
+ 	MOVV	R0, (g_sched+gobuf_lr)(g)
+-	MOVV	g, (g_sched+gobuf_g)(g)
+ 
+ 	// Switch to m->g0 & its stack, call fn.
+ 	MOVV	g, R19
+-- 
+2.40.0
+

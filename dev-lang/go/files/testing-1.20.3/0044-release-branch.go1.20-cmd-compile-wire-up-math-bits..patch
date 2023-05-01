@@ -1,0 +1,3474 @@
+From a023c49023882b038f64ac8f32e3b82824845060 Mon Sep 17 00:00:00 2001
+From: WANG Xuerui <git@xen0n.name>
+Date: Tue, 21 Mar 2023 00:31:40 +0800
+Subject: [PATCH 44/48] [release-branch.go1.20] cmd/compile: wire up
+ math/bits.TrailingZeros intrinsics for loong64
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The runtime malloc implementation makes use of these, among others.
+
+Some generic strength reduction rules for Ctz ops have also been added,
+though only enabled for loong64 for now. This is necessary to make the
+optimization profitable at all, as the LA464 architecture apparently
+handles the `TrailingZeros64(x) < 64` part in runtime.nextFreeFast very
+badly if the compiled branch isn't a simple BEQZ any more (that used to
+be the case before, when the compiler is able to peek into the pure Go
+implementation of TrailingZeros). Without the generic rules this change
+is going to be a big perf hit (as bad as 7~10% in select go1 benchmark
+cases).
+
+The generic changes are benchmarked on linux/amd64 (Threadripper 3990X)
+and darwin/arm64 (Apple M1 Pro) too, but results are either mixed
+(amd64) or even net loss (arm64). So, for now those rules are guarded
+with a predicate that only enables them for loong64.
+
+Micro-benchmark results on Loongson 3A5000:
+
+goos: linux
+goarch: loong64
+pkg: math/bits
+                │   before    │                after                │
+                │   sec/op    │   sec/op     vs base                │
+TrailingZeros     2.758n ± 0%   1.004n ± 0%  -63.60% (p=0.000 n=10)
+TrailingZeros8    1.508n ± 0%   1.219n ± 0%  -19.20% (p=0.000 n=10)
+TrailingZeros16   3.526n ± 0%   1.437n ± 0%  -59.25% (p=0.000 n=10)
+TrailingZeros32   3.161n ± 0%   1.004n ± 0%  -68.23% (p=0.000 n=10)
+TrailingZeros64   2.759n ± 0%   1.003n ± 0%  -63.65% (p=0.000 n=10)
+geomean           2.638n        1.121n       -57.51%
+
+Go1 benchmark results on the same machine:
+
+goos: linux
+goarch: loong64
+pkg: test/bench/go1
+                      │ CL 479496 v8 │              this CL               │
+                      │    sec/op    │   sec/op     vs base               │
+BinaryTree17              14.10 ± 1%    13.64 ± 1%  -3.28% (p=0.000 n=10)
+Fannkuch11                3.421 ± 0%    3.421 ± 0%       ~ (p=0.075 n=10)
+FmtFprintfEmpty          94.78n ± 0%   94.50n ± 0%  -0.30% (p=0.000 n=10)
+FmtFprintfString         155.0n ± 0%   154.1n ± 1%       ~ (p=1.000 n=10)
+FmtFprintfInt            157.2n ± 0%   155.2n ± 1%  -1.27% (p=0.000 n=10)
+FmtFprintfIntInt         242.1n ± 0%   238.0n ± 1%  -1.73% (p=0.000 n=10)
+FmtFprintfPrefixedInt    337.6n ± 0%   334.6n ± 0%  -0.89% (p=0.000 n=10)
+FmtFprintfFloat          399.0n ± 0%   396.4n ± 0%  -0.65% (p=0.000 n=10)
+FmtManyArgs              959.8n ± 0%   923.4n ± 0%  -3.79% (p=0.000 n=10)
+GobDecode                15.63m ± 3%   15.17m ± 1%  -2.90% (p=0.001 n=10)
+GobEncode                18.43m ± 3%   17.62m ± 0%  -4.38% (p=0.000 n=10)
+Gzip                     405.1m ± 0%   405.4m ± 0%  +0.06% (p=0.035 n=10)
+Gunzip                   86.84m ± 0%   87.20m ± 0%  +0.41% (p=0.000 n=10)
+HTTPClientServer         88.47µ ± 0%   86.92µ ± 1%  -1.75% (p=0.000 n=10)
+JSONEncode               18.84m ± 0%   18.66m ± 0%  -0.95% (p=0.000 n=10)
+JSONDecode               79.35m ± 0%   75.77m ± 1%  -4.51% (p=0.000 n=10)
+Mandelbrot200            7.215m ± 0%   7.215m ± 0%       ~ (p=0.315 n=10)
+GoParse                  7.591m ± 1%   7.407m ± 1%  -2.43% (p=0.000 n=10)
+RegexpMatchEasy0_32      133.8n ± 0%   134.3n ± 0%  +0.37% (p=0.000 n=10)
+RegexpMatchEasy0_1K      1.540µ ± 0%   1.544µ ± 0%  +0.26% (p=0.000 n=10)
+RegexpMatchEasy1_32      164.1n ± 0%   165.4n ± 0%  +0.79% (p=0.000 n=10)
+RegexpMatchEasy1_1K      1.626µ ± 0%   1.629µ ± 0%  +0.18% (p=0.000 n=10)
+RegexpMatchMedium_32     1.403µ ± 0%   1.413µ ± 0%  +0.71% (p=0.000 n=10)
+RegexpMatchMedium_1K     41.22µ ± 0%   41.59µ ± 0%  +0.90% (p=0.000 n=10)
+RegexpMatchHard_32       2.071µ ± 0%   2.060µ ± 0%  -0.53% (p=0.000 n=10)
+RegexpMatchHard_1K       61.05µ ± 0%   61.30µ ± 0%  +0.41% (p=0.001 n=10)
+Revcomp                   1.351 ± 0%    1.357 ± 0%  +0.42% (p=0.000 n=10)
+Template                 117.3m ± 1%   110.6m ± 2%  -5.71% (p=0.000 n=10)
+TimeParse                411.9n ± 0%   411.7n ± 0%       ~ (p=0.117 n=10)
+TimeFormat               514.2n ± 0%   499.9n ± 0%  -2.77% (p=0.000 n=10)
+geomean                  104.2µ        103.0µ       -1.15%
+
+                     │ CL 479496 v8 │               this CL               │
+                     │     B/s      │     B/s       vs base               │
+GobDecode              46.84Mi ± 3%   48.24Mi ± 1%  +2.98% (p=0.001 n=10)
+GobEncode              39.72Mi ± 4%   41.53Mi ± 0%  +4.57% (p=0.000 n=10)
+Gzip                   45.68Mi ± 0%   45.65Mi ± 0%  -0.05% (p=0.029 n=10)
+Gunzip                 213.1Mi ± 0%   212.2Mi ± 0%  -0.41% (p=0.000 n=10)
+JSONEncode             98.23Mi ± 0%   99.18Mi ± 0%  +0.97% (p=0.000 n=10)
+JSONDecode             23.32Mi ± 0%   24.42Mi ± 1%  +4.72% (p=0.000 n=10)
+GoParse                7.277Mi ± 1%   7.458Mi ± 1%  +2.49% (p=0.000 n=10)
+RegexpMatchEasy0_32    228.1Mi ± 0%   227.3Mi ± 0%  -0.36% (p=0.000 n=10)
+RegexpMatchEasy0_1K    634.2Mi ± 0%   632.5Mi ± 0%  -0.27% (p=0.000 n=10)
+RegexpMatchEasy1_32    186.0Mi ± 0%   184.5Mi ± 0%  -0.79% (p=0.000 n=10)
+RegexpMatchEasy1_1K    600.4Mi ± 0%   599.4Mi ± 0%  -0.17% (p=0.000 n=10)
+RegexpMatchMedium_32   21.75Mi ± 0%   21.60Mi ± 0%  -0.70% (p=0.000 n=10)
+RegexpMatchMedium_1K   23.69Mi ± 0%   23.48Mi ± 0%  -0.89% (p=0.000 n=10)
+RegexpMatchHard_32     14.73Mi ± 0%   14.81Mi ± 0%  +0.52% (p=0.000 n=10)
+RegexpMatchHard_1K     15.99Mi ± 0%   15.93Mi ± 0%  -0.42% (p=0.000 n=10)
+Revcomp                179.4Mi ± 0%   178.6Mi ± 0%  -0.42% (p=0.000 n=10)
+Template               15.78Mi ± 1%   16.73Mi ± 2%  +6.04% (p=0.000 n=10)
+geomean                59.97Mi        60.58Mi       +1.02%
+
+The change should be a net win, as all it does is to pattern-match and
+replace Ctz ops into respective native instructions, so any performance
+regression is likely also micro-architecture related, like observed in
+CL 479496's results. (Indeed, some of the more drastic improvements may
+well also be coincidental, but the point is that there is at least a
+small amount of deterministic improvements anyway.)
+
+Updates #59120
+
+Change-Id: I6c90f727eb00e0add2a5f8575ac045b9e288af54
+(cherry picked from commit ba1650c3c739434795465d953ef9a193a68c5024)
+---
+ src/cmd/compile/internal/loong64/ssa.go       |    2 +
+ .../compile/internal/ssa/_gen/LOONG64.rules   |    3 +
+ .../compile/internal/ssa/_gen/LOONG64Ops.go   |    2 +
+ .../compile/internal/ssa/_gen/generic.rules   |   37 +
+ src/cmd/compile/internal/ssa/opGen.go         |   28 +
+ src/cmd/compile/internal/ssa/rewrite.go       |   11 +
+ .../compile/internal/ssa/rewriteLOONG64.go    |   12 +
+ .../compile/internal/ssa/rewritegeneric.go    | 2636 +++++++++++++++--
+ src/cmd/compile/internal/ssagen/ssa.go        |    8 +-
+ test/codegen/mathbits.go                      |   65 +
+ 10 files changed, 2547 insertions(+), 257 deletions(-)
+
+diff --git a/src/cmd/compile/internal/loong64/ssa.go b/src/cmd/compile/internal/loong64/ssa.go
+index 661ffafedb..cc3867954e 100644
+--- a/src/cmd/compile/internal/loong64/ssa.go
++++ b/src/cmd/compile/internal/loong64/ssa.go
+@@ -324,6 +324,8 @@ func ssaGenValue(s *ssagen.State, v *ssa.Value) {
+ 		ssa.OpLOONG64MOVDF,
+ 		ssa.OpLOONG64NEGF,
+ 		ssa.OpLOONG64NEGD,
++		ssa.OpLOONG64CTZW,
++		ssa.OpLOONG64CTZV,
+ 		ssa.OpLOONG64SQRTD,
+ 		ssa.OpLOONG64SQRTF:
+ 		p := s.Prog(v.Op.Asm())
+diff --git a/src/cmd/compile/internal/ssa/_gen/LOONG64.rules b/src/cmd/compile/internal/ssa/_gen/LOONG64.rules
+index 9e596056b2..a966f6adf2 100644
+--- a/src/cmd/compile/internal/ssa/_gen/LOONG64.rules
++++ b/src/cmd/compile/internal/ssa/_gen/LOONG64.rules
+@@ -129,6 +129,9 @@
+ 
+ (Com(64|32|16|8) x) => (NOR (MOVVconst [0]) x)
+ 
++(Ctz(32|64)NonZero ...) => (Ctz(32|64) ...)
++(Ctz(32|64) ...) => (CTZ(W|V) ...)
++
+ (Sqrt ...) => (SQRTD ...)
+ (Sqrt32 ...) => (SQRTF ...)
+ 
+diff --git a/src/cmd/compile/internal/ssa/_gen/LOONG64Ops.go b/src/cmd/compile/internal/ssa/_gen/LOONG64Ops.go
+index 039c6d5f5a..08b4c7c50c 100644
+--- a/src/cmd/compile/internal/ssa/_gen/LOONG64Ops.go
++++ b/src/cmd/compile/internal/ssa/_gen/LOONG64Ops.go
+@@ -192,6 +192,8 @@ func init() {
+ 		{name: "NEGD", argLength: 1, reg: fp11, asm: "NEGD"},   // -arg0, float64
+ 		{name: "SQRTD", argLength: 1, reg: fp11, asm: "SQRTD"}, // sqrt(arg0), float64
+ 		{name: "SQRTF", argLength: 1, reg: fp11, asm: "SQRTF"}, // sqrt(arg0), float32
++		{name: "CTZW", argLength: 1, reg: gp11, asm: "CTZW"},   // Count trailing (low order) zeroes (returns 0-32)
++		{name: "CTZV", argLength: 1, reg: gp11, asm: "CTZV"},   // Count trailing (low order) zeroes (returns 0-64)
+ 
+ 		{name: "MASKEQZ", argLength: 2, reg: gp21, asm: "MASKEQZ"}, // returns 0 if arg1 == 0, otherwise returns arg0
+ 		{name: "MASKNEZ", argLength: 2, reg: gp21, asm: "MASKNEZ"}, // returns 0 if arg1 != 0, otherwise returns arg0
+diff --git a/src/cmd/compile/internal/ssa/_gen/generic.rules b/src/cmd/compile/internal/ssa/_gen/generic.rules
+index 0406fbbd17..8a60a502ce 100644
+--- a/src/cmd/compile/internal/ssa/_gen/generic.rules
++++ b/src/cmd/compile/internal/ssa/_gen/generic.rules
+@@ -2670,3 +2670,40 @@
+ (RotateLeft(64|32|16|8) (RotateLeft(64|32|16|8) x c) d) && c.Type.Size() == 4 && d.Type.Size() == 4 => (RotateLeft(64|32|16|8) x (Add32 <c.Type> c d))
+ (RotateLeft(64|32|16|8) (RotateLeft(64|32|16|8) x c) d) && c.Type.Size() == 2 && d.Type.Size() == 2 => (RotateLeft(64|32|16|8) x (Add16 <c.Type> c d))
+ (RotateLeft(64|32|16|8) (RotateLeft(64|32|16|8) x c) d) && c.Type.Size() == 1 && d.Type.Size() == 1 => (RotateLeft(64|32|16|8) x (Add8  <c.Type> c d))
++
++// Ctz simplifications.
++// CtzNN(x) == NN => x == 0
++(Eq(64|32|16|8) (Const(64|32|16|8) <t> [64]) (Ctz64 x)) && shouldStrengthReduceCtz(config) && config.PtrSize == 8 => (Eq(64|32|16|8) (Const(64|32|16|8) <t> [0]) x)
++(Eq(64|32|16|8) (Const(64|32|16|8) <t> [32]) (Ctz32 x)) && shouldStrengthReduceCtz(config) => (Eq(64|32|16|8) (Const(64|32|16|8) <t> [0]) x)
++(Eq(64|32|16|8) (Const(64|32|16|8) <t> [16]) (Ctz16 x)) && shouldStrengthReduceCtz(config) => (Eq(64|32|16|8) (Const(64|32|16|8) <t> [0]) x)
++(Eq(64|32|16|8) (Const(64|32|16|8) <t> [8])  (Ctz8  x)) && shouldStrengthReduceCtz(config) => (Eq(64|32|16|8) (Const(64|32|16|8) <t> [0]) x)
++
++// CtzNN(x) != NN => x != 0
++(Neq(64|32|16|8) (Const(64|32|16|8) <t> [64]) (Ctz64 x)) && shouldStrengthReduceCtz(config) && config.PtrSize == 8 => (Neq(64|32|16|8) (Const(64|32|16|8) <t> [0]) x)
++(Neq(64|32|16|8) (Const(64|32|16|8) <t> [32]) (Ctz32 x)) && shouldStrengthReduceCtz(config) => (Neq(64|32|16|8) (Const(64|32|16|8) <t> [0]) x)
++(Neq(64|32|16|8) (Const(64|32|16|8) <t> [16]) (Ctz16 x)) && shouldStrengthReduceCtz(config) => (Neq(64|32|16|8) (Const(64|32|16|8) <t> [0]) x)
++(Neq(64|32|16|8) (Const(64|32|16|8) <t> [8])  (Ctz8  x)) && shouldStrengthReduceCtz(config) => (Neq(64|32|16|8) (Const(64|32|16|8) <t> [0]) x)
++
++// CtzNN(x) < NN => x != 0
++(Less(64|32|16|8) (Ctz64 x) (Const(64|32|16|8) <t> [64])) && shouldStrengthReduceCtz(config) && config.PtrSize == 8 => (Neq(64|32|16|8) (Const(64|32|16|8) <t> [0]) x)
++(Less(64|32|16|8) (Ctz32 x) (Const(64|32|16|8) <t> [32])) && shouldStrengthReduceCtz(config) => (Neq(64|32|16|8) (Const(64|32|16|8) <t> [0]) x)
++(Less(64|32|16|8) (Ctz16 x) (Const(64|32|16|8) <t> [16])) && shouldStrengthReduceCtz(config) => (Neq(64|32|16|8) (Const(64|32|16|8) <t> [0]) x)
++(Less(64|32|16|8) (Ctz8  x) (Const(64|32|16|8) <t> [8]))  && shouldStrengthReduceCtz(config) => (Neq(64|32|16|8) (Const(64|32|16|8) <t> [0]) x)
++
++// CtzNN(x) >= NN => x == 0
++(Leq(64|32|16|8)  (Const(64|32|16|8) <t> [64]) (Ctz64 x)) && shouldStrengthReduceCtz(config) && config.PtrSize == 8 => (Eq(64|32|16|8) (Const(64|32|16|8) <t> [0]) x)
++(Leq(64|32|16|8)  (Const(64|32|16|8) <t> [32]) (Ctz32 x)) && shouldStrengthReduceCtz(config) => (Eq(64|32|16|8) (Const(64|32|16|8) <t> [0]) x)
++(Leq(64|32|16|8)  (Const(64|32|16|8) <t> [16]) (Ctz16 x)) && shouldStrengthReduceCtz(config) => (Eq(64|32|16|8) (Const(64|32|16|8) <t> [0]) x)
++(Leq(64|32|16|8)  (Const(64|32|16|8) <t> [8])  (Ctz8  x)) && shouldStrengthReduceCtz(config) => (Eq(64|32|16|8) (Const(64|32|16|8) <t> [0]) x)
++
++// CtzNN(x) <= NN - 1 => x != 0
++(Leq(64|32|16|8) (Ctz64 x) (Const(64|32|16|8) <t> [63])) && shouldStrengthReduceCtz(config) && config.PtrSize == 8 => (Neq(64|32|16|8) (Const(64|32|16|8) <t> [0]) x)
++(Leq(64|32|16|8) (Ctz32 x) (Const(64|32|16|8) <t> [31])) && shouldStrengthReduceCtz(config) => (Neq(64|32|16|8) (Const(64|32|16|8) <t> [0]) x)
++(Leq(64|32|16|8) (Ctz16 x) (Const(64|32|16|8) <t> [15])) && shouldStrengthReduceCtz(config) => (Neq(64|32|16|8) (Const(64|32|16|8) <t> [0]) x)
++(Leq(64|32|16|8) (Ctz8  x) (Const(64|32|16|8) <t> [7]))  && shouldStrengthReduceCtz(config) => (Neq(64|32|16|8) (Const(64|32|16|8) <t> [0]) x)
++
++// CtzNN(x) > NN - 1 => x == 0
++(Less(64|32|16|8) (Const(64|32|16|8) <t> [63]) (Ctz64 x)) && shouldStrengthReduceCtz(config) && config.PtrSize == 8 => (Eq(64|32|16|8) (Const(64|32|16|8) <t> [0]) x)
++(Less(64|32|16|8) (Const(64|32|16|8) <t> [31]) (Ctz32 x)) && shouldStrengthReduceCtz(config) => (Eq(64|32|16|8) (Const(64|32|16|8) <t> [0]) x)
++(Less(64|32|16|8) (Const(64|32|16|8) <t> [15]) (Ctz16 x)) && shouldStrengthReduceCtz(config) => (Eq(64|32|16|8) (Const(64|32|16|8) <t> [0]) x)
++(Less(64|32|16|8) (Const(64|32|16|8) <t> [7])  (Ctz8  x)) && shouldStrengthReduceCtz(config) => (Eq(64|32|16|8) (Const(64|32|16|8) <t> [0]) x)
+diff --git a/src/cmd/compile/internal/ssa/opGen.go b/src/cmd/compile/internal/ssa/opGen.go
+index b106399e28..28d1c22806 100644
+--- a/src/cmd/compile/internal/ssa/opGen.go
++++ b/src/cmd/compile/internal/ssa/opGen.go
+@@ -1743,6 +1743,8 @@ const (
+ 	OpLOONG64NEGD
+ 	OpLOONG64SQRTD
+ 	OpLOONG64SQRTF
++	OpLOONG64CTZW
++	OpLOONG64CTZV
+ 	OpLOONG64MASKEQZ
+ 	OpLOONG64MASKNEZ
+ 	OpLOONG64SLLV
+@@ -23312,6 +23314,32 @@ var opcodeTable = [...]opInfo{
+ 			},
+ 		},
+ 	},
++	{
++		name:   "CTZW",
++		argLen: 1,
++		asm:    loong64.ACTZW,
++		reg: regInfo{
++			inputs: []inputInfo{
++				{0, 1072693240}, // R4 R5 R6 R7 R8 R9 R10 R11 R12 R13 R14 R15 R16 R17 R18 R19 R20 g R23 R24 R25 R26 R27 R28 R29 R31
++			},
++			outputs: []outputInfo{
++				{0, 1070596088}, // R4 R5 R6 R7 R8 R9 R10 R11 R12 R13 R14 R15 R16 R17 R18 R19 R20 R23 R24 R25 R26 R27 R28 R29 R31
++			},
++		},
++	},
++	{
++		name:   "CTZV",
++		argLen: 1,
++		asm:    loong64.ACTZV,
++		reg: regInfo{
++			inputs: []inputInfo{
++				{0, 1072693240}, // R4 R5 R6 R7 R8 R9 R10 R11 R12 R13 R14 R15 R16 R17 R18 R19 R20 g R23 R24 R25 R26 R27 R28 R29 R31
++			},
++			outputs: []outputInfo{
++				{0, 1070596088}, // R4 R5 R6 R7 R8 R9 R10 R11 R12 R13 R14 R15 R16 R17 R18 R19 R20 R23 R24 R25 R26 R27 R28 R29 R31
++			},
++		},
++	},
+ 	{
+ 		name:   "MASKEQZ",
+ 		argLen: 2,
+diff --git a/src/cmd/compile/internal/ssa/rewrite.go b/src/cmd/compile/internal/ssa/rewrite.go
+index f4ac97c5eb..deb6c8a86e 100644
+--- a/src/cmd/compile/internal/ssa/rewrite.go
++++ b/src/cmd/compile/internal/ssa/rewrite.go
+@@ -2043,3 +2043,14 @@ func isARM64addcon(v int64) bool {
+ 	}
+ 	return v <= 0xFFF
+ }
++
++// shouldStrengthReduceCtz reports whether strength-reduction of Ctz ops is
++// actually profitable and should be done in this case.
++func shouldStrengthReduceCtz(c *Config) bool {
++	switch c.arch {
++	case "loong64":
++		return true
++	default:
++		return false
++	}
++}
+diff --git a/src/cmd/compile/internal/ssa/rewriteLOONG64.go b/src/cmd/compile/internal/ssa/rewriteLOONG64.go
+index 53fb134d89..b4c6a0aaad 100644
+--- a/src/cmd/compile/internal/ssa/rewriteLOONG64.go
++++ b/src/cmd/compile/internal/ssa/rewriteLOONG64.go
+@@ -117,6 +117,18 @@ func rewriteValueLOONG64(v *Value) bool {
+ 		return rewriteValueLOONG64_OpConstBool(v)
+ 	case OpConstNil:
+ 		return rewriteValueLOONG64_OpConstNil(v)
++	case OpCtz32:
++		v.Op = OpLOONG64CTZW
++		return true
++	case OpCtz32NonZero:
++		v.Op = OpCtz32
++		return true
++	case OpCtz64:
++		v.Op = OpLOONG64CTZV
++		return true
++	case OpCtz64NonZero:
++		v.Op = OpCtz64
++		return true
+ 	case OpCvt32Fto32:
+ 		v.Op = OpLOONG64TRUNCFW
+ 		return true
+diff --git a/src/cmd/compile/internal/ssa/rewritegeneric.go b/src/cmd/compile/internal/ssa/rewritegeneric.go
+index f8c64e6e06..4fc833b308 100644
+--- a/src/cmd/compile/internal/ssa/rewritegeneric.go
++++ b/src/cmd/compile/internal/ssa/rewritegeneric.go
+@@ -7837,12 +7837,109 @@ func rewriteValuegeneric_OpEq16(v *Value) bool {
+ 		}
+ 		break
+ 	}
++	// match: (Eq16 (Const16 <t> [64]) (Ctz64 x))
++	// cond: shouldStrengthReduceCtz(config) && config.PtrSize == 8
++	// result: (Eq16 (Const16 <t> [0]) x)
++	for {
++		for _i0 := 0; _i0 <= 1; _i0, v_0, v_1 = _i0+1, v_1, v_0 {
++			if v_0.Op != OpConst16 {
++				continue
++			}
++			t := v_0.Type
++			if auxIntToInt16(v_0.AuxInt) != 64 || v_1.Op != OpCtz64 {
++				continue
++			}
++			x := v_1.Args[0]
++			if !(shouldStrengthReduceCtz(config) && config.PtrSize == 8) {
++				continue
++			}
++			v.reset(OpEq16)
++			v0 := b.NewValue0(v.Pos, OpConst16, t)
++			v0.AuxInt = int16ToAuxInt(0)
++			v.AddArg2(v0, x)
++			return true
++		}
++		break
++	}
++	// match: (Eq16 (Const16 <t> [32]) (Ctz32 x))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Eq16 (Const16 <t> [0]) x)
++	for {
++		for _i0 := 0; _i0 <= 1; _i0, v_0, v_1 = _i0+1, v_1, v_0 {
++			if v_0.Op != OpConst16 {
++				continue
++			}
++			t := v_0.Type
++			if auxIntToInt16(v_0.AuxInt) != 32 || v_1.Op != OpCtz32 {
++				continue
++			}
++			x := v_1.Args[0]
++			if !(shouldStrengthReduceCtz(config)) {
++				continue
++			}
++			v.reset(OpEq16)
++			v0 := b.NewValue0(v.Pos, OpConst16, t)
++			v0.AuxInt = int16ToAuxInt(0)
++			v.AddArg2(v0, x)
++			return true
++		}
++		break
++	}
++	// match: (Eq16 (Const16 <t> [16]) (Ctz16 x))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Eq16 (Const16 <t> [0]) x)
++	for {
++		for _i0 := 0; _i0 <= 1; _i0, v_0, v_1 = _i0+1, v_1, v_0 {
++			if v_0.Op != OpConst16 {
++				continue
++			}
++			t := v_0.Type
++			if auxIntToInt16(v_0.AuxInt) != 16 || v_1.Op != OpCtz16 {
++				continue
++			}
++			x := v_1.Args[0]
++			if !(shouldStrengthReduceCtz(config)) {
++				continue
++			}
++			v.reset(OpEq16)
++			v0 := b.NewValue0(v.Pos, OpConst16, t)
++			v0.AuxInt = int16ToAuxInt(0)
++			v.AddArg2(v0, x)
++			return true
++		}
++		break
++	}
++	// match: (Eq16 (Const16 <t> [8]) (Ctz8 x))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Eq16 (Const16 <t> [0]) x)
++	for {
++		for _i0 := 0; _i0 <= 1; _i0, v_0, v_1 = _i0+1, v_1, v_0 {
++			if v_0.Op != OpConst16 {
++				continue
++			}
++			t := v_0.Type
++			if auxIntToInt16(v_0.AuxInt) != 8 || v_1.Op != OpCtz8 {
++				continue
++			}
++			x := v_1.Args[0]
++			if !(shouldStrengthReduceCtz(config)) {
++				continue
++			}
++			v.reset(OpEq16)
++			v0 := b.NewValue0(v.Pos, OpConst16, t)
++			v0.AuxInt = int16ToAuxInt(0)
++			v.AddArg2(v0, x)
++			return true
++		}
++		break
++	}
+ 	return false
+ }
+ func rewriteValuegeneric_OpEq32(v *Value) bool {
+ 	v_1 := v.Args[1]
+ 	v_0 := v.Args[0]
+ 	b := v.Block
++	config := b.Func.Config
+ 	typ := &b.Func.Config.Types
+ 	// match: (Eq32 x x)
+ 	// result: (ConstBool [true])
+@@ -8701,6 +8798,102 @@ func rewriteValuegeneric_OpEq32(v *Value) bool {
+ 		}
+ 		break
+ 	}
++	// match: (Eq32 (Const32 <t> [64]) (Ctz64 x))
++	// cond: shouldStrengthReduceCtz(config) && config.PtrSize == 8
++	// result: (Eq32 (Const32 <t> [0]) x)
++	for {
++		for _i0 := 0; _i0 <= 1; _i0, v_0, v_1 = _i0+1, v_1, v_0 {
++			if v_0.Op != OpConst32 {
++				continue
++			}
++			t := v_0.Type
++			if auxIntToInt32(v_0.AuxInt) != 64 || v_1.Op != OpCtz64 {
++				continue
++			}
++			x := v_1.Args[0]
++			if !(shouldStrengthReduceCtz(config) && config.PtrSize == 8) {
++				continue
++			}
++			v.reset(OpEq32)
++			v0 := b.NewValue0(v.Pos, OpConst32, t)
++			v0.AuxInt = int32ToAuxInt(0)
++			v.AddArg2(v0, x)
++			return true
++		}
++		break
++	}
++	// match: (Eq32 (Const32 <t> [32]) (Ctz32 x))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Eq32 (Const32 <t> [0]) x)
++	for {
++		for _i0 := 0; _i0 <= 1; _i0, v_0, v_1 = _i0+1, v_1, v_0 {
++			if v_0.Op != OpConst32 {
++				continue
++			}
++			t := v_0.Type
++			if auxIntToInt32(v_0.AuxInt) != 32 || v_1.Op != OpCtz32 {
++				continue
++			}
++			x := v_1.Args[0]
++			if !(shouldStrengthReduceCtz(config)) {
++				continue
++			}
++			v.reset(OpEq32)
++			v0 := b.NewValue0(v.Pos, OpConst32, t)
++			v0.AuxInt = int32ToAuxInt(0)
++			v.AddArg2(v0, x)
++			return true
++		}
++		break
++	}
++	// match: (Eq32 (Const32 <t> [16]) (Ctz16 x))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Eq32 (Const32 <t> [0]) x)
++	for {
++		for _i0 := 0; _i0 <= 1; _i0, v_0, v_1 = _i0+1, v_1, v_0 {
++			if v_0.Op != OpConst32 {
++				continue
++			}
++			t := v_0.Type
++			if auxIntToInt32(v_0.AuxInt) != 16 || v_1.Op != OpCtz16 {
++				continue
++			}
++			x := v_1.Args[0]
++			if !(shouldStrengthReduceCtz(config)) {
++				continue
++			}
++			v.reset(OpEq32)
++			v0 := b.NewValue0(v.Pos, OpConst32, t)
++			v0.AuxInt = int32ToAuxInt(0)
++			v.AddArg2(v0, x)
++			return true
++		}
++		break
++	}
++	// match: (Eq32 (Const32 <t> [8]) (Ctz8 x))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Eq32 (Const32 <t> [0]) x)
++	for {
++		for _i0 := 0; _i0 <= 1; _i0, v_0, v_1 = _i0+1, v_1, v_0 {
++			if v_0.Op != OpConst32 {
++				continue
++			}
++			t := v_0.Type
++			if auxIntToInt32(v_0.AuxInt) != 8 || v_1.Op != OpCtz8 {
++				continue
++			}
++			x := v_1.Args[0]
++			if !(shouldStrengthReduceCtz(config)) {
++				continue
++			}
++			v.reset(OpEq32)
++			v0 := b.NewValue0(v.Pos, OpConst32, t)
++			v0.AuxInt = int32ToAuxInt(0)
++			v.AddArg2(v0, x)
++			return true
++		}
++		break
++	}
+ 	return false
+ }
+ func rewriteValuegeneric_OpEq32F(v *Value) bool {
+@@ -8730,6 +8923,7 @@ func rewriteValuegeneric_OpEq64(v *Value) bool {
+ 	v_1 := v.Args[1]
+ 	v_0 := v.Args[0]
+ 	b := v.Block
++	config := b.Func.Config
+ 	typ := &b.Func.Config.Types
+ 	// match: (Eq64 x x)
+ 	// result: (ConstBool [true])
+@@ -9282,6 +9476,102 @@ func rewriteValuegeneric_OpEq64(v *Value) bool {
+ 		}
+ 		break
+ 	}
++	// match: (Eq64 (Const64 <t> [64]) (Ctz64 x))
++	// cond: shouldStrengthReduceCtz(config) && config.PtrSize == 8
++	// result: (Eq64 (Const64 <t> [0]) x)
++	for {
++		for _i0 := 0; _i0 <= 1; _i0, v_0, v_1 = _i0+1, v_1, v_0 {
++			if v_0.Op != OpConst64 {
++				continue
++			}
++			t := v_0.Type
++			if auxIntToInt64(v_0.AuxInt) != 64 || v_1.Op != OpCtz64 {
++				continue
++			}
++			x := v_1.Args[0]
++			if !(shouldStrengthReduceCtz(config) && config.PtrSize == 8) {
++				continue
++			}
++			v.reset(OpEq64)
++			v0 := b.NewValue0(v.Pos, OpConst64, t)
++			v0.AuxInt = int64ToAuxInt(0)
++			v.AddArg2(v0, x)
++			return true
++		}
++		break
++	}
++	// match: (Eq64 (Const64 <t> [32]) (Ctz32 x))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Eq64 (Const64 <t> [0]) x)
++	for {
++		for _i0 := 0; _i0 <= 1; _i0, v_0, v_1 = _i0+1, v_1, v_0 {
++			if v_0.Op != OpConst64 {
++				continue
++			}
++			t := v_0.Type
++			if auxIntToInt64(v_0.AuxInt) != 32 || v_1.Op != OpCtz32 {
++				continue
++			}
++			x := v_1.Args[0]
++			if !(shouldStrengthReduceCtz(config)) {
++				continue
++			}
++			v.reset(OpEq64)
++			v0 := b.NewValue0(v.Pos, OpConst64, t)
++			v0.AuxInt = int64ToAuxInt(0)
++			v.AddArg2(v0, x)
++			return true
++		}
++		break
++	}
++	// match: (Eq64 (Const64 <t> [16]) (Ctz16 x))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Eq64 (Const64 <t> [0]) x)
++	for {
++		for _i0 := 0; _i0 <= 1; _i0, v_0, v_1 = _i0+1, v_1, v_0 {
++			if v_0.Op != OpConst64 {
++				continue
++			}
++			t := v_0.Type
++			if auxIntToInt64(v_0.AuxInt) != 16 || v_1.Op != OpCtz16 {
++				continue
++			}
++			x := v_1.Args[0]
++			if !(shouldStrengthReduceCtz(config)) {
++				continue
++			}
++			v.reset(OpEq64)
++			v0 := b.NewValue0(v.Pos, OpConst64, t)
++			v0.AuxInt = int64ToAuxInt(0)
++			v.AddArg2(v0, x)
++			return true
++		}
++		break
++	}
++	// match: (Eq64 (Const64 <t> [8]) (Ctz8 x))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Eq64 (Const64 <t> [0]) x)
++	for {
++		for _i0 := 0; _i0 <= 1; _i0, v_0, v_1 = _i0+1, v_1, v_0 {
++			if v_0.Op != OpConst64 {
++				continue
++			}
++			t := v_0.Type
++			if auxIntToInt64(v_0.AuxInt) != 8 || v_1.Op != OpCtz8 {
++				continue
++			}
++			x := v_1.Args[0]
++			if !(shouldStrengthReduceCtz(config)) {
++				continue
++			}
++			v.reset(OpEq64)
++			v0 := b.NewValue0(v.Pos, OpConst64, t)
++			v0.AuxInt = int64ToAuxInt(0)
++			v.AddArg2(v0, x)
++			return true
++		}
++		break
++	}
+ 	return false
+ }
+ func rewriteValuegeneric_OpEq64F(v *Value) bool {
+@@ -9704,34 +9994,130 @@ func rewriteValuegeneric_OpEq8(v *Value) bool {
+ 		}
+ 		break
+ 	}
+-	return false
+-}
+-func rewriteValuegeneric_OpEqB(v *Value) bool {
+-	v_1 := v.Args[1]
+-	v_0 := v.Args[0]
+-	// match: (EqB (ConstBool [c]) (ConstBool [d]))
+-	// result: (ConstBool [c == d])
++	// match: (Eq8 (Const8 <t> [64]) (Ctz64 x))
++	// cond: shouldStrengthReduceCtz(config) && config.PtrSize == 8
++	// result: (Eq8 (Const8 <t> [0]) x)
+ 	for {
+ 		for _i0 := 0; _i0 <= 1; _i0, v_0, v_1 = _i0+1, v_1, v_0 {
+-			if v_0.Op != OpConstBool {
++			if v_0.Op != OpConst8 {
+ 				continue
+ 			}
+-			c := auxIntToBool(v_0.AuxInt)
+-			if v_1.Op != OpConstBool {
++			t := v_0.Type
++			if auxIntToInt8(v_0.AuxInt) != 64 || v_1.Op != OpCtz64 {
+ 				continue
+ 			}
+-			d := auxIntToBool(v_1.AuxInt)
+-			v.reset(OpConstBool)
+-			v.AuxInt = boolToAuxInt(c == d)
++			x := v_1.Args[0]
++			if !(shouldStrengthReduceCtz(config) && config.PtrSize == 8) {
++				continue
++			}
++			v.reset(OpEq8)
++			v0 := b.NewValue0(v.Pos, OpConst8, t)
++			v0.AuxInt = int8ToAuxInt(0)
++			v.AddArg2(v0, x)
+ 			return true
+ 		}
+ 		break
+ 	}
+-	// match: (EqB (ConstBool [false]) x)
+-	// result: (Not x)
++	// match: (Eq8 (Const8 <t> [32]) (Ctz32 x))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Eq8 (Const8 <t> [0]) x)
+ 	for {
+ 		for _i0 := 0; _i0 <= 1; _i0, v_0, v_1 = _i0+1, v_1, v_0 {
+-			if v_0.Op != OpConstBool || auxIntToBool(v_0.AuxInt) != false {
++			if v_0.Op != OpConst8 {
++				continue
++			}
++			t := v_0.Type
++			if auxIntToInt8(v_0.AuxInt) != 32 || v_1.Op != OpCtz32 {
++				continue
++			}
++			x := v_1.Args[0]
++			if !(shouldStrengthReduceCtz(config)) {
++				continue
++			}
++			v.reset(OpEq8)
++			v0 := b.NewValue0(v.Pos, OpConst8, t)
++			v0.AuxInt = int8ToAuxInt(0)
++			v.AddArg2(v0, x)
++			return true
++		}
++		break
++	}
++	// match: (Eq8 (Const8 <t> [16]) (Ctz16 x))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Eq8 (Const8 <t> [0]) x)
++	for {
++		for _i0 := 0; _i0 <= 1; _i0, v_0, v_1 = _i0+1, v_1, v_0 {
++			if v_0.Op != OpConst8 {
++				continue
++			}
++			t := v_0.Type
++			if auxIntToInt8(v_0.AuxInt) != 16 || v_1.Op != OpCtz16 {
++				continue
++			}
++			x := v_1.Args[0]
++			if !(shouldStrengthReduceCtz(config)) {
++				continue
++			}
++			v.reset(OpEq8)
++			v0 := b.NewValue0(v.Pos, OpConst8, t)
++			v0.AuxInt = int8ToAuxInt(0)
++			v.AddArg2(v0, x)
++			return true
++		}
++		break
++	}
++	// match: (Eq8 (Const8 <t> [8]) (Ctz8 x))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Eq8 (Const8 <t> [0]) x)
++	for {
++		for _i0 := 0; _i0 <= 1; _i0, v_0, v_1 = _i0+1, v_1, v_0 {
++			if v_0.Op != OpConst8 {
++				continue
++			}
++			t := v_0.Type
++			if auxIntToInt8(v_0.AuxInt) != 8 || v_1.Op != OpCtz8 {
++				continue
++			}
++			x := v_1.Args[0]
++			if !(shouldStrengthReduceCtz(config)) {
++				continue
++			}
++			v.reset(OpEq8)
++			v0 := b.NewValue0(v.Pos, OpConst8, t)
++			v0.AuxInt = int8ToAuxInt(0)
++			v.AddArg2(v0, x)
++			return true
++		}
++		break
++	}
++	return false
++}
++func rewriteValuegeneric_OpEqB(v *Value) bool {
++	v_1 := v.Args[1]
++	v_0 := v.Args[0]
++	// match: (EqB (ConstBool [c]) (ConstBool [d]))
++	// result: (ConstBool [c == d])
++	for {
++		for _i0 := 0; _i0 <= 1; _i0, v_0, v_1 = _i0+1, v_1, v_0 {
++			if v_0.Op != OpConstBool {
++				continue
++			}
++			c := auxIntToBool(v_0.AuxInt)
++			if v_1.Op != OpConstBool {
++				continue
++			}
++			d := auxIntToBool(v_1.AuxInt)
++			v.reset(OpConstBool)
++			v.AuxInt = boolToAuxInt(c == d)
++			return true
++		}
++		break
++	}
++	// match: (EqB (ConstBool [false]) x)
++	// result: (Not x)
++	for {
++		for _i0 := 0; _i0 <= 1; _i0, v_0, v_1 = _i0+1, v_1, v_0 {
++			if v_0.Op != OpConstBool || auxIntToBool(v_0.AuxInt) != false {
+ 				continue
+ 			}
+ 			x := v_1
+@@ -11137,6 +11523,8 @@ func rewriteValuegeneric_OpIsSliceInBounds(v *Value) bool {
+ func rewriteValuegeneric_OpLeq16(v *Value) bool {
+ 	v_1 := v.Args[1]
+ 	v_0 := v.Args[0]
++	b := v.Block
++	config := b.Func.Config
+ 	// match: (Leq16 (Const16 [c]) (Const16 [d]))
+ 	// result: (ConstBool [c <= d])
+ 	for {
+@@ -11196,6 +11584,174 @@ func rewriteValuegeneric_OpLeq16(v *Value) bool {
+ 		v.AuxInt = boolToAuxInt(true)
+ 		return true
+ 	}
++	// match: (Leq16 (Const16 <t> [64]) (Ctz64 x))
++	// cond: shouldStrengthReduceCtz(config) && config.PtrSize == 8
++	// result: (Eq16 (Const16 <t> [0]) x)
++	for {
++		if v_0.Op != OpConst16 {
++			break
++		}
++		t := v_0.Type
++		if auxIntToInt16(v_0.AuxInt) != 64 || v_1.Op != OpCtz64 {
++			break
++		}
++		x := v_1.Args[0]
++		if !(shouldStrengthReduceCtz(config) && config.PtrSize == 8) {
++			break
++		}
++		v.reset(OpEq16)
++		v0 := b.NewValue0(v.Pos, OpConst16, t)
++		v0.AuxInt = int16ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
++	}
++	// match: (Leq16 (Const16 <t> [32]) (Ctz32 x))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Eq16 (Const16 <t> [0]) x)
++	for {
++		if v_0.Op != OpConst16 {
++			break
++		}
++		t := v_0.Type
++		if auxIntToInt16(v_0.AuxInt) != 32 || v_1.Op != OpCtz32 {
++			break
++		}
++		x := v_1.Args[0]
++		if !(shouldStrengthReduceCtz(config)) {
++			break
++		}
++		v.reset(OpEq16)
++		v0 := b.NewValue0(v.Pos, OpConst16, t)
++		v0.AuxInt = int16ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
++	}
++	// match: (Leq16 (Const16 <t> [16]) (Ctz16 x))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Eq16 (Const16 <t> [0]) x)
++	for {
++		if v_0.Op != OpConst16 {
++			break
++		}
++		t := v_0.Type
++		if auxIntToInt16(v_0.AuxInt) != 16 || v_1.Op != OpCtz16 {
++			break
++		}
++		x := v_1.Args[0]
++		if !(shouldStrengthReduceCtz(config)) {
++			break
++		}
++		v.reset(OpEq16)
++		v0 := b.NewValue0(v.Pos, OpConst16, t)
++		v0.AuxInt = int16ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
++	}
++	// match: (Leq16 (Const16 <t> [8]) (Ctz8 x))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Eq16 (Const16 <t> [0]) x)
++	for {
++		if v_0.Op != OpConst16 {
++			break
++		}
++		t := v_0.Type
++		if auxIntToInt16(v_0.AuxInt) != 8 || v_1.Op != OpCtz8 {
++			break
++		}
++		x := v_1.Args[0]
++		if !(shouldStrengthReduceCtz(config)) {
++			break
++		}
++		v.reset(OpEq16)
++		v0 := b.NewValue0(v.Pos, OpConst16, t)
++		v0.AuxInt = int16ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
++	}
++	// match: (Leq16 (Ctz64 x) (Const16 <t> [63]))
++	// cond: shouldStrengthReduceCtz(config) && config.PtrSize == 8
++	// result: (Neq16 (Const16 <t> [0]) x)
++	for {
++		if v_0.Op != OpCtz64 {
++			break
++		}
++		x := v_0.Args[0]
++		if v_1.Op != OpConst16 {
++			break
++		}
++		t := v_1.Type
++		if auxIntToInt16(v_1.AuxInt) != 63 || !(shouldStrengthReduceCtz(config) && config.PtrSize == 8) {
++			break
++		}
++		v.reset(OpNeq16)
++		v0 := b.NewValue0(v.Pos, OpConst16, t)
++		v0.AuxInt = int16ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
++	}
++	// match: (Leq16 (Ctz32 x) (Const16 <t> [31]))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Neq16 (Const16 <t> [0]) x)
++	for {
++		if v_0.Op != OpCtz32 {
++			break
++		}
++		x := v_0.Args[0]
++		if v_1.Op != OpConst16 {
++			break
++		}
++		t := v_1.Type
++		if auxIntToInt16(v_1.AuxInt) != 31 || !(shouldStrengthReduceCtz(config)) {
++			break
++		}
++		v.reset(OpNeq16)
++		v0 := b.NewValue0(v.Pos, OpConst16, t)
++		v0.AuxInt = int16ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
++	}
++	// match: (Leq16 (Ctz16 x) (Const16 <t> [15]))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Neq16 (Const16 <t> [0]) x)
++	for {
++		if v_0.Op != OpCtz16 {
++			break
++		}
++		x := v_0.Args[0]
++		if v_1.Op != OpConst16 {
++			break
++		}
++		t := v_1.Type
++		if auxIntToInt16(v_1.AuxInt) != 15 || !(shouldStrengthReduceCtz(config)) {
++			break
++		}
++		v.reset(OpNeq16)
++		v0 := b.NewValue0(v.Pos, OpConst16, t)
++		v0.AuxInt = int16ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
++	}
++	// match: (Leq16 (Ctz8 x) (Const16 <t> [7]))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Neq16 (Const16 <t> [0]) x)
++	for {
++		if v_0.Op != OpCtz8 {
++			break
++		}
++		x := v_0.Args[0]
++		if v_1.Op != OpConst16 {
++			break
++		}
++		t := v_1.Type
++		if auxIntToInt16(v_1.AuxInt) != 7 || !(shouldStrengthReduceCtz(config)) {
++			break
++		}
++		v.reset(OpNeq16)
++		v0 := b.NewValue0(v.Pos, OpConst16, t)
++		v0.AuxInt = int16ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
++	}
+ 	return false
+ }
+ func rewriteValuegeneric_OpLeq16U(v *Value) bool {
+@@ -11231,6 +11787,8 @@ func rewriteValuegeneric_OpLeq16U(v *Value) bool {
+ func rewriteValuegeneric_OpLeq32(v *Value) bool {
+ 	v_1 := v.Args[1]
+ 	v_0 := v.Args[0]
++	b := v.Block
++	config := b.Func.Config
+ 	// match: (Leq32 (Const32 [c]) (Const32 [d]))
+ 	// result: (ConstBool [c <= d])
+ 	for {
+@@ -11290,164 +11848,218 @@ func rewriteValuegeneric_OpLeq32(v *Value) bool {
+ 		v.AuxInt = boolToAuxInt(true)
+ 		return true
+ 	}
+-	return false
+-}
+-func rewriteValuegeneric_OpLeq32F(v *Value) bool {
+-	v_1 := v.Args[1]
+-	v_0 := v.Args[0]
+-	// match: (Leq32F (Const32F [c]) (Const32F [d]))
+-	// result: (ConstBool [c <= d])
++	// match: (Leq32 (Const32 <t> [64]) (Ctz64 x))
++	// cond: shouldStrengthReduceCtz(config) && config.PtrSize == 8
++	// result: (Eq32 (Const32 <t> [0]) x)
+ 	for {
+-		if v_0.Op != OpConst32F {
++		if v_0.Op != OpConst32 {
+ 			break
+ 		}
+-		c := auxIntToFloat32(v_0.AuxInt)
+-		if v_1.Op != OpConst32F {
++		t := v_0.Type
++		if auxIntToInt32(v_0.AuxInt) != 64 || v_1.Op != OpCtz64 {
+ 			break
+ 		}
+-		d := auxIntToFloat32(v_1.AuxInt)
+-		v.reset(OpConstBool)
+-		v.AuxInt = boolToAuxInt(c <= d)
++		x := v_1.Args[0]
++		if !(shouldStrengthReduceCtz(config) && config.PtrSize == 8) {
++			break
++		}
++		v.reset(OpEq32)
++		v0 := b.NewValue0(v.Pos, OpConst32, t)
++		v0.AuxInt = int32ToAuxInt(0)
++		v.AddArg2(v0, x)
+ 		return true
+ 	}
+-	return false
+-}
+-func rewriteValuegeneric_OpLeq32U(v *Value) bool {
+-	v_1 := v.Args[1]
+-	v_0 := v.Args[0]
+-	// match: (Leq32U (Const32 [c]) (Const32 [d]))
+-	// result: (ConstBool [uint32(c) <= uint32(d)])
++	// match: (Leq32 (Const32 <t> [32]) (Ctz32 x))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Eq32 (Const32 <t> [0]) x)
+ 	for {
+ 		if v_0.Op != OpConst32 {
+ 			break
+ 		}
+-		c := auxIntToInt32(v_0.AuxInt)
+-		if v_1.Op != OpConst32 {
++		t := v_0.Type
++		if auxIntToInt32(v_0.AuxInt) != 32 || v_1.Op != OpCtz32 {
+ 			break
+ 		}
+-		d := auxIntToInt32(v_1.AuxInt)
+-		v.reset(OpConstBool)
+-		v.AuxInt = boolToAuxInt(uint32(c) <= uint32(d))
+-		return true
+-	}
+-	// match: (Leq32U (Const32 [0]) _)
+-	// result: (ConstBool [true])
++		x := v_1.Args[0]
++		if !(shouldStrengthReduceCtz(config)) {
++			break
++		}
++		v.reset(OpEq32)
++		v0 := b.NewValue0(v.Pos, OpConst32, t)
++		v0.AuxInt = int32ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
++	}
++	// match: (Leq32 (Const32 <t> [16]) (Ctz16 x))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Eq32 (Const32 <t> [0]) x)
+ 	for {
+-		if v_0.Op != OpConst32 || auxIntToInt32(v_0.AuxInt) != 0 {
++		if v_0.Op != OpConst32 {
+ 			break
+ 		}
+-		v.reset(OpConstBool)
+-		v.AuxInt = boolToAuxInt(true)
++		t := v_0.Type
++		if auxIntToInt32(v_0.AuxInt) != 16 || v_1.Op != OpCtz16 {
++			break
++		}
++		x := v_1.Args[0]
++		if !(shouldStrengthReduceCtz(config)) {
++			break
++		}
++		v.reset(OpEq32)
++		v0 := b.NewValue0(v.Pos, OpConst32, t)
++		v0.AuxInt = int32ToAuxInt(0)
++		v.AddArg2(v0, x)
+ 		return true
+ 	}
+-	return false
+-}
+-func rewriteValuegeneric_OpLeq64(v *Value) bool {
+-	v_1 := v.Args[1]
+-	v_0 := v.Args[0]
+-	// match: (Leq64 (Const64 [c]) (Const64 [d]))
+-	// result: (ConstBool [c <= d])
++	// match: (Leq32 (Const32 <t> [8]) (Ctz8 x))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Eq32 (Const32 <t> [0]) x)
+ 	for {
+-		if v_0.Op != OpConst64 {
++		if v_0.Op != OpConst32 {
+ 			break
+ 		}
+-		c := auxIntToInt64(v_0.AuxInt)
+-		if v_1.Op != OpConst64 {
++		t := v_0.Type
++		if auxIntToInt32(v_0.AuxInt) != 8 || v_1.Op != OpCtz8 {
+ 			break
+ 		}
+-		d := auxIntToInt64(v_1.AuxInt)
+-		v.reset(OpConstBool)
+-		v.AuxInt = boolToAuxInt(c <= d)
++		x := v_1.Args[0]
++		if !(shouldStrengthReduceCtz(config)) {
++			break
++		}
++		v.reset(OpEq32)
++		v0 := b.NewValue0(v.Pos, OpConst32, t)
++		v0.AuxInt = int32ToAuxInt(0)
++		v.AddArg2(v0, x)
+ 		return true
+ 	}
+-	// match: (Leq64 (Const64 [0]) (And64 _ (Const64 [c])))
+-	// cond: c >= 0
+-	// result: (ConstBool [true])
++	// match: (Leq32 (Ctz64 x) (Const32 <t> [63]))
++	// cond: shouldStrengthReduceCtz(config) && config.PtrSize == 8
++	// result: (Neq32 (Const32 <t> [0]) x)
+ 	for {
+-		if v_0.Op != OpConst64 || auxIntToInt64(v_0.AuxInt) != 0 || v_1.Op != OpAnd64 {
++		if v_0.Op != OpCtz64 {
+ 			break
+ 		}
+-		_ = v_1.Args[1]
+-		v_1_0 := v_1.Args[0]
+-		v_1_1 := v_1.Args[1]
+-		for _i0 := 0; _i0 <= 1; _i0, v_1_0, v_1_1 = _i0+1, v_1_1, v_1_0 {
+-			if v_1_1.Op != OpConst64 {
+-				continue
+-			}
+-			c := auxIntToInt64(v_1_1.AuxInt)
+-			if !(c >= 0) {
+-				continue
+-			}
+-			v.reset(OpConstBool)
+-			v.AuxInt = boolToAuxInt(true)
+-			return true
++		x := v_0.Args[0]
++		if v_1.Op != OpConst32 {
++			break
+ 		}
+-		break
++		t := v_1.Type
++		if auxIntToInt32(v_1.AuxInt) != 63 || !(shouldStrengthReduceCtz(config) && config.PtrSize == 8) {
++			break
++		}
++		v.reset(OpNeq32)
++		v0 := b.NewValue0(v.Pos, OpConst32, t)
++		v0.AuxInt = int32ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
+ 	}
+-	// match: (Leq64 (Const64 [0]) (Rsh64Ux64 _ (Const64 [c])))
+-	// cond: c > 0
+-	// result: (ConstBool [true])
++	// match: (Leq32 (Ctz32 x) (Const32 <t> [31]))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Neq32 (Const32 <t> [0]) x)
+ 	for {
+-		if v_0.Op != OpConst64 || auxIntToInt64(v_0.AuxInt) != 0 || v_1.Op != OpRsh64Ux64 {
++		if v_0.Op != OpCtz32 {
+ 			break
+ 		}
+-		_ = v_1.Args[1]
+-		v_1_1 := v_1.Args[1]
+-		if v_1_1.Op != OpConst64 {
++		x := v_0.Args[0]
++		if v_1.Op != OpConst32 {
+ 			break
+ 		}
+-		c := auxIntToInt64(v_1_1.AuxInt)
+-		if !(c > 0) {
++		t := v_1.Type
++		if auxIntToInt32(v_1.AuxInt) != 31 || !(shouldStrengthReduceCtz(config)) {
+ 			break
+ 		}
+-		v.reset(OpConstBool)
+-		v.AuxInt = boolToAuxInt(true)
++		v.reset(OpNeq32)
++		v0 := b.NewValue0(v.Pos, OpConst32, t)
++		v0.AuxInt = int32ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
++	}
++	// match: (Leq32 (Ctz16 x) (Const32 <t> [15]))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Neq32 (Const32 <t> [0]) x)
++	for {
++		if v_0.Op != OpCtz16 {
++			break
++		}
++		x := v_0.Args[0]
++		if v_1.Op != OpConst32 {
++			break
++		}
++		t := v_1.Type
++		if auxIntToInt32(v_1.AuxInt) != 15 || !(shouldStrengthReduceCtz(config)) {
++			break
++		}
++		v.reset(OpNeq32)
++		v0 := b.NewValue0(v.Pos, OpConst32, t)
++		v0.AuxInt = int32ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
++	}
++	// match: (Leq32 (Ctz8 x) (Const32 <t> [7]))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Neq32 (Const32 <t> [0]) x)
++	for {
++		if v_0.Op != OpCtz8 {
++			break
++		}
++		x := v_0.Args[0]
++		if v_1.Op != OpConst32 {
++			break
++		}
++		t := v_1.Type
++		if auxIntToInt32(v_1.AuxInt) != 7 || !(shouldStrengthReduceCtz(config)) {
++			break
++		}
++		v.reset(OpNeq32)
++		v0 := b.NewValue0(v.Pos, OpConst32, t)
++		v0.AuxInt = int32ToAuxInt(0)
++		v.AddArg2(v0, x)
+ 		return true
+ 	}
+ 	return false
+ }
+-func rewriteValuegeneric_OpLeq64F(v *Value) bool {
++func rewriteValuegeneric_OpLeq32F(v *Value) bool {
+ 	v_1 := v.Args[1]
+ 	v_0 := v.Args[0]
+-	// match: (Leq64F (Const64F [c]) (Const64F [d]))
++	// match: (Leq32F (Const32F [c]) (Const32F [d]))
+ 	// result: (ConstBool [c <= d])
+ 	for {
+-		if v_0.Op != OpConst64F {
++		if v_0.Op != OpConst32F {
+ 			break
+ 		}
+-		c := auxIntToFloat64(v_0.AuxInt)
+-		if v_1.Op != OpConst64F {
++		c := auxIntToFloat32(v_0.AuxInt)
++		if v_1.Op != OpConst32F {
+ 			break
+ 		}
+-		d := auxIntToFloat64(v_1.AuxInt)
++		d := auxIntToFloat32(v_1.AuxInt)
+ 		v.reset(OpConstBool)
+ 		v.AuxInt = boolToAuxInt(c <= d)
+ 		return true
+ 	}
+ 	return false
+ }
+-func rewriteValuegeneric_OpLeq64U(v *Value) bool {
++func rewriteValuegeneric_OpLeq32U(v *Value) bool {
+ 	v_1 := v.Args[1]
+ 	v_0 := v.Args[0]
+-	// match: (Leq64U (Const64 [c]) (Const64 [d]))
+-	// result: (ConstBool [uint64(c) <= uint64(d)])
++	// match: (Leq32U (Const32 [c]) (Const32 [d]))
++	// result: (ConstBool [uint32(c) <= uint32(d)])
+ 	for {
+-		if v_0.Op != OpConst64 {
++		if v_0.Op != OpConst32 {
+ 			break
+ 		}
+-		c := auxIntToInt64(v_0.AuxInt)
+-		if v_1.Op != OpConst64 {
++		c := auxIntToInt32(v_0.AuxInt)
++		if v_1.Op != OpConst32 {
+ 			break
+ 		}
+-		d := auxIntToInt64(v_1.AuxInt)
++		d := auxIntToInt32(v_1.AuxInt)
+ 		v.reset(OpConstBool)
+-		v.AuxInt = boolToAuxInt(uint64(c) <= uint64(d))
++		v.AuxInt = boolToAuxInt(uint32(c) <= uint32(d))
+ 		return true
+ 	}
+-	// match: (Leq64U (Const64 [0]) _)
++	// match: (Leq32U (Const32 [0]) _)
+ 	// result: (ConstBool [true])
+ 	for {
+-		if v_0.Op != OpConst64 || auxIntToInt64(v_0.AuxInt) != 0 {
++		if v_0.Op != OpConst32 || auxIntToInt32(v_0.AuxInt) != 0 {
+ 			break
+ 		}
+ 		v.reset(OpConstBool)
+@@ -11456,39 +12068,41 @@ func rewriteValuegeneric_OpLeq64U(v *Value) bool {
+ 	}
+ 	return false
+ }
+-func rewriteValuegeneric_OpLeq8(v *Value) bool {
++func rewriteValuegeneric_OpLeq64(v *Value) bool {
+ 	v_1 := v.Args[1]
+ 	v_0 := v.Args[0]
+-	// match: (Leq8 (Const8 [c]) (Const8 [d]))
++	b := v.Block
++	config := b.Func.Config
++	// match: (Leq64 (Const64 [c]) (Const64 [d]))
+ 	// result: (ConstBool [c <= d])
+ 	for {
+-		if v_0.Op != OpConst8 {
++		if v_0.Op != OpConst64 {
+ 			break
+ 		}
+-		c := auxIntToInt8(v_0.AuxInt)
+-		if v_1.Op != OpConst8 {
++		c := auxIntToInt64(v_0.AuxInt)
++		if v_1.Op != OpConst64 {
+ 			break
+ 		}
+-		d := auxIntToInt8(v_1.AuxInt)
++		d := auxIntToInt64(v_1.AuxInt)
+ 		v.reset(OpConstBool)
+ 		v.AuxInt = boolToAuxInt(c <= d)
+ 		return true
+ 	}
+-	// match: (Leq8 (Const8 [0]) (And8 _ (Const8 [c])))
++	// match: (Leq64 (Const64 [0]) (And64 _ (Const64 [c])))
+ 	// cond: c >= 0
+ 	// result: (ConstBool [true])
+ 	for {
+-		if v_0.Op != OpConst8 || auxIntToInt8(v_0.AuxInt) != 0 || v_1.Op != OpAnd8 {
++		if v_0.Op != OpConst64 || auxIntToInt64(v_0.AuxInt) != 0 || v_1.Op != OpAnd64 {
+ 			break
+ 		}
+ 		_ = v_1.Args[1]
+ 		v_1_0 := v_1.Args[0]
+ 		v_1_1 := v_1.Args[1]
+ 		for _i0 := 0; _i0 <= 1; _i0, v_1_0, v_1_1 = _i0+1, v_1_1, v_1_0 {
+-			if v_1_1.Op != OpConst8 {
++			if v_1_1.Op != OpConst64 {
+ 				continue
+ 			}
+-			c := auxIntToInt8(v_1_1.AuxInt)
++			c := auxIntToInt64(v_1_1.AuxInt)
+ 			if !(c >= 0) {
+ 				continue
+ 			}
+@@ -11498,11 +12112,11 @@ func rewriteValuegeneric_OpLeq8(v *Value) bool {
+ 		}
+ 		break
+ 	}
+-	// match: (Leq8 (Const8 [0]) (Rsh8Ux64 _ (Const64 [c])))
++	// match: (Leq64 (Const64 [0]) (Rsh64Ux64 _ (Const64 [c])))
+ 	// cond: c > 0
+ 	// result: (ConstBool [true])
+ 	for {
+-		if v_0.Op != OpConst8 || auxIntToInt8(v_0.AuxInt) != 0 || v_1.Op != OpRsh8Ux64 {
++		if v_0.Op != OpConst64 || auxIntToInt64(v_0.AuxInt) != 0 || v_1.Op != OpRsh64Ux64 {
+ 			break
+ 		}
+ 		_ = v_1.Args[1]
+@@ -11518,178 +12132,968 @@ func rewriteValuegeneric_OpLeq8(v *Value) bool {
+ 		v.AuxInt = boolToAuxInt(true)
+ 		return true
+ 	}
+-	return false
+-}
+-func rewriteValuegeneric_OpLeq8U(v *Value) bool {
+-	v_1 := v.Args[1]
+-	v_0 := v.Args[0]
+-	// match: (Leq8U (Const8 [c]) (Const8 [d]))
+-	// result: (ConstBool [ uint8(c) <= uint8(d)])
++	// match: (Leq64 (Const64 <t> [64]) (Ctz64 x))
++	// cond: shouldStrengthReduceCtz(config) && config.PtrSize == 8
++	// result: (Eq64 (Const64 <t> [0]) x)
+ 	for {
+-		if v_0.Op != OpConst8 {
++		if v_0.Op != OpConst64 {
+ 			break
+ 		}
+-		c := auxIntToInt8(v_0.AuxInt)
+-		if v_1.Op != OpConst8 {
++		t := v_0.Type
++		if auxIntToInt64(v_0.AuxInt) != 64 || v_1.Op != OpCtz64 {
+ 			break
+ 		}
+-		d := auxIntToInt8(v_1.AuxInt)
+-		v.reset(OpConstBool)
+-		v.AuxInt = boolToAuxInt(uint8(c) <= uint8(d))
+-		return true
+-	}
+-	// match: (Leq8U (Const8 [0]) _)
+-	// result: (ConstBool [true])
+-	for {
+-		if v_0.Op != OpConst8 || auxIntToInt8(v_0.AuxInt) != 0 {
++		x := v_1.Args[0]
++		if !(shouldStrengthReduceCtz(config) && config.PtrSize == 8) {
+ 			break
+ 		}
+-		v.reset(OpConstBool)
+-		v.AuxInt = boolToAuxInt(true)
++		v.reset(OpEq64)
++		v0 := b.NewValue0(v.Pos, OpConst64, t)
++		v0.AuxInt = int64ToAuxInt(0)
++		v.AddArg2(v0, x)
+ 		return true
+ 	}
+-	return false
+-}
+-func rewriteValuegeneric_OpLess16(v *Value) bool {
+-	v_1 := v.Args[1]
+-	v_0 := v.Args[0]
+-	b := v.Block
+-	// match: (Less16 (Const16 [c]) (Const16 [d]))
+-	// result: (ConstBool [c < d])
++	// match: (Leq64 (Const64 <t> [32]) (Ctz32 x))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Eq64 (Const64 <t> [0]) x)
+ 	for {
+-		if v_0.Op != OpConst16 {
++		if v_0.Op != OpConst64 {
+ 			break
+ 		}
+-		c := auxIntToInt16(v_0.AuxInt)
+-		if v_1.Op != OpConst16 {
++		t := v_0.Type
++		if auxIntToInt64(v_0.AuxInt) != 32 || v_1.Op != OpCtz32 {
+ 			break
+ 		}
+-		d := auxIntToInt16(v_1.AuxInt)
+-		v.reset(OpConstBool)
+-		v.AuxInt = boolToAuxInt(c < d)
++		x := v_1.Args[0]
++		if !(shouldStrengthReduceCtz(config)) {
++			break
++		}
++		v.reset(OpEq64)
++		v0 := b.NewValue0(v.Pos, OpConst64, t)
++		v0.AuxInt = int64ToAuxInt(0)
++		v.AddArg2(v0, x)
+ 		return true
+ 	}
+-	// match: (Less16 (Const16 <t> [0]) x)
+-	// cond: isNonNegative(x)
+-	// result: (Neq16 (Const16 <t> [0]) x)
++	// match: (Leq64 (Const64 <t> [16]) (Ctz16 x))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Eq64 (Const64 <t> [0]) x)
+ 	for {
+-		if v_0.Op != OpConst16 {
++		if v_0.Op != OpConst64 {
+ 			break
+ 		}
+ 		t := v_0.Type
+-		if auxIntToInt16(v_0.AuxInt) != 0 {
++		if auxIntToInt64(v_0.AuxInt) != 16 || v_1.Op != OpCtz16 {
+ 			break
+ 		}
+-		x := v_1
+-		if !(isNonNegative(x)) {
++		x := v_1.Args[0]
++		if !(shouldStrengthReduceCtz(config)) {
+ 			break
+ 		}
+-		v.reset(OpNeq16)
+-		v0 := b.NewValue0(v.Pos, OpConst16, t)
+-		v0.AuxInt = int16ToAuxInt(0)
++		v.reset(OpEq64)
++		v0 := b.NewValue0(v.Pos, OpConst64, t)
++		v0.AuxInt = int64ToAuxInt(0)
+ 		v.AddArg2(v0, x)
+ 		return true
+ 	}
+-	// match: (Less16 x (Const16 <t> [1]))
+-	// cond: isNonNegative(x)
++	// match: (Leq64 (Const64 <t> [8]) (Ctz8 x))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Eq64 (Const64 <t> [0]) x)
++	for {
++		if v_0.Op != OpConst64 {
++			break
++		}
++		t := v_0.Type
++		if auxIntToInt64(v_0.AuxInt) != 8 || v_1.Op != OpCtz8 {
++			break
++		}
++		x := v_1.Args[0]
++		if !(shouldStrengthReduceCtz(config)) {
++			break
++		}
++		v.reset(OpEq64)
++		v0 := b.NewValue0(v.Pos, OpConst64, t)
++		v0.AuxInt = int64ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
++	}
++	// match: (Leq64 (Ctz64 x) (Const64 <t> [63]))
++	// cond: shouldStrengthReduceCtz(config) && config.PtrSize == 8
++	// result: (Neq64 (Const64 <t> [0]) x)
++	for {
++		if v_0.Op != OpCtz64 {
++			break
++		}
++		x := v_0.Args[0]
++		if v_1.Op != OpConst64 {
++			break
++		}
++		t := v_1.Type
++		if auxIntToInt64(v_1.AuxInt) != 63 || !(shouldStrengthReduceCtz(config) && config.PtrSize == 8) {
++			break
++		}
++		v.reset(OpNeq64)
++		v0 := b.NewValue0(v.Pos, OpConst64, t)
++		v0.AuxInt = int64ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
++	}
++	// match: (Leq64 (Ctz32 x) (Const64 <t> [31]))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Neq64 (Const64 <t> [0]) x)
++	for {
++		if v_0.Op != OpCtz32 {
++			break
++		}
++		x := v_0.Args[0]
++		if v_1.Op != OpConst64 {
++			break
++		}
++		t := v_1.Type
++		if auxIntToInt64(v_1.AuxInt) != 31 || !(shouldStrengthReduceCtz(config)) {
++			break
++		}
++		v.reset(OpNeq64)
++		v0 := b.NewValue0(v.Pos, OpConst64, t)
++		v0.AuxInt = int64ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
++	}
++	// match: (Leq64 (Ctz16 x) (Const64 <t> [15]))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Neq64 (Const64 <t> [0]) x)
++	for {
++		if v_0.Op != OpCtz16 {
++			break
++		}
++		x := v_0.Args[0]
++		if v_1.Op != OpConst64 {
++			break
++		}
++		t := v_1.Type
++		if auxIntToInt64(v_1.AuxInt) != 15 || !(shouldStrengthReduceCtz(config)) {
++			break
++		}
++		v.reset(OpNeq64)
++		v0 := b.NewValue0(v.Pos, OpConst64, t)
++		v0.AuxInt = int64ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
++	}
++	// match: (Leq64 (Ctz8 x) (Const64 <t> [7]))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Neq64 (Const64 <t> [0]) x)
++	for {
++		if v_0.Op != OpCtz8 {
++			break
++		}
++		x := v_0.Args[0]
++		if v_1.Op != OpConst64 {
++			break
++		}
++		t := v_1.Type
++		if auxIntToInt64(v_1.AuxInt) != 7 || !(shouldStrengthReduceCtz(config)) {
++			break
++		}
++		v.reset(OpNeq64)
++		v0 := b.NewValue0(v.Pos, OpConst64, t)
++		v0.AuxInt = int64ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
++	}
++	return false
++}
++func rewriteValuegeneric_OpLeq64F(v *Value) bool {
++	v_1 := v.Args[1]
++	v_0 := v.Args[0]
++	// match: (Leq64F (Const64F [c]) (Const64F [d]))
++	// result: (ConstBool [c <= d])
++	for {
++		if v_0.Op != OpConst64F {
++			break
++		}
++		c := auxIntToFloat64(v_0.AuxInt)
++		if v_1.Op != OpConst64F {
++			break
++		}
++		d := auxIntToFloat64(v_1.AuxInt)
++		v.reset(OpConstBool)
++		v.AuxInt = boolToAuxInt(c <= d)
++		return true
++	}
++	return false
++}
++func rewriteValuegeneric_OpLeq64U(v *Value) bool {
++	v_1 := v.Args[1]
++	v_0 := v.Args[0]
++	// match: (Leq64U (Const64 [c]) (Const64 [d]))
++	// result: (ConstBool [uint64(c) <= uint64(d)])
++	for {
++		if v_0.Op != OpConst64 {
++			break
++		}
++		c := auxIntToInt64(v_0.AuxInt)
++		if v_1.Op != OpConst64 {
++			break
++		}
++		d := auxIntToInt64(v_1.AuxInt)
++		v.reset(OpConstBool)
++		v.AuxInt = boolToAuxInt(uint64(c) <= uint64(d))
++		return true
++	}
++	// match: (Leq64U (Const64 [0]) _)
++	// result: (ConstBool [true])
++	for {
++		if v_0.Op != OpConst64 || auxIntToInt64(v_0.AuxInt) != 0 {
++			break
++		}
++		v.reset(OpConstBool)
++		v.AuxInt = boolToAuxInt(true)
++		return true
++	}
++	return false
++}
++func rewriteValuegeneric_OpLeq8(v *Value) bool {
++	v_1 := v.Args[1]
++	v_0 := v.Args[0]
++	b := v.Block
++	config := b.Func.Config
++	// match: (Leq8 (Const8 [c]) (Const8 [d]))
++	// result: (ConstBool [c <= d])
++	for {
++		if v_0.Op != OpConst8 {
++			break
++		}
++		c := auxIntToInt8(v_0.AuxInt)
++		if v_1.Op != OpConst8 {
++			break
++		}
++		d := auxIntToInt8(v_1.AuxInt)
++		v.reset(OpConstBool)
++		v.AuxInt = boolToAuxInt(c <= d)
++		return true
++	}
++	// match: (Leq8 (Const8 [0]) (And8 _ (Const8 [c])))
++	// cond: c >= 0
++	// result: (ConstBool [true])
++	for {
++		if v_0.Op != OpConst8 || auxIntToInt8(v_0.AuxInt) != 0 || v_1.Op != OpAnd8 {
++			break
++		}
++		_ = v_1.Args[1]
++		v_1_0 := v_1.Args[0]
++		v_1_1 := v_1.Args[1]
++		for _i0 := 0; _i0 <= 1; _i0, v_1_0, v_1_1 = _i0+1, v_1_1, v_1_0 {
++			if v_1_1.Op != OpConst8 {
++				continue
++			}
++			c := auxIntToInt8(v_1_1.AuxInt)
++			if !(c >= 0) {
++				continue
++			}
++			v.reset(OpConstBool)
++			v.AuxInt = boolToAuxInt(true)
++			return true
++		}
++		break
++	}
++	// match: (Leq8 (Const8 [0]) (Rsh8Ux64 _ (Const64 [c])))
++	// cond: c > 0
++	// result: (ConstBool [true])
++	for {
++		if v_0.Op != OpConst8 || auxIntToInt8(v_0.AuxInt) != 0 || v_1.Op != OpRsh8Ux64 {
++			break
++		}
++		_ = v_1.Args[1]
++		v_1_1 := v_1.Args[1]
++		if v_1_1.Op != OpConst64 {
++			break
++		}
++		c := auxIntToInt64(v_1_1.AuxInt)
++		if !(c > 0) {
++			break
++		}
++		v.reset(OpConstBool)
++		v.AuxInt = boolToAuxInt(true)
++		return true
++	}
++	// match: (Leq8 (Const8 <t> [64]) (Ctz64 x))
++	// cond: shouldStrengthReduceCtz(config) && config.PtrSize == 8
++	// result: (Eq8 (Const8 <t> [0]) x)
++	for {
++		if v_0.Op != OpConst8 {
++			break
++		}
++		t := v_0.Type
++		if auxIntToInt8(v_0.AuxInt) != 64 || v_1.Op != OpCtz64 {
++			break
++		}
++		x := v_1.Args[0]
++		if !(shouldStrengthReduceCtz(config) && config.PtrSize == 8) {
++			break
++		}
++		v.reset(OpEq8)
++		v0 := b.NewValue0(v.Pos, OpConst8, t)
++		v0.AuxInt = int8ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
++	}
++	// match: (Leq8 (Const8 <t> [32]) (Ctz32 x))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Eq8 (Const8 <t> [0]) x)
++	for {
++		if v_0.Op != OpConst8 {
++			break
++		}
++		t := v_0.Type
++		if auxIntToInt8(v_0.AuxInt) != 32 || v_1.Op != OpCtz32 {
++			break
++		}
++		x := v_1.Args[0]
++		if !(shouldStrengthReduceCtz(config)) {
++			break
++		}
++		v.reset(OpEq8)
++		v0 := b.NewValue0(v.Pos, OpConst8, t)
++		v0.AuxInt = int8ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
++	}
++	// match: (Leq8 (Const8 <t> [16]) (Ctz16 x))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Eq8 (Const8 <t> [0]) x)
++	for {
++		if v_0.Op != OpConst8 {
++			break
++		}
++		t := v_0.Type
++		if auxIntToInt8(v_0.AuxInt) != 16 || v_1.Op != OpCtz16 {
++			break
++		}
++		x := v_1.Args[0]
++		if !(shouldStrengthReduceCtz(config)) {
++			break
++		}
++		v.reset(OpEq8)
++		v0 := b.NewValue0(v.Pos, OpConst8, t)
++		v0.AuxInt = int8ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
++	}
++	// match: (Leq8 (Const8 <t> [8]) (Ctz8 x))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Eq8 (Const8 <t> [0]) x)
++	for {
++		if v_0.Op != OpConst8 {
++			break
++		}
++		t := v_0.Type
++		if auxIntToInt8(v_0.AuxInt) != 8 || v_1.Op != OpCtz8 {
++			break
++		}
++		x := v_1.Args[0]
++		if !(shouldStrengthReduceCtz(config)) {
++			break
++		}
++		v.reset(OpEq8)
++		v0 := b.NewValue0(v.Pos, OpConst8, t)
++		v0.AuxInt = int8ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
++	}
++	// match: (Leq8 (Ctz64 x) (Const8 <t> [63]))
++	// cond: shouldStrengthReduceCtz(config) && config.PtrSize == 8
++	// result: (Neq8 (Const8 <t> [0]) x)
++	for {
++		if v_0.Op != OpCtz64 {
++			break
++		}
++		x := v_0.Args[0]
++		if v_1.Op != OpConst8 {
++			break
++		}
++		t := v_1.Type
++		if auxIntToInt8(v_1.AuxInt) != 63 || !(shouldStrengthReduceCtz(config) && config.PtrSize == 8) {
++			break
++		}
++		v.reset(OpNeq8)
++		v0 := b.NewValue0(v.Pos, OpConst8, t)
++		v0.AuxInt = int8ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
++	}
++	// match: (Leq8 (Ctz32 x) (Const8 <t> [31]))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Neq8 (Const8 <t> [0]) x)
++	for {
++		if v_0.Op != OpCtz32 {
++			break
++		}
++		x := v_0.Args[0]
++		if v_1.Op != OpConst8 {
++			break
++		}
++		t := v_1.Type
++		if auxIntToInt8(v_1.AuxInt) != 31 || !(shouldStrengthReduceCtz(config)) {
++			break
++		}
++		v.reset(OpNeq8)
++		v0 := b.NewValue0(v.Pos, OpConst8, t)
++		v0.AuxInt = int8ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
++	}
++	// match: (Leq8 (Ctz16 x) (Const8 <t> [15]))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Neq8 (Const8 <t> [0]) x)
++	for {
++		if v_0.Op != OpCtz16 {
++			break
++		}
++		x := v_0.Args[0]
++		if v_1.Op != OpConst8 {
++			break
++		}
++		t := v_1.Type
++		if auxIntToInt8(v_1.AuxInt) != 15 || !(shouldStrengthReduceCtz(config)) {
++			break
++		}
++		v.reset(OpNeq8)
++		v0 := b.NewValue0(v.Pos, OpConst8, t)
++		v0.AuxInt = int8ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
++	}
++	// match: (Leq8 (Ctz8 x) (Const8 <t> [7]))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Neq8 (Const8 <t> [0]) x)
++	for {
++		if v_0.Op != OpCtz8 {
++			break
++		}
++		x := v_0.Args[0]
++		if v_1.Op != OpConst8 {
++			break
++		}
++		t := v_1.Type
++		if auxIntToInt8(v_1.AuxInt) != 7 || !(shouldStrengthReduceCtz(config)) {
++			break
++		}
++		v.reset(OpNeq8)
++		v0 := b.NewValue0(v.Pos, OpConst8, t)
++		v0.AuxInt = int8ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
++	}
++	return false
++}
++func rewriteValuegeneric_OpLeq8U(v *Value) bool {
++	v_1 := v.Args[1]
++	v_0 := v.Args[0]
++	// match: (Leq8U (Const8 [c]) (Const8 [d]))
++	// result: (ConstBool [ uint8(c) <= uint8(d)])
++	for {
++		if v_0.Op != OpConst8 {
++			break
++		}
++		c := auxIntToInt8(v_0.AuxInt)
++		if v_1.Op != OpConst8 {
++			break
++		}
++		d := auxIntToInt8(v_1.AuxInt)
++		v.reset(OpConstBool)
++		v.AuxInt = boolToAuxInt(uint8(c) <= uint8(d))
++		return true
++	}
++	// match: (Leq8U (Const8 [0]) _)
++	// result: (ConstBool [true])
++	for {
++		if v_0.Op != OpConst8 || auxIntToInt8(v_0.AuxInt) != 0 {
++			break
++		}
++		v.reset(OpConstBool)
++		v.AuxInt = boolToAuxInt(true)
++		return true
++	}
++	return false
++}
++func rewriteValuegeneric_OpLess16(v *Value) bool {
++	v_1 := v.Args[1]
++	v_0 := v.Args[0]
++	b := v.Block
++	config := b.Func.Config
++	// match: (Less16 (Const16 [c]) (Const16 [d]))
++	// result: (ConstBool [c < d])
++	for {
++		if v_0.Op != OpConst16 {
++			break
++		}
++		c := auxIntToInt16(v_0.AuxInt)
++		if v_1.Op != OpConst16 {
++			break
++		}
++		d := auxIntToInt16(v_1.AuxInt)
++		v.reset(OpConstBool)
++		v.AuxInt = boolToAuxInt(c < d)
++		return true
++	}
++	// match: (Less16 (Const16 <t> [0]) x)
++	// cond: isNonNegative(x)
++	// result: (Neq16 (Const16 <t> [0]) x)
++	for {
++		if v_0.Op != OpConst16 {
++			break
++		}
++		t := v_0.Type
++		if auxIntToInt16(v_0.AuxInt) != 0 {
++			break
++		}
++		x := v_1
++		if !(isNonNegative(x)) {
++			break
++		}
++		v.reset(OpNeq16)
++		v0 := b.NewValue0(v.Pos, OpConst16, t)
++		v0.AuxInt = int16ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
++	}
++	// match: (Less16 x (Const16 <t> [1]))
++	// cond: isNonNegative(x)
++	// result: (Eq16 (Const16 <t> [0]) x)
++	for {
++		x := v_0
++		if v_1.Op != OpConst16 {
++			break
++		}
++		t := v_1.Type
++		if auxIntToInt16(v_1.AuxInt) != 1 || !(isNonNegative(x)) {
++			break
++		}
++		v.reset(OpEq16)
++		v0 := b.NewValue0(v.Pos, OpConst16, t)
++		v0.AuxInt = int16ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
++	}
++	// match: (Less16 (Ctz64 x) (Const16 <t> [64]))
++	// cond: shouldStrengthReduceCtz(config) && config.PtrSize == 8
++	// result: (Neq16 (Const16 <t> [0]) x)
++	for {
++		if v_0.Op != OpCtz64 {
++			break
++		}
++		x := v_0.Args[0]
++		if v_1.Op != OpConst16 {
++			break
++		}
++		t := v_1.Type
++		if auxIntToInt16(v_1.AuxInt) != 64 || !(shouldStrengthReduceCtz(config) && config.PtrSize == 8) {
++			break
++		}
++		v.reset(OpNeq16)
++		v0 := b.NewValue0(v.Pos, OpConst16, t)
++		v0.AuxInt = int16ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
++	}
++	// match: (Less16 (Ctz32 x) (Const16 <t> [32]))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Neq16 (Const16 <t> [0]) x)
++	for {
++		if v_0.Op != OpCtz32 {
++			break
++		}
++		x := v_0.Args[0]
++		if v_1.Op != OpConst16 {
++			break
++		}
++		t := v_1.Type
++		if auxIntToInt16(v_1.AuxInt) != 32 || !(shouldStrengthReduceCtz(config)) {
++			break
++		}
++		v.reset(OpNeq16)
++		v0 := b.NewValue0(v.Pos, OpConst16, t)
++		v0.AuxInt = int16ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
++	}
++	// match: (Less16 (Ctz16 x) (Const16 <t> [16]))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Neq16 (Const16 <t> [0]) x)
++	for {
++		if v_0.Op != OpCtz16 {
++			break
++		}
++		x := v_0.Args[0]
++		if v_1.Op != OpConst16 {
++			break
++		}
++		t := v_1.Type
++		if auxIntToInt16(v_1.AuxInt) != 16 || !(shouldStrengthReduceCtz(config)) {
++			break
++		}
++		v.reset(OpNeq16)
++		v0 := b.NewValue0(v.Pos, OpConst16, t)
++		v0.AuxInt = int16ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
++	}
++	// match: (Less16 (Ctz8 x) (Const16 <t> [8]))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Neq16 (Const16 <t> [0]) x)
++	for {
++		if v_0.Op != OpCtz8 {
++			break
++		}
++		x := v_0.Args[0]
++		if v_1.Op != OpConst16 {
++			break
++		}
++		t := v_1.Type
++		if auxIntToInt16(v_1.AuxInt) != 8 || !(shouldStrengthReduceCtz(config)) {
++			break
++		}
++		v.reset(OpNeq16)
++		v0 := b.NewValue0(v.Pos, OpConst16, t)
++		v0.AuxInt = int16ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
++	}
++	// match: (Less16 (Const16 <t> [63]) (Ctz64 x))
++	// cond: shouldStrengthReduceCtz(config) && config.PtrSize == 8
++	// result: (Eq16 (Const16 <t> [0]) x)
++	for {
++		if v_0.Op != OpConst16 {
++			break
++		}
++		t := v_0.Type
++		if auxIntToInt16(v_0.AuxInt) != 63 || v_1.Op != OpCtz64 {
++			break
++		}
++		x := v_1.Args[0]
++		if !(shouldStrengthReduceCtz(config) && config.PtrSize == 8) {
++			break
++		}
++		v.reset(OpEq16)
++		v0 := b.NewValue0(v.Pos, OpConst16, t)
++		v0.AuxInt = int16ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
++	}
++	// match: (Less16 (Const16 <t> [31]) (Ctz32 x))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Eq16 (Const16 <t> [0]) x)
++	for {
++		if v_0.Op != OpConst16 {
++			break
++		}
++		t := v_0.Type
++		if auxIntToInt16(v_0.AuxInt) != 31 || v_1.Op != OpCtz32 {
++			break
++		}
++		x := v_1.Args[0]
++		if !(shouldStrengthReduceCtz(config)) {
++			break
++		}
++		v.reset(OpEq16)
++		v0 := b.NewValue0(v.Pos, OpConst16, t)
++		v0.AuxInt = int16ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
++	}
++	// match: (Less16 (Const16 <t> [15]) (Ctz16 x))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Eq16 (Const16 <t> [0]) x)
++	for {
++		if v_0.Op != OpConst16 {
++			break
++		}
++		t := v_0.Type
++		if auxIntToInt16(v_0.AuxInt) != 15 || v_1.Op != OpCtz16 {
++			break
++		}
++		x := v_1.Args[0]
++		if !(shouldStrengthReduceCtz(config)) {
++			break
++		}
++		v.reset(OpEq16)
++		v0 := b.NewValue0(v.Pos, OpConst16, t)
++		v0.AuxInt = int16ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
++	}
++	// match: (Less16 (Const16 <t> [7]) (Ctz8 x))
++	// cond: shouldStrengthReduceCtz(config)
+ 	// result: (Eq16 (Const16 <t> [0]) x)
+ 	for {
+-		x := v_0
+-		if v_1.Op != OpConst16 {
++		if v_0.Op != OpConst16 {
++			break
++		}
++		t := v_0.Type
++		if auxIntToInt16(v_0.AuxInt) != 7 || v_1.Op != OpCtz8 {
++			break
++		}
++		x := v_1.Args[0]
++		if !(shouldStrengthReduceCtz(config)) {
++			break
++		}
++		v.reset(OpEq16)
++		v0 := b.NewValue0(v.Pos, OpConst16, t)
++		v0.AuxInt = int16ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
++	}
++	return false
++}
++func rewriteValuegeneric_OpLess16U(v *Value) bool {
++	v_1 := v.Args[1]
++	v_0 := v.Args[0]
++	// match: (Less16U (Const16 [c]) (Const16 [d]))
++	// result: (ConstBool [uint16(c) < uint16(d)])
++	for {
++		if v_0.Op != OpConst16 {
++			break
++		}
++		c := auxIntToInt16(v_0.AuxInt)
++		if v_1.Op != OpConst16 {
++			break
++		}
++		d := auxIntToInt16(v_1.AuxInt)
++		v.reset(OpConstBool)
++		v.AuxInt = boolToAuxInt(uint16(c) < uint16(d))
++		return true
++	}
++	// match: (Less16U _ (Const16 [0]))
++	// result: (ConstBool [false])
++	for {
++		if v_1.Op != OpConst16 || auxIntToInt16(v_1.AuxInt) != 0 {
++			break
++		}
++		v.reset(OpConstBool)
++		v.AuxInt = boolToAuxInt(false)
++		return true
++	}
++	return false
++}
++func rewriteValuegeneric_OpLess32(v *Value) bool {
++	v_1 := v.Args[1]
++	v_0 := v.Args[0]
++	b := v.Block
++	config := b.Func.Config
++	// match: (Less32 (Const32 [c]) (Const32 [d]))
++	// result: (ConstBool [c < d])
++	for {
++		if v_0.Op != OpConst32 {
++			break
++		}
++		c := auxIntToInt32(v_0.AuxInt)
++		if v_1.Op != OpConst32 {
++			break
++		}
++		d := auxIntToInt32(v_1.AuxInt)
++		v.reset(OpConstBool)
++		v.AuxInt = boolToAuxInt(c < d)
++		return true
++	}
++	// match: (Less32 (Const32 <t> [0]) x)
++	// cond: isNonNegative(x)
++	// result: (Neq32 (Const32 <t> [0]) x)
++	for {
++		if v_0.Op != OpConst32 {
++			break
++		}
++		t := v_0.Type
++		if auxIntToInt32(v_0.AuxInt) != 0 {
++			break
++		}
++		x := v_1
++		if !(isNonNegative(x)) {
++			break
++		}
++		v.reset(OpNeq32)
++		v0 := b.NewValue0(v.Pos, OpConst32, t)
++		v0.AuxInt = int32ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
++	}
++	// match: (Less32 x (Const32 <t> [1]))
++	// cond: isNonNegative(x)
++	// result: (Eq32 (Const32 <t> [0]) x)
++	for {
++		x := v_0
++		if v_1.Op != OpConst32 {
++			break
++		}
++		t := v_1.Type
++		if auxIntToInt32(v_1.AuxInt) != 1 || !(isNonNegative(x)) {
++			break
++		}
++		v.reset(OpEq32)
++		v0 := b.NewValue0(v.Pos, OpConst32, t)
++		v0.AuxInt = int32ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
++	}
++	// match: (Less32 (Ctz64 x) (Const32 <t> [64]))
++	// cond: shouldStrengthReduceCtz(config) && config.PtrSize == 8
++	// result: (Neq32 (Const32 <t> [0]) x)
++	for {
++		if v_0.Op != OpCtz64 {
++			break
++		}
++		x := v_0.Args[0]
++		if v_1.Op != OpConst32 {
++			break
++		}
++		t := v_1.Type
++		if auxIntToInt32(v_1.AuxInt) != 64 || !(shouldStrengthReduceCtz(config) && config.PtrSize == 8) {
++			break
++		}
++		v.reset(OpNeq32)
++		v0 := b.NewValue0(v.Pos, OpConst32, t)
++		v0.AuxInt = int32ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
++	}
++	// match: (Less32 (Ctz32 x) (Const32 <t> [32]))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Neq32 (Const32 <t> [0]) x)
++	for {
++		if v_0.Op != OpCtz32 {
++			break
++		}
++		x := v_0.Args[0]
++		if v_1.Op != OpConst32 {
+ 			break
+ 		}
+ 		t := v_1.Type
+-		if auxIntToInt16(v_1.AuxInt) != 1 || !(isNonNegative(x)) {
++		if auxIntToInt32(v_1.AuxInt) != 32 || !(shouldStrengthReduceCtz(config)) {
+ 			break
+ 		}
+-		v.reset(OpEq16)
+-		v0 := b.NewValue0(v.Pos, OpConst16, t)
+-		v0.AuxInt = int16ToAuxInt(0)
++		v.reset(OpNeq32)
++		v0 := b.NewValue0(v.Pos, OpConst32, t)
++		v0.AuxInt = int32ToAuxInt(0)
+ 		v.AddArg2(v0, x)
+ 		return true
+ 	}
+-	return false
+-}
+-func rewriteValuegeneric_OpLess16U(v *Value) bool {
+-	v_1 := v.Args[1]
+-	v_0 := v.Args[0]
+-	// match: (Less16U (Const16 [c]) (Const16 [d]))
+-	// result: (ConstBool [uint16(c) < uint16(d)])
++	// match: (Less32 (Ctz16 x) (Const32 <t> [16]))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Neq32 (Const32 <t> [0]) x)
+ 	for {
+-		if v_0.Op != OpConst16 {
++		if v_0.Op != OpCtz16 {
+ 			break
+ 		}
+-		c := auxIntToInt16(v_0.AuxInt)
+-		if v_1.Op != OpConst16 {
++		x := v_0.Args[0]
++		if v_1.Op != OpConst32 {
+ 			break
+ 		}
+-		d := auxIntToInt16(v_1.AuxInt)
+-		v.reset(OpConstBool)
+-		v.AuxInt = boolToAuxInt(uint16(c) < uint16(d))
++		t := v_1.Type
++		if auxIntToInt32(v_1.AuxInt) != 16 || !(shouldStrengthReduceCtz(config)) {
++			break
++		}
++		v.reset(OpNeq32)
++		v0 := b.NewValue0(v.Pos, OpConst32, t)
++		v0.AuxInt = int32ToAuxInt(0)
++		v.AddArg2(v0, x)
+ 		return true
+ 	}
+-	// match: (Less16U _ (Const16 [0]))
+-	// result: (ConstBool [false])
++	// match: (Less32 (Ctz8 x) (Const32 <t> [8]))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Neq32 (Const32 <t> [0]) x)
+ 	for {
+-		if v_1.Op != OpConst16 || auxIntToInt16(v_1.AuxInt) != 0 {
++		if v_0.Op != OpCtz8 {
+ 			break
+ 		}
+-		v.reset(OpConstBool)
+-		v.AuxInt = boolToAuxInt(false)
++		x := v_0.Args[0]
++		if v_1.Op != OpConst32 {
++			break
++		}
++		t := v_1.Type
++		if auxIntToInt32(v_1.AuxInt) != 8 || !(shouldStrengthReduceCtz(config)) {
++			break
++		}
++		v.reset(OpNeq32)
++		v0 := b.NewValue0(v.Pos, OpConst32, t)
++		v0.AuxInt = int32ToAuxInt(0)
++		v.AddArg2(v0, x)
+ 		return true
+ 	}
+-	return false
+-}
+-func rewriteValuegeneric_OpLess32(v *Value) bool {
+-	v_1 := v.Args[1]
+-	v_0 := v.Args[0]
+-	b := v.Block
+-	// match: (Less32 (Const32 [c]) (Const32 [d]))
+-	// result: (ConstBool [c < d])
++	// match: (Less32 (Const32 <t> [63]) (Ctz64 x))
++	// cond: shouldStrengthReduceCtz(config) && config.PtrSize == 8
++	// result: (Eq32 (Const32 <t> [0]) x)
+ 	for {
+ 		if v_0.Op != OpConst32 {
+ 			break
+ 		}
+-		c := auxIntToInt32(v_0.AuxInt)
+-		if v_1.Op != OpConst32 {
++		t := v_0.Type
++		if auxIntToInt32(v_0.AuxInt) != 63 || v_1.Op != OpCtz64 {
+ 			break
+ 		}
+-		d := auxIntToInt32(v_1.AuxInt)
+-		v.reset(OpConstBool)
+-		v.AuxInt = boolToAuxInt(c < d)
++		x := v_1.Args[0]
++		if !(shouldStrengthReduceCtz(config) && config.PtrSize == 8) {
++			break
++		}
++		v.reset(OpEq32)
++		v0 := b.NewValue0(v.Pos, OpConst32, t)
++		v0.AuxInt = int32ToAuxInt(0)
++		v.AddArg2(v0, x)
+ 		return true
+ 	}
+-	// match: (Less32 (Const32 <t> [0]) x)
+-	// cond: isNonNegative(x)
+-	// result: (Neq32 (Const32 <t> [0]) x)
++	// match: (Less32 (Const32 <t> [31]) (Ctz32 x))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Eq32 (Const32 <t> [0]) x)
+ 	for {
+ 		if v_0.Op != OpConst32 {
+ 			break
+ 		}
+ 		t := v_0.Type
+-		if auxIntToInt32(v_0.AuxInt) != 0 {
++		if auxIntToInt32(v_0.AuxInt) != 31 || v_1.Op != OpCtz32 {
+ 			break
+ 		}
+-		x := v_1
+-		if !(isNonNegative(x)) {
++		x := v_1.Args[0]
++		if !(shouldStrengthReduceCtz(config)) {
+ 			break
+ 		}
+-		v.reset(OpNeq32)
++		v.reset(OpEq32)
+ 		v0 := b.NewValue0(v.Pos, OpConst32, t)
+ 		v0.AuxInt = int32ToAuxInt(0)
+ 		v.AddArg2(v0, x)
+ 		return true
+ 	}
+-	// match: (Less32 x (Const32 <t> [1]))
+-	// cond: isNonNegative(x)
++	// match: (Less32 (Const32 <t> [15]) (Ctz16 x))
++	// cond: shouldStrengthReduceCtz(config)
+ 	// result: (Eq32 (Const32 <t> [0]) x)
+ 	for {
+-		x := v_0
+-		if v_1.Op != OpConst32 {
++		if v_0.Op != OpConst32 {
+ 			break
+ 		}
+-		t := v_1.Type
+-		if auxIntToInt32(v_1.AuxInt) != 1 || !(isNonNegative(x)) {
++		t := v_0.Type
++		if auxIntToInt32(v_0.AuxInt) != 15 || v_1.Op != OpCtz16 {
++			break
++		}
++		x := v_1.Args[0]
++		if !(shouldStrengthReduceCtz(config)) {
++			break
++		}
++		v.reset(OpEq32)
++		v0 := b.NewValue0(v.Pos, OpConst32, t)
++		v0.AuxInt = int32ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
++	}
++	// match: (Less32 (Const32 <t> [7]) (Ctz8 x))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Eq32 (Const32 <t> [0]) x)
++	for {
++		if v_0.Op != OpConst32 {
++			break
++		}
++		t := v_0.Type
++		if auxIntToInt32(v_0.AuxInt) != 7 || v_1.Op != OpCtz8 {
++			break
++		}
++		x := v_1.Args[0]
++		if !(shouldStrengthReduceCtz(config)) {
+ 			break
+ 		}
+ 		v.reset(OpEq32)
+@@ -11726,80 +13130,249 @@ func rewriteValuegeneric_OpLess32U(v *Value) bool {
+ 	// match: (Less32U (Const32 [c]) (Const32 [d]))
+ 	// result: (ConstBool [uint32(c) < uint32(d)])
+ 	for {
+-		if v_0.Op != OpConst32 {
++		if v_0.Op != OpConst32 {
++			break
++		}
++		c := auxIntToInt32(v_0.AuxInt)
++		if v_1.Op != OpConst32 {
++			break
++		}
++		d := auxIntToInt32(v_1.AuxInt)
++		v.reset(OpConstBool)
++		v.AuxInt = boolToAuxInt(uint32(c) < uint32(d))
++		return true
++	}
++	// match: (Less32U _ (Const32 [0]))
++	// result: (ConstBool [false])
++	for {
++		if v_1.Op != OpConst32 || auxIntToInt32(v_1.AuxInt) != 0 {
++			break
++		}
++		v.reset(OpConstBool)
++		v.AuxInt = boolToAuxInt(false)
++		return true
++	}
++	return false
++}
++func rewriteValuegeneric_OpLess64(v *Value) bool {
++	v_1 := v.Args[1]
++	v_0 := v.Args[0]
++	b := v.Block
++	config := b.Func.Config
++	// match: (Less64 (Const64 [c]) (Const64 [d]))
++	// result: (ConstBool [c < d])
++	for {
++		if v_0.Op != OpConst64 {
++			break
++		}
++		c := auxIntToInt64(v_0.AuxInt)
++		if v_1.Op != OpConst64 {
++			break
++		}
++		d := auxIntToInt64(v_1.AuxInt)
++		v.reset(OpConstBool)
++		v.AuxInt = boolToAuxInt(c < d)
++		return true
++	}
++	// match: (Less64 (Const64 <t> [0]) x)
++	// cond: isNonNegative(x)
++	// result: (Neq64 (Const64 <t> [0]) x)
++	for {
++		if v_0.Op != OpConst64 {
++			break
++		}
++		t := v_0.Type
++		if auxIntToInt64(v_0.AuxInt) != 0 {
++			break
++		}
++		x := v_1
++		if !(isNonNegative(x)) {
++			break
++		}
++		v.reset(OpNeq64)
++		v0 := b.NewValue0(v.Pos, OpConst64, t)
++		v0.AuxInt = int64ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
++	}
++	// match: (Less64 x (Const64 <t> [1]))
++	// cond: isNonNegative(x)
++	// result: (Eq64 (Const64 <t> [0]) x)
++	for {
++		x := v_0
++		if v_1.Op != OpConst64 {
++			break
++		}
++		t := v_1.Type
++		if auxIntToInt64(v_1.AuxInt) != 1 || !(isNonNegative(x)) {
++			break
++		}
++		v.reset(OpEq64)
++		v0 := b.NewValue0(v.Pos, OpConst64, t)
++		v0.AuxInt = int64ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
++	}
++	// match: (Less64 (Ctz64 x) (Const64 <t> [64]))
++	// cond: shouldStrengthReduceCtz(config) && config.PtrSize == 8
++	// result: (Neq64 (Const64 <t> [0]) x)
++	for {
++		if v_0.Op != OpCtz64 {
++			break
++		}
++		x := v_0.Args[0]
++		if v_1.Op != OpConst64 {
++			break
++		}
++		t := v_1.Type
++		if auxIntToInt64(v_1.AuxInt) != 64 || !(shouldStrengthReduceCtz(config) && config.PtrSize == 8) {
++			break
++		}
++		v.reset(OpNeq64)
++		v0 := b.NewValue0(v.Pos, OpConst64, t)
++		v0.AuxInt = int64ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
++	}
++	// match: (Less64 (Ctz32 x) (Const64 <t> [32]))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Neq64 (Const64 <t> [0]) x)
++	for {
++		if v_0.Op != OpCtz32 {
++			break
++		}
++		x := v_0.Args[0]
++		if v_1.Op != OpConst64 {
++			break
++		}
++		t := v_1.Type
++		if auxIntToInt64(v_1.AuxInt) != 32 || !(shouldStrengthReduceCtz(config)) {
++			break
++		}
++		v.reset(OpNeq64)
++		v0 := b.NewValue0(v.Pos, OpConst64, t)
++		v0.AuxInt = int64ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
++	}
++	// match: (Less64 (Ctz16 x) (Const64 <t> [16]))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Neq64 (Const64 <t> [0]) x)
++	for {
++		if v_0.Op != OpCtz16 {
++			break
++		}
++		x := v_0.Args[0]
++		if v_1.Op != OpConst64 {
++			break
++		}
++		t := v_1.Type
++		if auxIntToInt64(v_1.AuxInt) != 16 || !(shouldStrengthReduceCtz(config)) {
++			break
++		}
++		v.reset(OpNeq64)
++		v0 := b.NewValue0(v.Pos, OpConst64, t)
++		v0.AuxInt = int64ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
++	}
++	// match: (Less64 (Ctz8 x) (Const64 <t> [8]))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Neq64 (Const64 <t> [0]) x)
++	for {
++		if v_0.Op != OpCtz8 {
+ 			break
+ 		}
+-		c := auxIntToInt32(v_0.AuxInt)
+-		if v_1.Op != OpConst32 {
++		x := v_0.Args[0]
++		if v_1.Op != OpConst64 {
+ 			break
+ 		}
+-		d := auxIntToInt32(v_1.AuxInt)
+-		v.reset(OpConstBool)
+-		v.AuxInt = boolToAuxInt(uint32(c) < uint32(d))
++		t := v_1.Type
++		if auxIntToInt64(v_1.AuxInt) != 8 || !(shouldStrengthReduceCtz(config)) {
++			break
++		}
++		v.reset(OpNeq64)
++		v0 := b.NewValue0(v.Pos, OpConst64, t)
++		v0.AuxInt = int64ToAuxInt(0)
++		v.AddArg2(v0, x)
+ 		return true
+ 	}
+-	// match: (Less32U _ (Const32 [0]))
+-	// result: (ConstBool [false])
++	// match: (Less64 (Const64 <t> [63]) (Ctz64 x))
++	// cond: shouldStrengthReduceCtz(config) && config.PtrSize == 8
++	// result: (Eq64 (Const64 <t> [0]) x)
+ 	for {
+-		if v_1.Op != OpConst32 || auxIntToInt32(v_1.AuxInt) != 0 {
++		if v_0.Op != OpConst64 {
+ 			break
+ 		}
+-		v.reset(OpConstBool)
+-		v.AuxInt = boolToAuxInt(false)
++		t := v_0.Type
++		if auxIntToInt64(v_0.AuxInt) != 63 || v_1.Op != OpCtz64 {
++			break
++		}
++		x := v_1.Args[0]
++		if !(shouldStrengthReduceCtz(config) && config.PtrSize == 8) {
++			break
++		}
++		v.reset(OpEq64)
++		v0 := b.NewValue0(v.Pos, OpConst64, t)
++		v0.AuxInt = int64ToAuxInt(0)
++		v.AddArg2(v0, x)
+ 		return true
+ 	}
+-	return false
+-}
+-func rewriteValuegeneric_OpLess64(v *Value) bool {
+-	v_1 := v.Args[1]
+-	v_0 := v.Args[0]
+-	b := v.Block
+-	// match: (Less64 (Const64 [c]) (Const64 [d]))
+-	// result: (ConstBool [c < d])
++	// match: (Less64 (Const64 <t> [31]) (Ctz32 x))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Eq64 (Const64 <t> [0]) x)
+ 	for {
+ 		if v_0.Op != OpConst64 {
+ 			break
+ 		}
+-		c := auxIntToInt64(v_0.AuxInt)
+-		if v_1.Op != OpConst64 {
++		t := v_0.Type
++		if auxIntToInt64(v_0.AuxInt) != 31 || v_1.Op != OpCtz32 {
+ 			break
+ 		}
+-		d := auxIntToInt64(v_1.AuxInt)
+-		v.reset(OpConstBool)
+-		v.AuxInt = boolToAuxInt(c < d)
++		x := v_1.Args[0]
++		if !(shouldStrengthReduceCtz(config)) {
++			break
++		}
++		v.reset(OpEq64)
++		v0 := b.NewValue0(v.Pos, OpConst64, t)
++		v0.AuxInt = int64ToAuxInt(0)
++		v.AddArg2(v0, x)
+ 		return true
+ 	}
+-	// match: (Less64 (Const64 <t> [0]) x)
+-	// cond: isNonNegative(x)
+-	// result: (Neq64 (Const64 <t> [0]) x)
++	// match: (Less64 (Const64 <t> [15]) (Ctz16 x))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Eq64 (Const64 <t> [0]) x)
+ 	for {
+ 		if v_0.Op != OpConst64 {
+ 			break
+ 		}
+ 		t := v_0.Type
+-		if auxIntToInt64(v_0.AuxInt) != 0 {
++		if auxIntToInt64(v_0.AuxInt) != 15 || v_1.Op != OpCtz16 {
+ 			break
+ 		}
+-		x := v_1
+-		if !(isNonNegative(x)) {
++		x := v_1.Args[0]
++		if !(shouldStrengthReduceCtz(config)) {
+ 			break
+ 		}
+-		v.reset(OpNeq64)
++		v.reset(OpEq64)
+ 		v0 := b.NewValue0(v.Pos, OpConst64, t)
+ 		v0.AuxInt = int64ToAuxInt(0)
+ 		v.AddArg2(v0, x)
+ 		return true
+ 	}
+-	// match: (Less64 x (Const64 <t> [1]))
+-	// cond: isNonNegative(x)
++	// match: (Less64 (Const64 <t> [7]) (Ctz8 x))
++	// cond: shouldStrengthReduceCtz(config)
+ 	// result: (Eq64 (Const64 <t> [0]) x)
+ 	for {
+-		x := v_0
+-		if v_1.Op != OpConst64 {
++		if v_0.Op != OpConst64 {
+ 			break
+ 		}
+-		t := v_1.Type
+-		if auxIntToInt64(v_1.AuxInt) != 1 || !(isNonNegative(x)) {
++		t := v_0.Type
++		if auxIntToInt64(v_0.AuxInt) != 7 || v_1.Op != OpCtz8 {
++			break
++		}
++		x := v_1.Args[0]
++		if !(shouldStrengthReduceCtz(config)) {
+ 			break
+ 		}
+ 		v.reset(OpEq64)
+@@ -11864,6 +13437,7 @@ func rewriteValuegeneric_OpLess8(v *Value) bool {
+ 	v_1 := v.Args[1]
+ 	v_0 := v.Args[0]
+ 	b := v.Block
++	config := b.Func.Config
+ 	// match: (Less8 (Const8 [c]) (Const8 [d]))
+ 	// result: (ConstBool [c < d])
+ 	for {
+@@ -11918,6 +13492,174 @@ func rewriteValuegeneric_OpLess8(v *Value) bool {
+ 		v.AddArg2(v0, x)
+ 		return true
+ 	}
++	// match: (Less8 (Ctz64 x) (Const8 <t> [64]))
++	// cond: shouldStrengthReduceCtz(config) && config.PtrSize == 8
++	// result: (Neq8 (Const8 <t> [0]) x)
++	for {
++		if v_0.Op != OpCtz64 {
++			break
++		}
++		x := v_0.Args[0]
++		if v_1.Op != OpConst8 {
++			break
++		}
++		t := v_1.Type
++		if auxIntToInt8(v_1.AuxInt) != 64 || !(shouldStrengthReduceCtz(config) && config.PtrSize == 8) {
++			break
++		}
++		v.reset(OpNeq8)
++		v0 := b.NewValue0(v.Pos, OpConst8, t)
++		v0.AuxInt = int8ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
++	}
++	// match: (Less8 (Ctz32 x) (Const8 <t> [32]))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Neq8 (Const8 <t> [0]) x)
++	for {
++		if v_0.Op != OpCtz32 {
++			break
++		}
++		x := v_0.Args[0]
++		if v_1.Op != OpConst8 {
++			break
++		}
++		t := v_1.Type
++		if auxIntToInt8(v_1.AuxInt) != 32 || !(shouldStrengthReduceCtz(config)) {
++			break
++		}
++		v.reset(OpNeq8)
++		v0 := b.NewValue0(v.Pos, OpConst8, t)
++		v0.AuxInt = int8ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
++	}
++	// match: (Less8 (Ctz16 x) (Const8 <t> [16]))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Neq8 (Const8 <t> [0]) x)
++	for {
++		if v_0.Op != OpCtz16 {
++			break
++		}
++		x := v_0.Args[0]
++		if v_1.Op != OpConst8 {
++			break
++		}
++		t := v_1.Type
++		if auxIntToInt8(v_1.AuxInt) != 16 || !(shouldStrengthReduceCtz(config)) {
++			break
++		}
++		v.reset(OpNeq8)
++		v0 := b.NewValue0(v.Pos, OpConst8, t)
++		v0.AuxInt = int8ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
++	}
++	// match: (Less8 (Ctz8 x) (Const8 <t> [8]))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Neq8 (Const8 <t> [0]) x)
++	for {
++		if v_0.Op != OpCtz8 {
++			break
++		}
++		x := v_0.Args[0]
++		if v_1.Op != OpConst8 {
++			break
++		}
++		t := v_1.Type
++		if auxIntToInt8(v_1.AuxInt) != 8 || !(shouldStrengthReduceCtz(config)) {
++			break
++		}
++		v.reset(OpNeq8)
++		v0 := b.NewValue0(v.Pos, OpConst8, t)
++		v0.AuxInt = int8ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
++	}
++	// match: (Less8 (Const8 <t> [63]) (Ctz64 x))
++	// cond: shouldStrengthReduceCtz(config) && config.PtrSize == 8
++	// result: (Eq8 (Const8 <t> [0]) x)
++	for {
++		if v_0.Op != OpConst8 {
++			break
++		}
++		t := v_0.Type
++		if auxIntToInt8(v_0.AuxInt) != 63 || v_1.Op != OpCtz64 {
++			break
++		}
++		x := v_1.Args[0]
++		if !(shouldStrengthReduceCtz(config) && config.PtrSize == 8) {
++			break
++		}
++		v.reset(OpEq8)
++		v0 := b.NewValue0(v.Pos, OpConst8, t)
++		v0.AuxInt = int8ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
++	}
++	// match: (Less8 (Const8 <t> [31]) (Ctz32 x))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Eq8 (Const8 <t> [0]) x)
++	for {
++		if v_0.Op != OpConst8 {
++			break
++		}
++		t := v_0.Type
++		if auxIntToInt8(v_0.AuxInt) != 31 || v_1.Op != OpCtz32 {
++			break
++		}
++		x := v_1.Args[0]
++		if !(shouldStrengthReduceCtz(config)) {
++			break
++		}
++		v.reset(OpEq8)
++		v0 := b.NewValue0(v.Pos, OpConst8, t)
++		v0.AuxInt = int8ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
++	}
++	// match: (Less8 (Const8 <t> [15]) (Ctz16 x))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Eq8 (Const8 <t> [0]) x)
++	for {
++		if v_0.Op != OpConst8 {
++			break
++		}
++		t := v_0.Type
++		if auxIntToInt8(v_0.AuxInt) != 15 || v_1.Op != OpCtz16 {
++			break
++		}
++		x := v_1.Args[0]
++		if !(shouldStrengthReduceCtz(config)) {
++			break
++		}
++		v.reset(OpEq8)
++		v0 := b.NewValue0(v.Pos, OpConst8, t)
++		v0.AuxInt = int8ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
++	}
++	// match: (Less8 (Const8 <t> [7]) (Ctz8 x))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Eq8 (Const8 <t> [0]) x)
++	for {
++		if v_0.Op != OpConst8 {
++			break
++		}
++		t := v_0.Type
++		if auxIntToInt8(v_0.AuxInt) != 7 || v_1.Op != OpCtz8 {
++			break
++		}
++		x := v_1.Args[0]
++		if !(shouldStrengthReduceCtz(config)) {
++			break
++		}
++		v.reset(OpEq8)
++		v0 := b.NewValue0(v.Pos, OpConst8, t)
++		v0.AuxInt = int8ToAuxInt(0)
++		v.AddArg2(v0, x)
++		return true
++	}
+ 	return false
+ }
+ func rewriteValuegeneric_OpLess8U(v *Value) bool {
+@@ -16825,6 +18567,7 @@ func rewriteValuegeneric_OpNeq16(v *Value) bool {
+ 	v_1 := v.Args[1]
+ 	v_0 := v.Args[0]
+ 	b := v.Block
++	config := b.Func.Config
+ 	typ := &b.Func.Config.Types
+ 	// match: (Neq16 x x)
+ 	// result: (ConstBool [false])
+@@ -17006,12 +18749,109 @@ func rewriteValuegeneric_OpNeq16(v *Value) bool {
+ 		}
+ 		break
+ 	}
++	// match: (Neq16 (Const16 <t> [64]) (Ctz64 x))
++	// cond: shouldStrengthReduceCtz(config) && config.PtrSize == 8
++	// result: (Neq16 (Const16 <t> [0]) x)
++	for {
++		for _i0 := 0; _i0 <= 1; _i0, v_0, v_1 = _i0+1, v_1, v_0 {
++			if v_0.Op != OpConst16 {
++				continue
++			}
++			t := v_0.Type
++			if auxIntToInt16(v_0.AuxInt) != 64 || v_1.Op != OpCtz64 {
++				continue
++			}
++			x := v_1.Args[0]
++			if !(shouldStrengthReduceCtz(config) && config.PtrSize == 8) {
++				continue
++			}
++			v.reset(OpNeq16)
++			v0 := b.NewValue0(v.Pos, OpConst16, t)
++			v0.AuxInt = int16ToAuxInt(0)
++			v.AddArg2(v0, x)
++			return true
++		}
++		break
++	}
++	// match: (Neq16 (Const16 <t> [32]) (Ctz32 x))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Neq16 (Const16 <t> [0]) x)
++	for {
++		for _i0 := 0; _i0 <= 1; _i0, v_0, v_1 = _i0+1, v_1, v_0 {
++			if v_0.Op != OpConst16 {
++				continue
++			}
++			t := v_0.Type
++			if auxIntToInt16(v_0.AuxInt) != 32 || v_1.Op != OpCtz32 {
++				continue
++			}
++			x := v_1.Args[0]
++			if !(shouldStrengthReduceCtz(config)) {
++				continue
++			}
++			v.reset(OpNeq16)
++			v0 := b.NewValue0(v.Pos, OpConst16, t)
++			v0.AuxInt = int16ToAuxInt(0)
++			v.AddArg2(v0, x)
++			return true
++		}
++		break
++	}
++	// match: (Neq16 (Const16 <t> [16]) (Ctz16 x))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Neq16 (Const16 <t> [0]) x)
++	for {
++		for _i0 := 0; _i0 <= 1; _i0, v_0, v_1 = _i0+1, v_1, v_0 {
++			if v_0.Op != OpConst16 {
++				continue
++			}
++			t := v_0.Type
++			if auxIntToInt16(v_0.AuxInt) != 16 || v_1.Op != OpCtz16 {
++				continue
++			}
++			x := v_1.Args[0]
++			if !(shouldStrengthReduceCtz(config)) {
++				continue
++			}
++			v.reset(OpNeq16)
++			v0 := b.NewValue0(v.Pos, OpConst16, t)
++			v0.AuxInt = int16ToAuxInt(0)
++			v.AddArg2(v0, x)
++			return true
++		}
++		break
++	}
++	// match: (Neq16 (Const16 <t> [8]) (Ctz8 x))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Neq16 (Const16 <t> [0]) x)
++	for {
++		for _i0 := 0; _i0 <= 1; _i0, v_0, v_1 = _i0+1, v_1, v_0 {
++			if v_0.Op != OpConst16 {
++				continue
++			}
++			t := v_0.Type
++			if auxIntToInt16(v_0.AuxInt) != 8 || v_1.Op != OpCtz8 {
++				continue
++			}
++			x := v_1.Args[0]
++			if !(shouldStrengthReduceCtz(config)) {
++				continue
++			}
++			v.reset(OpNeq16)
++			v0 := b.NewValue0(v.Pos, OpConst16, t)
++			v0.AuxInt = int16ToAuxInt(0)
++			v.AddArg2(v0, x)
++			return true
++		}
++		break
++	}
+ 	return false
+ }
+ func rewriteValuegeneric_OpNeq32(v *Value) bool {
+ 	v_1 := v.Args[1]
+ 	v_0 := v.Args[0]
+ 	b := v.Block
++	config := b.Func.Config
+ 	typ := &b.Func.Config.Types
+ 	// match: (Neq32 x x)
+ 	// result: (ConstBool [false])
+@@ -17193,6 +19033,102 @@ func rewriteValuegeneric_OpNeq32(v *Value) bool {
+ 		}
+ 		break
+ 	}
++	// match: (Neq32 (Const32 <t> [64]) (Ctz64 x))
++	// cond: shouldStrengthReduceCtz(config) && config.PtrSize == 8
++	// result: (Neq32 (Const32 <t> [0]) x)
++	for {
++		for _i0 := 0; _i0 <= 1; _i0, v_0, v_1 = _i0+1, v_1, v_0 {
++			if v_0.Op != OpConst32 {
++				continue
++			}
++			t := v_0.Type
++			if auxIntToInt32(v_0.AuxInt) != 64 || v_1.Op != OpCtz64 {
++				continue
++			}
++			x := v_1.Args[0]
++			if !(shouldStrengthReduceCtz(config) && config.PtrSize == 8) {
++				continue
++			}
++			v.reset(OpNeq32)
++			v0 := b.NewValue0(v.Pos, OpConst32, t)
++			v0.AuxInt = int32ToAuxInt(0)
++			v.AddArg2(v0, x)
++			return true
++		}
++		break
++	}
++	// match: (Neq32 (Const32 <t> [32]) (Ctz32 x))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Neq32 (Const32 <t> [0]) x)
++	for {
++		for _i0 := 0; _i0 <= 1; _i0, v_0, v_1 = _i0+1, v_1, v_0 {
++			if v_0.Op != OpConst32 {
++				continue
++			}
++			t := v_0.Type
++			if auxIntToInt32(v_0.AuxInt) != 32 || v_1.Op != OpCtz32 {
++				continue
++			}
++			x := v_1.Args[0]
++			if !(shouldStrengthReduceCtz(config)) {
++				continue
++			}
++			v.reset(OpNeq32)
++			v0 := b.NewValue0(v.Pos, OpConst32, t)
++			v0.AuxInt = int32ToAuxInt(0)
++			v.AddArg2(v0, x)
++			return true
++		}
++		break
++	}
++	// match: (Neq32 (Const32 <t> [16]) (Ctz16 x))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Neq32 (Const32 <t> [0]) x)
++	for {
++		for _i0 := 0; _i0 <= 1; _i0, v_0, v_1 = _i0+1, v_1, v_0 {
++			if v_0.Op != OpConst32 {
++				continue
++			}
++			t := v_0.Type
++			if auxIntToInt32(v_0.AuxInt) != 16 || v_1.Op != OpCtz16 {
++				continue
++			}
++			x := v_1.Args[0]
++			if !(shouldStrengthReduceCtz(config)) {
++				continue
++			}
++			v.reset(OpNeq32)
++			v0 := b.NewValue0(v.Pos, OpConst32, t)
++			v0.AuxInt = int32ToAuxInt(0)
++			v.AddArg2(v0, x)
++			return true
++		}
++		break
++	}
++	// match: (Neq32 (Const32 <t> [8]) (Ctz8 x))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Neq32 (Const32 <t> [0]) x)
++	for {
++		for _i0 := 0; _i0 <= 1; _i0, v_0, v_1 = _i0+1, v_1, v_0 {
++			if v_0.Op != OpConst32 {
++				continue
++			}
++			t := v_0.Type
++			if auxIntToInt32(v_0.AuxInt) != 8 || v_1.Op != OpCtz8 {
++				continue
++			}
++			x := v_1.Args[0]
++			if !(shouldStrengthReduceCtz(config)) {
++				continue
++			}
++			v.reset(OpNeq32)
++			v0 := b.NewValue0(v.Pos, OpConst32, t)
++			v0.AuxInt = int32ToAuxInt(0)
++			v.AddArg2(v0, x)
++			return true
++		}
++		break
++	}
+ 	return false
+ }
+ func rewriteValuegeneric_OpNeq32F(v *Value) bool {
+@@ -17222,6 +19158,7 @@ func rewriteValuegeneric_OpNeq64(v *Value) bool {
+ 	v_1 := v.Args[1]
+ 	v_0 := v.Args[0]
+ 	b := v.Block
++	config := b.Func.Config
+ 	typ := &b.Func.Config.Types
+ 	// match: (Neq64 x x)
+ 	// result: (ConstBool [false])
+@@ -17403,6 +19340,102 @@ func rewriteValuegeneric_OpNeq64(v *Value) bool {
+ 		}
+ 		break
+ 	}
++	// match: (Neq64 (Const64 <t> [64]) (Ctz64 x))
++	// cond: shouldStrengthReduceCtz(config) && config.PtrSize == 8
++	// result: (Neq64 (Const64 <t> [0]) x)
++	for {
++		for _i0 := 0; _i0 <= 1; _i0, v_0, v_1 = _i0+1, v_1, v_0 {
++			if v_0.Op != OpConst64 {
++				continue
++			}
++			t := v_0.Type
++			if auxIntToInt64(v_0.AuxInt) != 64 || v_1.Op != OpCtz64 {
++				continue
++			}
++			x := v_1.Args[0]
++			if !(shouldStrengthReduceCtz(config) && config.PtrSize == 8) {
++				continue
++			}
++			v.reset(OpNeq64)
++			v0 := b.NewValue0(v.Pos, OpConst64, t)
++			v0.AuxInt = int64ToAuxInt(0)
++			v.AddArg2(v0, x)
++			return true
++		}
++		break
++	}
++	// match: (Neq64 (Const64 <t> [32]) (Ctz32 x))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Neq64 (Const64 <t> [0]) x)
++	for {
++		for _i0 := 0; _i0 <= 1; _i0, v_0, v_1 = _i0+1, v_1, v_0 {
++			if v_0.Op != OpConst64 {
++				continue
++			}
++			t := v_0.Type
++			if auxIntToInt64(v_0.AuxInt) != 32 || v_1.Op != OpCtz32 {
++				continue
++			}
++			x := v_1.Args[0]
++			if !(shouldStrengthReduceCtz(config)) {
++				continue
++			}
++			v.reset(OpNeq64)
++			v0 := b.NewValue0(v.Pos, OpConst64, t)
++			v0.AuxInt = int64ToAuxInt(0)
++			v.AddArg2(v0, x)
++			return true
++		}
++		break
++	}
++	// match: (Neq64 (Const64 <t> [16]) (Ctz16 x))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Neq64 (Const64 <t> [0]) x)
++	for {
++		for _i0 := 0; _i0 <= 1; _i0, v_0, v_1 = _i0+1, v_1, v_0 {
++			if v_0.Op != OpConst64 {
++				continue
++			}
++			t := v_0.Type
++			if auxIntToInt64(v_0.AuxInt) != 16 || v_1.Op != OpCtz16 {
++				continue
++			}
++			x := v_1.Args[0]
++			if !(shouldStrengthReduceCtz(config)) {
++				continue
++			}
++			v.reset(OpNeq64)
++			v0 := b.NewValue0(v.Pos, OpConst64, t)
++			v0.AuxInt = int64ToAuxInt(0)
++			v.AddArg2(v0, x)
++			return true
++		}
++		break
++	}
++	// match: (Neq64 (Const64 <t> [8]) (Ctz8 x))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Neq64 (Const64 <t> [0]) x)
++	for {
++		for _i0 := 0; _i0 <= 1; _i0, v_0, v_1 = _i0+1, v_1, v_0 {
++			if v_0.Op != OpConst64 {
++				continue
++			}
++			t := v_0.Type
++			if auxIntToInt64(v_0.AuxInt) != 8 || v_1.Op != OpCtz8 {
++				continue
++			}
++			x := v_1.Args[0]
++			if !(shouldStrengthReduceCtz(config)) {
++				continue
++			}
++			v.reset(OpNeq64)
++			v0 := b.NewValue0(v.Pos, OpConst64, t)
++			v0.AuxInt = int64ToAuxInt(0)
++			v.AddArg2(v0, x)
++			return true
++		}
++		break
++	}
+ 	return false
+ }
+ func rewriteValuegeneric_OpNeq64F(v *Value) bool {
+@@ -17432,6 +19465,7 @@ func rewriteValuegeneric_OpNeq8(v *Value) bool {
+ 	v_1 := v.Args[1]
+ 	v_0 := v.Args[0]
+ 	b := v.Block
++	config := b.Func.Config
+ 	typ := &b.Func.Config.Types
+ 	// match: (Neq8 x x)
+ 	// result: (ConstBool [false])
+@@ -17613,6 +19647,102 @@ func rewriteValuegeneric_OpNeq8(v *Value) bool {
+ 		}
+ 		break
+ 	}
++	// match: (Neq8 (Const8 <t> [64]) (Ctz64 x))
++	// cond: shouldStrengthReduceCtz(config) && config.PtrSize == 8
++	// result: (Neq8 (Const8 <t> [0]) x)
++	for {
++		for _i0 := 0; _i0 <= 1; _i0, v_0, v_1 = _i0+1, v_1, v_0 {
++			if v_0.Op != OpConst8 {
++				continue
++			}
++			t := v_0.Type
++			if auxIntToInt8(v_0.AuxInt) != 64 || v_1.Op != OpCtz64 {
++				continue
++			}
++			x := v_1.Args[0]
++			if !(shouldStrengthReduceCtz(config) && config.PtrSize == 8) {
++				continue
++			}
++			v.reset(OpNeq8)
++			v0 := b.NewValue0(v.Pos, OpConst8, t)
++			v0.AuxInt = int8ToAuxInt(0)
++			v.AddArg2(v0, x)
++			return true
++		}
++		break
++	}
++	// match: (Neq8 (Const8 <t> [32]) (Ctz32 x))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Neq8 (Const8 <t> [0]) x)
++	for {
++		for _i0 := 0; _i0 <= 1; _i0, v_0, v_1 = _i0+1, v_1, v_0 {
++			if v_0.Op != OpConst8 {
++				continue
++			}
++			t := v_0.Type
++			if auxIntToInt8(v_0.AuxInt) != 32 || v_1.Op != OpCtz32 {
++				continue
++			}
++			x := v_1.Args[0]
++			if !(shouldStrengthReduceCtz(config)) {
++				continue
++			}
++			v.reset(OpNeq8)
++			v0 := b.NewValue0(v.Pos, OpConst8, t)
++			v0.AuxInt = int8ToAuxInt(0)
++			v.AddArg2(v0, x)
++			return true
++		}
++		break
++	}
++	// match: (Neq8 (Const8 <t> [16]) (Ctz16 x))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Neq8 (Const8 <t> [0]) x)
++	for {
++		for _i0 := 0; _i0 <= 1; _i0, v_0, v_1 = _i0+1, v_1, v_0 {
++			if v_0.Op != OpConst8 {
++				continue
++			}
++			t := v_0.Type
++			if auxIntToInt8(v_0.AuxInt) != 16 || v_1.Op != OpCtz16 {
++				continue
++			}
++			x := v_1.Args[0]
++			if !(shouldStrengthReduceCtz(config)) {
++				continue
++			}
++			v.reset(OpNeq8)
++			v0 := b.NewValue0(v.Pos, OpConst8, t)
++			v0.AuxInt = int8ToAuxInt(0)
++			v.AddArg2(v0, x)
++			return true
++		}
++		break
++	}
++	// match: (Neq8 (Const8 <t> [8]) (Ctz8 x))
++	// cond: shouldStrengthReduceCtz(config)
++	// result: (Neq8 (Const8 <t> [0]) x)
++	for {
++		for _i0 := 0; _i0 <= 1; _i0, v_0, v_1 = _i0+1, v_1, v_0 {
++			if v_0.Op != OpConst8 {
++				continue
++			}
++			t := v_0.Type
++			if auxIntToInt8(v_0.AuxInt) != 8 || v_1.Op != OpCtz8 {
++				continue
++			}
++			x := v_1.Args[0]
++			if !(shouldStrengthReduceCtz(config)) {
++				continue
++			}
++			v.reset(OpNeq8)
++			v0 := b.NewValue0(v.Pos, OpConst8, t)
++			v0.AuxInt = int8ToAuxInt(0)
++			v.AddArg2(v0, x)
++			return true
++		}
++		break
++	}
+ 	return false
+ }
+ func rewriteValuegeneric_OpNeqB(v *Value) bool {
+diff --git a/src/cmd/compile/internal/ssagen/ssa.go b/src/cmd/compile/internal/ssagen/ssa.go
+index 526332294c..cda33f67d2 100644
+--- a/src/cmd/compile/internal/ssagen/ssa.go
++++ b/src/cmd/compile/internal/ssagen/ssa.go
+@@ -4489,12 +4489,12 @@ func InitTables() {
+ 		func(s *state, n *ir.CallExpr, args []*ssa.Value) *ssa.Value {
+ 			return s.newValue1(ssa.OpCtz64, types.Types[types.TINT], args[0])
+ 		},
+-		sys.AMD64, sys.ARM64, sys.ARM, sys.S390X, sys.MIPS, sys.PPC64, sys.Wasm)
++		sys.AMD64, sys.ARM64, sys.ARM, sys.S390X, sys.Loong64, sys.MIPS, sys.PPC64, sys.Wasm)
+ 	addF("math/bits", "TrailingZeros32",
+ 		func(s *state, n *ir.CallExpr, args []*ssa.Value) *ssa.Value {
+ 			return s.newValue1(ssa.OpCtz32, types.Types[types.TINT], args[0])
+ 		},
+-		sys.AMD64, sys.ARM64, sys.ARM, sys.S390X, sys.MIPS, sys.PPC64, sys.Wasm)
++		sys.AMD64, sys.ARM64, sys.ARM, sys.S390X, sys.Loong64, sys.MIPS, sys.PPC64, sys.Wasm)
+ 	addF("math/bits", "TrailingZeros16",
+ 		func(s *state, n *ir.CallExpr, args []*ssa.Value) *ssa.Value {
+ 			x := s.newValue1(ssa.OpZeroExt16to32, types.Types[types.TUINT32], args[0])
+@@ -4515,7 +4515,7 @@ func InitTables() {
+ 			y := s.newValue2(ssa.OpOr64, types.Types[types.TUINT64], x, c)
+ 			return s.newValue1(ssa.OpCtz64, types.Types[types.TINT], y)
+ 		},
+-		sys.S390X, sys.PPC64)
++		sys.Loong64, sys.S390X, sys.PPC64)
+ 	addF("math/bits", "TrailingZeros8",
+ 		func(s *state, n *ir.CallExpr, args []*ssa.Value) *ssa.Value {
+ 			x := s.newValue1(ssa.OpZeroExt8to32, types.Types[types.TUINT32], args[0])
+@@ -4536,7 +4536,7 @@ func InitTables() {
+ 			y := s.newValue2(ssa.OpOr64, types.Types[types.TUINT64], x, c)
+ 			return s.newValue1(ssa.OpCtz64, types.Types[types.TINT], y)
+ 		},
+-		sys.S390X)
++		sys.Loong64, sys.S390X)
+ 	alias("math/bits", "ReverseBytes64", "runtime/internal/sys", "Bswap64", all...)
+ 	alias("math/bits", "ReverseBytes32", "runtime/internal/sys", "Bswap32", all...)
+ 	// ReverseBytes inlines correctly, no need to intrinsify it.
+diff --git a/test/codegen/mathbits.go b/test/codegen/mathbits.go
+index b506a37006..90af677d6b 100644
+--- a/test/codegen/mathbits.go
++++ b/test/codegen/mathbits.go
+@@ -310,6 +310,7 @@ func TrailingZeros(n uint) int {
+ 	// amd64/v3:"TZCNTQ"
+ 	// arm:"CLZ"
+ 	// arm64:"RBIT","CLZ"
++	// loong64:"CTZV"
+ 	// s390x:"FLOGR"
+ 	// ppc64/power8:"ANDN","POPCNTD"
+ 	// ppc64le/power8:"ANDN","POPCNTD"
+@@ -323,6 +324,7 @@ func TrailingZeros64(n uint64) int {
+ 	// amd64/v1,amd64/v2:"BSFQ","MOVL\t\\$64","CMOVQEQ"
+ 	// amd64/v3:"TZCNTQ"
+ 	// arm64:"RBIT","CLZ"
++	// loong64:"CTZV"
+ 	// s390x:"FLOGR"
+ 	// ppc64/power8:"ANDN","POPCNTD"
+ 	// ppc64le/power8:"ANDN","POPCNTD"
+@@ -338,11 +340,42 @@ func TrailingZeros64Subtract(n uint64) int {
+ 	return bits.TrailingZeros64(1 - n)
+ }
+ 
++func TrailingZeros64Eq(n uint64) bool {
++	// loong64:-"CTZV"
++	return bits.TrailingZeros64(n) == 64
++}
++
++func TrailingZeros64Neq(n uint64) bool {
++	// loong64:-"CTZV"
++	return bits.TrailingZeros64(n) != 64
++}
++
++func TrailingZeros64Less(n uint64) bool {
++	// loong64:-"CTZV"
++	return bits.TrailingZeros64(n) < 64
++}
++
++func TrailingZeros64Leq(n uint64) bool {
++	// loong64:-"CTZV"
++	return bits.TrailingZeros64(n) <= 63
++}
++
++func TrailingZeros64AndBranch(n uint64) int {
++	// loong64:"CTZV"
++	theBit := bits.TrailingZeros64(n)
++	// loong64:"BEQ",-"SGT"
++	if theBit < 64 {
++		return theBit * 2
++	}
++	return 0
++}
++
+ func TrailingZeros32(n uint32) int {
+ 	// amd64/v1,amd64/v2:"BTSQ\\t\\$32","BSFQ"
+ 	// amd64/v3:"TZCNTL"
+ 	// arm:"CLZ"
+ 	// arm64:"RBITW","CLZW"
++	// loong64:"CTZW"
+ 	// s390x:"FLOGR","MOVWZ"
+ 	// ppc64/power8:"ANDN","POPCNTW"
+ 	// ppc64le/power8:"ANDN","POPCNTW"
+@@ -352,11 +385,42 @@ func TrailingZeros32(n uint32) int {
+ 	return bits.TrailingZeros32(n)
+ }
+ 
++func TrailingZeros32Eq(n uint32) bool {
++	// loong64:-"CTZW"
++	return bits.TrailingZeros32(n) == 32
++}
++
++func TrailingZeros32Neq(n uint32) bool {
++	// loong64:-"CTZW"
++	return bits.TrailingZeros32(n) != 32
++}
++
++func TrailingZeros32Less(n uint32) bool {
++	// loong64:-"CTZW"
++	return bits.TrailingZeros32(n) < 32
++}
++
++func TrailingZeros32Leq(n uint32) bool {
++	// loong64:-"CTZW"
++	return bits.TrailingZeros32(n) <= 31
++}
++
++func TrailingZeros32AndBranch(n uint32) int {
++	// loong64:"CTZW"
++	theBit := bits.TrailingZeros32(n)
++	// loong64:"BEQ",-"SGT"
++	if theBit < 32 {
++		return theBit * 2
++	}
++	return 0
++}
++
+ func TrailingZeros16(n uint16) int {
+ 	// amd64:"BSFL","BTSL\\t\\$16"
+ 	// 386:"BSFL\t"
+ 	// arm:"ORR\t\\$65536","CLZ",-"MOVHU\tR"
+ 	// arm64:"ORR\t\\$65536","RBITW","CLZW",-"MOVHU\tR",-"RBIT\t",-"CLZ\t"
++	// loong64:"CTZV"
+ 	// s390x:"FLOGR","OR\t\\$65536"
+ 	// ppc64/power8:"POPCNTD","OR\\t\\$65536"
+ 	// ppc64le/power8:"POPCNTD","OR\\t\\$65536"
+@@ -370,6 +434,7 @@ func TrailingZeros8(n uint8) int {
+ 	// amd64:"BSFL","BTSL\\t\\$8"
+ 	// arm:"ORR\t\\$256","CLZ",-"MOVBU\tR"
+ 	// arm64:"ORR\t\\$256","RBITW","CLZW",-"MOVBU\tR",-"RBIT\t",-"CLZ\t"
++	// loong64:"CTZV"
+ 	// s390x:"FLOGR","OR\t\\$256"
+ 	// wasm:"I64Ctz"
+ 	return bits.TrailingZeros8(n)
+-- 
+2.40.0
+

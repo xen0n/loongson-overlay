@@ -64,6 +64,9 @@ DOCS=(
 	SECURITY.md
 )
 
+PATCHES=(
+)
+
 go_arch() {
 	# By chance most portage arch names match Go
 	local tc_arch=$(tc-arch $@)
@@ -117,6 +120,13 @@ go_tuple() {
 
 go_cross_compile() {
 	[[ $(go_tuple ${CBUILD}) != $(go_tuple) ]]
+}
+
+src_prepare() {
+	PATCHES+=(
+		"${FILESDIR}/testing-1.20.3/"*
+	)
+	default
 }
 
 src_compile() {

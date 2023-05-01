@@ -1,0 +1,129 @@
+From a0615cddf7ae2f443e229dffcb4f58a730f44e0e Mon Sep 17 00:00:00 2001
+From: WANG Xuerui <git@xen0n.name>
+Date: Thu, 23 Mar 2023 00:52:51 +0800
+Subject: [PATCH 39/48] cmd/asm: add support for loong64 CRC32 instructions
+
+Change-Id: Id85739854d82a31e0ede4fcd2a48566d6c2ed8de
+(cherry picked from commit 4a8ca08d565509660b10ceabc03f03e7fd922fec)
+---
+ .../asm/internal/asm/testdata/loong64enc1.s   | 10 +++++++
+ src/cmd/internal/obj/loong64/a.out.go         |  9 +++++++
+ src/cmd/internal/obj/loong64/anames.go        |  8 ++++++
+ src/cmd/internal/obj/loong64/asm.go           | 27 +++++++++++++++++++
+ 4 files changed, 54 insertions(+)
+
+diff --git a/src/cmd/asm/internal/asm/testdata/loong64enc1.s b/src/cmd/asm/internal/asm/testdata/loong64enc1.s
+index e034d548aa..25a8150cef 100644
+--- a/src/cmd/asm/internal/asm/testdata/loong64enc1.s
++++ b/src/cmd/asm/internal/asm/testdata/loong64enc1.s
+@@ -184,6 +184,16 @@ lable2:
+ 	DIVVU	R4, R5	 		// a5102300
+ 	DIVVU	R4, R5, R6		// a6102300
+ 
++	// CRC32
++	CRCWBW	R4, R5, R6		// a6102400
++	CRCWHW	R4, R5, R6		// a6902400
++	CRCWWW	R4, R5, R6		// a6102500
++	CRCWVW	R4, R5, R6		// a6902500
++	CRCCWBW	R4, R5, R6		// a6102600
++	CRCCWHW	R4, R5, R6		// a6902600
++	CRCCWWW	R4, R5, R6		// a6102700
++	CRCCWVW	R4, R5, R6		// a6902700
++
+ 	MOVH	R4, result+16(FP)	// 64604029
+ 	MOVH	R4, 1(R5)		// a4044029
+ 	MOVH	y+8(FP), R4		// 64404028
+diff --git a/src/cmd/internal/obj/loong64/a.out.go b/src/cmd/internal/obj/loong64/a.out.go
+index ad92791e10..7efbaada1e 100644
+--- a/src/cmd/internal/obj/loong64/a.out.go
++++ b/src/cmd/internal/obj/loong64/a.out.go
+@@ -400,6 +400,15 @@ const (
+ 	AREVH2W
+ 	AREVHV
+ 
++	ACRCWBW
++	ACRCWHW
++	ACRCWWW
++	ACRCWVW
++	ACRCCWBW
++	ACRCCWHW
++	ACRCCWWW
++	ACRCCWVW
++
+ 	// 64-bit FP
+ 	ATRUNCFV
+ 	ATRUNCDV
+diff --git a/src/cmd/internal/obj/loong64/anames.go b/src/cmd/internal/obj/loong64/anames.go
+index da6b578ebf..cd6764e4d8 100644
+--- a/src/cmd/internal/obj/loong64/anames.go
++++ b/src/cmd/internal/obj/loong64/anames.go
+@@ -140,6 +140,14 @@ var Anames = []string{
+ 	"REVBV",
+ 	"REVH2W",
+ 	"REVHV",
++	"CRCWBW",
++	"CRCWHW",
++	"CRCWWW",
++	"CRCWVW",
++	"CRCCWBW",
++	"CRCCWHW",
++	"CRCCWWW",
++	"CRCCWVW",
+ 	"TRUNCFV",
+ 	"TRUNCDV",
+ 	"TRUNCFW",
+diff --git a/src/cmd/internal/obj/loong64/asm.go b/src/cmd/internal/obj/loong64/asm.go
+index cacaaf0154..51600f1c8e 100644
+--- a/src/cmd/internal/obj/loong64/asm.go
++++ b/src/cmd/internal/obj/loong64/asm.go
+@@ -74,6 +74,7 @@ var optab = []Optab{
+ 	{ANEGW, C_REG, C_NONE, C_NONE, C_REG, C_NONE, 2, 4, 0, 0},
+ 	{ANEGV, C_REG, C_NONE, C_NONE, C_REG, C_NONE, 2, 4, 0, 0},
+ 	{AMASKEQZ, C_REG, C_REG, C_NONE, C_REG, C_NONE, 2, 4, 0, 0},
++	{ACRCWBW, C_REG, C_REG, C_NONE, C_REG, C_NONE, 2, 4, 0, 0},
+ 
+ 	{ASLL, C_REG, C_NONE, C_NONE, C_REG, C_NONE, 9, 4, 0, 0},
+ 	{ASLL, C_REG, C_REG, C_NONE, C_REG, C_NONE, 9, 4, 0, 0},
+@@ -1197,6 +1198,15 @@ func buildop(ctxt *obj.Link) {
+ 
+ 		case AMASKEQZ:
+ 			opset(AMASKNEZ, r0)
++
++		case ACRCWBW:
++			opset(ACRCWHW, r0)
++			opset(ACRCWWW, r0)
++			opset(ACRCWVW, r0)
++			opset(ACRCCWBW, r0)
++			opset(ACRCCWHW, r0)
++			opset(ACRCCWWW, r0)
++			opset(ACRCCWVW, r0)
+ 		}
+ 	}
+ }
+@@ -1919,6 +1929,23 @@ func (c *ctxt0) oprrr(a obj.As) uint32 {
+ 	case AREMVU:
+ 		return 0x47 << 15 // mod.du
+ 
++	case ACRCWBW:
++		return 0x48 << 15 // crc.w.b.w
++	case ACRCWHW:
++		return 0x49 << 15 // crc.w.h.w
++	case ACRCWWW:
++		return 0x4a << 15 // crc.w.w.w
++	case ACRCWVW:
++		return 0x4b << 15 // crc.w.d.w
++	case ACRCCWBW:
++		return 0x4c << 15 // crcc.w.b.w
++	case ACRCCWHW:
++		return 0x4d << 15 // crcc.w.h.w
++	case ACRCCWWW:
++		return 0x4e << 15 // crcc.w.w.w
++	case ACRCCWVW:
++		return 0x4f << 15 // crcc.w.d.w
++
+ 	case AJMP:
+ 		return 0x13 << 26 // jirl r0, rj, 0
+ 	case AJAL:
+-- 
+2.40.0
+

@@ -1,0 +1,42 @@
+From 4c0119a97d6619b5b41574685dcd19b96abcadaf Mon Sep 17 00:00:00 2001
+From: WANG Xuerui <git@xen0n.name>
+Date: Sat, 11 Mar 2023 22:38:01 +0800
+Subject: [PATCH 09/48] cmd/link/internal/loong64: use BREAK 0 as the code pad
+ sequence
+
+As the comment on CodePad goes, we "might want to pad with a trap
+instruction to catch wayward programs". The current behavior of
+zero-padding is equivalent to padding with an instruction of 0x00000000,
+which is invalid according to the LoongArch manuals nevertheless, but
+rumor has it that some early and/or engineering samples of Loongson
+3A5000 recognized it (maybe behaving like NOP). It is better to avoid
+undocumented behavior and ensure execution flow would not overflow the
+pads.
+
+Change-Id: I531b1eabeb355e9ad4a2d5340e61f2fe71349297
+Reviewed-on: https://go-review.googlesource.com/c/go/+/475616
+Reviewed-by: abner chenc <chenguoqi@loongson.cn>
+Reviewed-by: Ian Lance Taylor <iant@google.com>
+Run-TryBot: Cherry Mui <cherryyz@google.com>
+TryBot-Result: Gopher Robot <gobot@golang.org>
+Reviewed-by: Cherry Mui <cherryyz@google.com>
+(cherry picked from commit 71f82df19a7595b422d9dbc7d05530bd824a9114)
+---
+ src/cmd/link/internal/loong64/obj.go | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/cmd/link/internal/loong64/obj.go b/src/cmd/link/internal/loong64/obj.go
+index 0a5bb0ac6d..4865c695b9 100644
+--- a/src/cmd/link/internal/loong64/obj.go
++++ b/src/cmd/link/internal/loong64/obj.go
+@@ -19,6 +19,7 @@ func Init() (*sys.Arch, ld.Arch) {
+ 		Minalign:         minAlign,
+ 		Dwarfregsp:       dwarfRegSP,
+ 		Dwarfreglr:       dwarfRegLR,
++		CodePad:          []byte{0x00, 0x00, 0x2a, 0x00}, // BREAK 0
+ 		Adddynrel:        adddynrel,
+ 		Archinit:         archinit,
+ 		Archreloc:        archreloc,
+-- 
+2.40.0
+

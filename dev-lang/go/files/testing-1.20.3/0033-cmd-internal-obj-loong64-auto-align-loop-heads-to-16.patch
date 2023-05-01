@@ -1,0 +1,197 @@
+From 11d0ea24961875df9f2bb40efc588a53faff0543 Mon Sep 17 00:00:00 2001
+From: WANG Xuerui <git@xen0n.name>
+Date: Tue, 28 Mar 2023 21:10:16 +0800
+Subject: [PATCH 33/48] cmd/internal/obj/loong64: auto-align loop heads to
+ 16-byte boundaries
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CL 479816 took care of loops in hand-written assembly, but did not
+account for those written in Go, that may become performance-sensitive
+as well.
+
+In this patch, all loop heads are automatically identified and aligned
+to 16-byte boundaries, by inserting a synthetic `PCALIGN $16` before
+them. "Loop heads" are defined as targets of backward branches.
+
+While at it, tweak some of the local comments so the flow is hopefully
+clearer.
+
+Because LoongArch instructions are all 32 bits long, at most 3 NOOPs
+can be inserted for each target Prog. This may sound excessive, but
+benchmark results indicate the current approach is overall profitable
+anyway.
+
+Benchmark results on Loongson 3A5000 (LA464):
+
+goos: linux
+goarch: loong64
+pkg: test/bench/go1
+                      │  CL 479816  │              this CL               │
+                      │   sec/op    │   sec/op     vs base               │
+BinaryTree17             14.10 ± 1%    14.06 ± 1%       ~ (p=0.280 n=10)
+Fannkuch11               3.579 ± 0%    3.419 ± 0%  -4.45% (p=0.000 n=10)
+FmtFprintfEmpty         94.73n ± 0%   94.44n ± 0%  -0.31% (p=0.000 n=10)
+FmtFprintfString        151.9n ± 0%   149.1n ± 0%  -1.84% (p=0.000 n=10)
+FmtFprintfInt           158.3n ± 0%   155.2n ± 0%  -1.96% (p=0.000 n=10)
+FmtFprintfIntInt        241.4n ± 0%   235.4n ± 0%  -2.49% (p=0.000 n=10)
+FmtFprintfPrefixedInt   320.2n ± 0%   314.7n ± 0%  -1.73% (p=0.000 n=10)
+FmtFprintfFloat         414.3n ± 0%   398.7n ± 0%  -3.77% (p=0.000 n=10)
+FmtManyArgs             949.9n ± 0%   929.8n ± 0%  -2.12% (p=0.000 n=10)
+GobDecode               15.24m ± 0%   15.30m ± 0%  +0.38% (p=0.035 n=10)
+GobEncode               18.10m ± 2%   17.59m ± 1%  -2.81% (p=0.002 n=10)
+Gzip                    429.9m ± 0%   421.5m ± 0%  -1.97% (p=0.000 n=10)
+Gunzip                  88.31m ± 0%   87.39m ± 0%  -1.04% (p=0.000 n=10)
+HTTPClientServer        85.71µ ± 0%   87.24µ ± 0%  +1.79% (p=0.000 n=10)
+JSONEncode              19.74m ± 0%   18.55m ± 0%  -6.00% (p=0.000 n=10)
+JSONDecode              78.60m ± 1%   77.93m ± 0%  -0.84% (p=0.000 n=10)
+Mandelbrot200           7.208m ± 0%   7.217m ± 0%       ~ (p=0.481 n=10)
+GoParse                 7.616m ± 1%   7.630m ± 2%       ~ (p=0.796 n=10)
+RegexpMatchEasy0_32     133.0n ± 0%   134.1n ± 0%  +0.83% (p=0.000 n=10)
+RegexpMatchEasy0_1K     1.362µ ± 0%   1.364µ ± 0%  +0.15% (p=0.000 n=10)
+RegexpMatchEasy1_32     161.8n ± 0%   163.7n ± 0%  +1.17% (p=0.000 n=10)
+RegexpMatchEasy1_1K     1.497µ ± 0%   1.497µ ± 0%       ~ (p=1.000 n=10)
+RegexpMatchMedium_32    1.420µ ± 0%   1.446µ ± 0%  +1.83% (p=0.000 n=10)
+RegexpMatchMedium_1K    42.25µ ± 0%   42.53µ ± 0%  +0.65% (p=0.000 n=10)
+RegexpMatchHard_32      2.108µ ± 0%   2.116µ ± 0%  +0.38% (p=0.000 n=10)
+RegexpMatchHard_1K      62.65µ ± 0%   63.23µ ± 0%  +0.93% (p=0.000 n=10)
+Revcomp                  1.192 ± 0%    1.198 ± 0%  +0.55% (p=0.000 n=10)
+Template                115.6m ± 2%   116.9m ± 1%       ~ (p=0.075 n=10)
+TimeParse               418.1n ± 1%   414.7n ± 0%  -0.81% (p=0.000 n=10)
+TimeFormat              517.9n ± 0%   513.7n ± 0%  -0.81% (p=0.000 n=10)
+geomean                 103.5µ        102.6µ       -0.79%
+
+                     │  CL 479816   │               this CL               │
+                     │     B/s      │     B/s       vs base               │
+GobDecode              48.04Mi ± 0%   47.86Mi ± 0%  -0.38% (p=0.035 n=10)
+GobEncode              40.44Mi ± 2%   41.61Mi ± 1%  +2.89% (p=0.001 n=10)
+Gzip                   43.04Mi ± 0%   43.91Mi ± 0%  +2.02% (p=0.000 n=10)
+Gunzip                 209.6Mi ± 0%   211.8Mi ± 0%  +1.05% (p=0.000 n=10)
+JSONEncode             93.76Mi ± 0%   99.75Mi ± 0%  +6.39% (p=0.000 n=10)
+JSONDecode             23.55Mi ± 1%   23.75Mi ± 0%  +0.85% (p=0.000 n=10)
+GoParse                7.253Mi ± 1%   7.238Mi ± 2%       ~ (p=0.698 n=10)
+RegexpMatchEasy0_32    229.4Mi ± 0%   227.6Mi ± 0%  -0.82% (p=0.000 n=10)
+RegexpMatchEasy0_1K    717.3Mi ± 0%   716.2Mi ± 0%  -0.15% (p=0.000 n=10)
+RegexpMatchEasy1_32    188.6Mi ± 0%   186.4Mi ± 0%  -1.13% (p=0.000 n=10)
+RegexpMatchEasy1_1K    652.2Mi ± 0%   652.3Mi ± 0%  +0.01% (p=0.005 n=10)
+RegexpMatchMedium_32   21.49Mi ± 0%   21.11Mi ± 0%  -1.73% (p=0.000 n=10)
+RegexpMatchMedium_1K   23.11Mi ± 0%   22.96Mi ± 0%  -0.62% (p=0.000 n=10)
+RegexpMatchHard_32     14.48Mi ± 0%   14.42Mi ± 0%  -0.40% (p=0.000 n=10)
+RegexpMatchHard_1K     15.59Mi ± 0%   15.44Mi ± 0%  -0.98% (p=0.000 n=10)
+Revcomp                203.4Mi ± 0%   202.3Mi ± 0%  -0.55% (p=0.000 n=10)
+Template               16.00Mi ± 2%   15.83Mi ± 1%       ~ (p=0.078 n=10)
+geomean                60.72Mi        60.89Mi       +0.29%
+
+The slight regression on the Regexp cases is likely because the previous
+numbers are just coincidental: indeed, large regressions or improvements
+(of roughly ±10%) happen with definitely irrelevant changes during
+development. This CL should (hopefully) bring such random performance
+fluctuations down a bit.
+
+Change-Id: I8bdda6e65336da00d4ad79650937b3eeb9db0e7c
+Reviewed-on: https://go-review.googlesource.com/c/go/+/479817
+Reviewed-by: Keith Randall <khr@golang.org>
+Reviewed-by: abner chenc <chenguoqi@loongson.cn>
+Reviewed-by: Keith Randall <khr@google.com>
+Reviewed-by: David Chase <drchase@google.com>
+TryBot-Result: Gopher Robot <gobot@golang.org>
+Run-TryBot: WANG Xuerui <git@xen0n.name>
+(cherry picked from commit f736a9ad0105b7906636aab43df96123d0f32d70)
+---
+ src/cmd/internal/obj/loong64/asm.go | 55 ++++++++++++++++++++++++-----
+ 1 file changed, 47 insertions(+), 8 deletions(-)
+
+diff --git a/src/cmd/internal/obj/loong64/asm.go b/src/cmd/internal/obj/loong64/asm.go
+index 75b9302f24..fe2c91becf 100644
+--- a/src/cmd/internal/obj/loong64/asm.go
++++ b/src/cmd/internal/obj/loong64/asm.go
+@@ -28,6 +28,7 @@ type ctxt0 struct {
+ 
+ const (
+ 	FuncAlign = 4
++	loopAlign = 16
+ )
+ 
+ type Optab struct {
+@@ -45,6 +46,10 @@ type Optab struct {
+ 
+ const (
+ 	NOTUSETMP = 1 << iota // p expands to multiple instructions, but does NOT use REGTMP
++
++	// branchLoopHead marks loop entry.
++	// Used to insert padding for under-aligned loops.
++	branchLoopHead
+ )
+ 
+ var optab = []Optab{
+@@ -421,24 +426,58 @@ func span0(ctxt *obj.Link, cursym *obj.LSym, newprog obj.ProgAlloc) {
+ 
+ 	c.cursym.Size = pc
+ 
+-	/*
+-	 * if any procedure is large enough to
+-	 * generate a large SBRA branch, then
+-	 * generate extra passes putting branches
+-	 * around jmps to fix. this is rare.
+-	 */
+-	bflag := 1
++	// mark loop entry instructions for padding
++	// loop entrances are defined as targets of backward branches
++	for p = c.cursym.Func().Text.Link; p != nil; p = p.Link {
++		if q := p.To.Target(); q != nil && q.Pc < p.Pc {
++			q.Mark |= branchLoopHead
++		}
++	}
+ 
++	// Run these passes until convergence.
++	bflag := 1
+ 	var otxt int64
+ 	var q *obj.Prog
+ 	for bflag != 0 {
+ 		bflag = 0
+ 		pc = 0
+-		for p = c.cursym.Func().Text.Link; p != nil; p = p.Link {
++		prev := c.cursym.Func().Text
++		for p = prev.Link; p != nil; prev, p = p, p.Link {
+ 			p.Pc = pc
+ 			o = c.oplook(p)
+ 
++			// Prepend a PCALIGN $loopAlign to each of the loop heads
++			// that need padding, if not already done so (because this
++			// pass may execute more than once).
++			//
++			// This needs to come before any pass that look at pc,
++			// because pc will be adjusted if padding happens.
++			if p.Mark&branchLoopHead != 0 && pc&(loopAlign-1) != 0 &&
++				!(prev.As == obj.APCALIGN && prev.From.Offset >= loopAlign) {
++				q = c.newprog()
++				prev.Link = q
++				q.Link = p
++				q.Pc = pc
++				q.As = obj.APCALIGN
++				q.From.Type = obj.TYPE_CONST
++				q.From.Offset = loopAlign
++				// Don't associate the synthesized PCALIGN with
++				// the original source position, for deterministic
++				// mapping between source and corresponding asm.
++				// q.Pos = p.Pos
++
++				// Manually make the PCALIGN come into effect,
++				// since this loop iteration is for p.
++				pc += int64(pcAlignPadLength(ctxt, pc, loopAlign))
++				p.Pc = pc
++			}
++
+ 			// very large conditional branches
++			//
++			// if any procedure is large enough to
++			// generate a large SBRA branch, then
++			// generate extra passes putting branches
++			// around jmps to fix. this is rare.
+ 			if o.type_ == 6 && p.To.Target() != nil {
+ 				otxt = p.To.Target().Pc - pc
+ 				if otxt < -(1<<17)+10 || otxt >= (1<<17)-10 {
+-- 
+2.40.0
+

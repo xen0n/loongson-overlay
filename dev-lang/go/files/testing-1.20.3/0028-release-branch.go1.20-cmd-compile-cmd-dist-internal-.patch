@@ -1,0 +1,69 @@
+From 6b58dbcaada515b5f597b1eaf1046bcf09b062d4 Mon Sep 17 00:00:00 2001
+From: WANG Xuerui <git@xen0n.name>
+Date: Sun, 4 Dec 2022 15:06:45 +0800
+Subject: [PATCH 28/48] [release-branch.go1.20] cmd/compile, cmd/dist,
+ internal: enable buildmode=pie for linux/loong64
+
+This is actually not tied to the ELF psABI v2 upgrade, and can be
+enabled "for free".
+
+Change-Id: I6906d9eb4bd8655c685b059283e200cb7e210369
+Reviewed-on: https://go-review.googlesource.com/c/go/+/455075
+Reviewed-by: abner chenc <chenguoqi@loongson.cn>
+Run-TryBot: Ben Shi <powerman1st@163.com>
+Reviewed-by: Meidan Li <limeidan@loongson.cn>
+Run-TryBot: WANG Xuerui <git@xen0n.name>
+TryBot-Result: Gopher Robot <gobot@golang.org>
+Run-TryBot: Ian Lance Taylor <iant@golang.org>
+Reviewed-by: Ian Lance Taylor <iant@google.com>
+Auto-Submit: Ian Lance Taylor <iant@google.com>
+Reviewed-by: David Chase <drchase@google.com>
+(cherry picked from commit 4bd77619b743c3c986742527236568e43db37c44)
+---
+ src/cmd/compile/internal/base/flag.go | 2 +-
+ src/cmd/dist/test.go                  | 2 +-
+ src/internal/platform/supported.go    | 2 +-
+ 3 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/src/cmd/compile/internal/base/flag.go b/src/cmd/compile/internal/base/flag.go
+index be555c3d06..a18da88717 100644
+--- a/src/cmd/compile/internal/base/flag.go
++++ b/src/cmd/compile/internal/base/flag.go
+@@ -204,7 +204,7 @@ func ParseFlags() {
+ 	if Flag.Race && !platform.RaceDetectorSupported(buildcfg.GOOS, buildcfg.GOARCH) {
+ 		log.Fatalf("%s/%s does not support -race", buildcfg.GOOS, buildcfg.GOARCH)
+ 	}
+-	if (*Flag.Shared || *Flag.Dynlink || *Flag.LinkShared) && !Ctxt.Arch.InFamily(sys.AMD64, sys.ARM, sys.ARM64, sys.I386, sys.PPC64, sys.RISCV64, sys.S390X) {
++	if (*Flag.Shared || *Flag.Dynlink || *Flag.LinkShared) && !Ctxt.Arch.InFamily(sys.AMD64, sys.ARM, sys.ARM64, sys.I386, sys.Loong64, sys.PPC64, sys.RISCV64, sys.S390X) {
+ 		log.Fatalf("%s/%s does not support -shared", buildcfg.GOOS, buildcfg.GOARCH)
+ 	}
+ 	parseSpectre(Flag.Spectre) // left as string for RecordFlags
+diff --git a/src/cmd/dist/test.go b/src/cmd/dist/test.go
+index 9f2660631d..e16a83db04 100644
+--- a/src/cmd/dist/test.go
++++ b/src/cmd/dist/test.go
+@@ -1218,7 +1218,7 @@ func (t *tester) supportedBuildmode(mode string) bool {
+ 	case "pie":
+ 		switch pair {
+ 		case "aix/ppc64",
+-			"linux-386", "linux-amd64", "linux-arm", "linux-arm64", "linux-ppc64le", "linux-riscv64", "linux-s390x",
++			"linux-386", "linux-amd64", "linux-arm", "linux-arm64", "linux-loong64", "linux-ppc64le", "linux-riscv64", "linux-s390x",
+ 			"android-amd64", "android-arm", "android-arm64", "android-386":
+ 			return true
+ 		case "darwin-amd64", "darwin-arm64":
+diff --git a/src/internal/platform/supported.go b/src/internal/platform/supported.go
+index 046352f34c..7350ee3120 100644
+--- a/src/internal/platform/supported.go
++++ b/src/internal/platform/supported.go
+@@ -160,7 +160,7 @@ func BuildModeSupported(compiler, buildmode, goos, goarch string) bool {
+ 
+ 	case "pie":
+ 		switch platform {
+-		case "linux/386", "linux/amd64", "linux/arm", "linux/arm64", "linux/ppc64le", "linux/riscv64", "linux/s390x",
++		case "linux/386", "linux/amd64", "linux/arm", "linux/arm64", "linux/loong64", "linux/ppc64le", "linux/riscv64", "linux/s390x",
+ 			"android/amd64", "android/arm", "android/arm64", "android/386",
+ 			"freebsd/amd64",
+ 			"darwin/amd64", "darwin/arm64",
+-- 
+2.40.0
+
