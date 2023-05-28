@@ -1,4 +1,4 @@
-From f749ae8bdecb5a13b5213200b08e6ef95e9e83fc Mon Sep 17 00:00:00 2001
+From ecb240e0c4676fd12e30ab848cd4ce946356a761 Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <git@xen0n.name>
 Date: Tue, 9 Aug 2022 13:33:31 +0800
 Subject: [PATCH] [lld][ELF] Support LoongArch
@@ -17,13 +17,13 @@ tested to work as well.
 
 Differential Revision: https://reviews.llvm.org/D138135
 ---
- lld/ELF/Arch/LoongArch.cpp                    | 684 ++++++++++++++++++
+ lld/ELF/Arch/LoongArch.cpp                    | 682 ++++++++++++++++++
  lld/ELF/CMakeLists.txt                        |   1 +
  lld/ELF/Driver.cpp                            |  12 +-
  lld/ELF/InputFiles.cpp                        |   3 +
- lld/ELF/InputSection.cpp                      |  28 +
- lld/ELF/Relocations.cpp                       |  38 +-
- lld/ELF/Relocations.h                         |  11 +
+ lld/ELF/InputSection.cpp                      |  29 +
+ lld/ELF/Relocations.cpp                       |  41 +-
+ lld/ELF/Relocations.h                         |  10 +
  lld/ELF/ScriptParser.cpp                      |   2 +
  lld/ELF/Target.cpp                            |   2 +
  lld/ELF/Target.h                              |   2 +
@@ -37,8 +37,13 @@ Differential Revision: https://reviews.llvm.org/D138135
  .../ELF/loongarch-pcala-lo12-jirl-shared.s    |  49 ++
  lld/test/ELF/loongarch-pcala-lo12-jirl.s      |  42 ++
  lld/test/ELF/loongarch-plt.s                  | 108 +++
+ lld/test/ELF/loongarch-reloc-pic.s            |  44 ++
+ lld/test/ELF/loongarch-tls-gd-and-ie.s        |  43 ++
+ lld/test/ELF/loongarch-tls-gd.s               | 140 ++++
+ lld/test/ELF/loongarch-tls-ie.s               | 115 +++
+ lld/test/ELF/loongarch-tls-le.s               |  42 ++
  lld/test/lit.cfg.py                           |   1 +
- 21 files changed, 1341 insertions(+), 17 deletions(-)
+ 26 files changed, 1726 insertions(+), 17 deletions(-)
  create mode 100644 lld/ELF/Arch/LoongArch.cpp
  create mode 100644 lld/test/ELF/loongarch-abs64.s
  create mode 100644 lld/test/ELF/loongarch-branch-b16.s
@@ -50,13 +55,18 @@ Differential Revision: https://reviews.llvm.org/D138135
  create mode 100644 lld/test/ELF/loongarch-pcala-lo12-jirl-shared.s
  create mode 100644 lld/test/ELF/loongarch-pcala-lo12-jirl.s
  create mode 100644 lld/test/ELF/loongarch-plt.s
+ create mode 100644 lld/test/ELF/loongarch-reloc-pic.s
+ create mode 100644 lld/test/ELF/loongarch-tls-gd-and-ie.s
+ create mode 100644 lld/test/ELF/loongarch-tls-gd.s
+ create mode 100644 lld/test/ELF/loongarch-tls-ie.s
+ create mode 100644 lld/test/ELF/loongarch-tls-le.s
 
 diff --git a/lld/ELF/Arch/LoongArch.cpp b/lld/ELF/Arch/LoongArch.cpp
 new file mode 100644
-index 000000000000..320fd2246c0a
+index 000000000000..78326d8707e9
 --- /dev/null
 +++ b/lld/ELF/Arch/LoongArch.cpp
-@@ -0,0 +1,684 @@
+@@ -0,0 +1,682 @@
 +//===- LoongArch.cpp ------------------------------------------------------===//
 +//
 +// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
@@ -463,9 +473,8 @@ index 000000000000..320fd2246c0a
 +  case R_LARCH_SUB16:
 +  case R_LARCH_SUB32:
 +  case R_LARCH_SUB64:
-+    // The LoongArch add/sub relocs are meant to behave the same as the RISCV
-+    // counterparts; reuse its RelExpr to avoid having to define one more
-+    // RelExpr type just to duplicate everything afterwards.
++    // The LoongArch add/sub relocs behave like the RISCV counterparts; reuse
++    // the RelExpr to avoid code duplication.
 +    return R_RISCV_ADD;
 +  case R_LARCH_32_PCREL:
 +    return R_PC;
@@ -478,6 +487,7 @@ index 000000000000..320fd2246c0a
 +  case R_LARCH_GOT64_PC_HI12:
 +    return R_LOONGARCH_GOT_PAGE_PC;
 +  case R_LARCH_GOT_PC_LO12:
++  case R_LARCH_TLS_IE_PC_LO12:
 +    return R_LOONGARCH_GOT;
 +  case R_LARCH_TLS_LD_PC_HI20:
 +  case R_LARCH_TLS_GD_PC_HI20:
@@ -486,8 +496,6 @@ index 000000000000..320fd2246c0a
 +  case R_LARCH_TLS_IE64_PC_LO20:
 +  case R_LARCH_TLS_IE64_PC_HI12:
 +    return R_LOONGARCH_GOT_TLSIE_PAGE_PC;
-+  case R_LARCH_TLS_IE_PC_LO12:
-+    return R_LOONGARCH_GOT_TLSIE;
 +  case R_LARCH_PCALA_HI20:
 +    // Why not R_LOONGARCH_PAGE_PC, majority of references don't go through PLT
 +    // anyway so why waste time checking only to get everything relaxed back to
@@ -754,10 +762,10 @@ index 8e6a746d219e..89955db67733 100644
    Arch/MipsArchTree.cpp
    Arch/MSP430.cpp
 diff --git a/lld/ELF/Driver.cpp b/lld/ELF/Driver.cpp
-index 7e2a72acf8f6..3c1803be6fb9 100644
+index 6325995da2b3..be10178b956b 100644
 --- a/lld/ELF/Driver.cpp
 +++ b/lld/ELF/Driver.cpp
-@@ -167,6 +167,7 @@ static std::tuple<ELFKind, uint16_t, uint8_t> parseEmulation(StringRef emul) {
+@@ -169,6 +169,7 @@ static std::tuple<ELFKind, uint16_t, uint8_t> parseEmulation(StringRef emul) {
            .Case("elf32lriscv", {ELF32LEKind, EM_RISCV})
            .Cases("elf32ppc", "elf32ppclinux", {ELF32BEKind, EM_PPC})
            .Cases("elf32lppc", "elf32lppclinux", {ELF32LEKind, EM_PPC})
@@ -765,7 +773,7 @@ index 7e2a72acf8f6..3c1803be6fb9 100644
            .Case("elf64btsmip", {ELF64BEKind, EM_MIPS})
            .Case("elf64ltsmip", {ELF64LEKind, EM_MIPS})
            .Case("elf64lriscv", {ELF64LEKind, EM_RISCV})
-@@ -178,6 +179,7 @@ static std::tuple<ELFKind, uint16_t, uint8_t> parseEmulation(StringRef emul) {
+@@ -180,6 +181,7 @@ static std::tuple<ELFKind, uint16_t, uint8_t> parseEmulation(StringRef emul) {
            .Case("elf64_sparc", {ELF64BEKind, EM_SPARCV9})
            .Case("msp430elf", {ELF32LEKind, EM_MSP430})
            .Case("elf64_amdgpu", {ELF64LEKind, EM_AMDGPU})
@@ -773,7 +781,7 @@ index 7e2a72acf8f6..3c1803be6fb9 100644
            .Default({ELFNoneKind, EM_NONE});
  
    if (ret.first == ELFNoneKind)
-@@ -1032,8 +1034,9 @@ static bool getIsRela(opt::InputArgList &args) {
+@@ -1057,8 +1059,9 @@ static bool getIsRela(opt::InputArgList &args) {
  
    // Otherwise use the psABI defined relocation entry format.
    uint16_t m = config->emachine;
@@ -785,7 +793,7 @@ index 7e2a72acf8f6..3c1803be6fb9 100644
  }
  
  static void parseClangOption(StringRef opt, const Twine &msg) {
-@@ -1570,8 +1573,9 @@ static void setConfigs(opt::InputArgList &args) {
+@@ -1646,8 +1649,9 @@ static void setConfigs(opt::InputArgList &args) {
    // have support for reading Elf_Rel addends, so we only enable for a subset.
  #ifndef NDEBUG
    bool checkDynamicRelocsDefault = m == EM_AARCH64 || m == EM_ARM ||
@@ -798,10 +806,10 @@ index 7e2a72acf8f6..3c1803be6fb9 100644
    bool checkDynamicRelocsDefault = false;
  #endif
 diff --git a/lld/ELF/InputFiles.cpp b/lld/ELF/InputFiles.cpp
-index 7dacdeb9f042..c43b4afd6cb6 100644
+index 311e2c9a9e54..364e56334899 100644
 --- a/lld/ELF/InputFiles.cpp
 +++ b/lld/ELF/InputFiles.cpp
-@@ -1534,6 +1534,9 @@ static uint16_t getBitcodeMachineKind(StringRef path, const Triple &t) {
+@@ -1558,6 +1558,9 @@ static uint16_t getBitcodeMachineKind(StringRef path, const Triple &t) {
      return EM_AVR;
    case Triple::hexagon:
      return EM_HEXAGON;
@@ -812,7 +820,7 @@ index 7dacdeb9f042..c43b4afd6cb6 100644
    case Triple::mipsel:
    case Triple::mips64:
 diff --git a/lld/ELF/InputSection.cpp b/lld/ELF/InputSection.cpp
-index df24f998bff6..cf2cc1a97b8d 100644
+index 3057cedb4bdc..77ba5b3ae5b6 100644
 --- a/lld/ELF/InputSection.cpp
 +++ b/lld/ELF/InputSection.cpp
 @@ -21,6 +21,7 @@
@@ -823,7 +831,7 @@ index df24f998bff6..cf2cc1a97b8d 100644
  #include <mutex>
  #include <vector>
  
-@@ -609,6 +610,7 @@ static int64_t getTlsTpOffset(const Symbol &s) {
+@@ -610,6 +611,7 @@ static int64_t getTlsTpOffset(const Symbol &s) {
      // to allow a signed 16-bit offset to reach 0x1000 of TCB/thread-library
      // data and 0xf000 of the program's TLS segment.
      return s.getVA(0) + (tls->p_vaddr & (tls->p_align - 1)) - 0x7000;
@@ -831,21 +839,22 @@ index df24f998bff6..cf2cc1a97b8d 100644
    case EM_RISCV:
      return s.getVA(0) + (tls->p_vaddr & (tls->p_align - 1));
  
-@@ -643,6 +645,23 @@ uint64_t InputSectionBase::getRelocTargetVA(const InputFile *file, RelType type,
+@@ -644,6 +646,24 @@ uint64_t InputSectionBase::getRelocTargetVA(const InputFile *file, RelType type,
    case R_GOT:
    case R_RELAX_TLS_GD_TO_IE_ABS:
      return sym.getGotVA() + a;
 +  case R_LOONGARCH_GOT:
-+  case R_LOONGARCH_GOT_TLSIE:
 +    // The LoongArch PC-relative GOT relocs are notorious, in that the TLS
 +    // relocs share the same reloc type with non-TLS ones for their page
 +    // offsets. The arithmetics are different in the TLS case so we have to
 +    // duplicate some logic here.
 +    if (sym.isTls()) {
-+      if (sym.hasFlag(NEEDS_TLSGD)) {
++      if (type == R_LARCH_TLS_IE_PC_LO12)
++        // Like R_LOONGARCH_GOT_TLSIE_PAGE_PC but taking the absolute value.
++        return sym.getGotVA() + a;
++      if (sym.hasFlag(NEEDS_TLSGD))
 +        // Like R_LOONGARCH_TLSGD_PAGE_PC but taking the absolute value.
 +        return in.got->getGlobalDynAddr(sym) + a;
-+      }
 +      if (ctx.needsTlsLd.load(std::memory_order_relaxed))
 +        // Like R_TLSLD_PC but taking the absolute value.
 +        return in.got->getTlsIndexVA() + a;
@@ -855,7 +864,7 @@ index df24f998bff6..cf2cc1a97b8d 100644
    case R_GOTONLY_PC:
      return in.got->getVA() + a - p;
    case R_GOTPLTONLY_PC:
-@@ -667,6 +686,9 @@ uint64_t InputSectionBase::getRelocTargetVA(const InputFile *file, RelType type,
+@@ -668,6 +688,9 @@ uint64_t InputSectionBase::getRelocTargetVA(const InputFile *file, RelType type,
    case R_GOT_PC:
    case R_RELAX_TLS_GD_TO_IE:
      return sym.getGotVA() + a - p;
@@ -865,7 +874,7 @@ index df24f998bff6..cf2cc1a97b8d 100644
    case R_MIPS_GOTREL:
      return sym.getVA(a) - in.mipsGot->getGp(file);
    case R_MIPS_GOT_GP:
-@@ -715,6 +737,8 @@ uint64_t InputSectionBase::getRelocTargetVA(const InputFile *file, RelType type,
+@@ -716,6 +739,8 @@ uint64_t InputSectionBase::getRelocTargetVA(const InputFile *file, RelType type,
                                *hiRel->sym, hiRel->expr);
      return 0;
    }
@@ -874,7 +883,7 @@ index df24f998bff6..cf2cc1a97b8d 100644
    case R_PC:
    case R_ARM_PCA: {
      uint64_t dest;
-@@ -748,6 +772,8 @@ uint64_t InputSectionBase::getRelocTargetVA(const InputFile *file, RelType type,
+@@ -749,6 +774,8 @@ uint64_t InputSectionBase::getRelocTargetVA(const InputFile *file, RelType type,
    case R_PLT_PC:
    case R_PPC64_CALL_PLT:
      return sym.getPltVA() + a - p;
@@ -883,7 +892,7 @@ index df24f998bff6..cf2cc1a97b8d 100644
    case R_PLT_GOTPLT:
      return sym.getPltVA() + a - in.gotPlt->getVA();
    case R_PPC32_PLTREL:
-@@ -808,6 +834,8 @@ uint64_t InputSectionBase::getRelocTargetVA(const InputFile *file, RelType type,
+@@ -809,6 +836,8 @@ uint64_t InputSectionBase::getRelocTargetVA(const InputFile *file, RelType type,
      return in.got->getGlobalDynAddr(sym) + a - in.gotPlt->getVA();
    case R_TLSGD_PC:
      return in.got->getGlobalDynAddr(sym) + a - p;
@@ -893,10 +902,10 @@ index df24f998bff6..cf2cc1a97b8d 100644
      return in.got->getVA() + in.got->getTlsIndexOff() + a - in.gotPlt->getVA();
    case R_TLSLD_GOT:
 diff --git a/lld/ELF/Relocations.cpp b/lld/ELF/Relocations.cpp
-index 1368d9053125..e6a1a1187aaa 100644
+index 2f7fcd664c6a..bd7f387fe8cd 100644
 --- a/lld/ELF/Relocations.cpp
 +++ b/lld/ELF/Relocations.cpp
-@@ -190,8 +190,8 @@ static bool isAbsoluteValue(const Symbol &sym) {
+@@ -195,8 +195,8 @@ static bool isAbsoluteValue(const Symbol &sym) {
  
  // Returns true if Expr refers a PLT entry.
  static bool needsPlt(RelExpr expr) {
@@ -907,18 +916,16 @@ index 1368d9053125..e6a1a1187aaa 100644
  }
  
  // Returns true if Expr refers a GOT entry. Note that this function
-@@ -200,7 +200,9 @@ static bool needsPlt(RelExpr expr) {
+@@ -205,7 +205,7 @@ static bool needsPlt(RelExpr expr) {
  static bool needsGot(RelExpr expr) {
    return oneof<R_GOT, R_GOT_OFF, R_MIPS_GOT_LOCAL_PAGE, R_MIPS_GOT_OFF,
                 R_MIPS_GOT_OFF32, R_AARCH64_GOT_PAGE_PC, R_GOT_PC, R_GOTPLT,
 -               R_AARCH64_GOT_PAGE>(expr);
-+               R_AARCH64_GOT_PAGE, R_LOONGARCH_GOT, R_LOONGARCH_GOT_TLSIE,
-+               R_LOONGARCH_GOT_PAGE_PC, R_LOONGARCH_GOT_TLSGD_PAGE_PC,
-+               R_LOONGARCH_GOT_TLSIE_PAGE_PC>(expr);
++               R_AARCH64_GOT_PAGE, R_LOONGARCH_GOT, R_LOONGARCH_GOT_PAGE_PC>(expr);
  }
  
  // True if this expression is of the form Sym - X, where X is a position in the
-@@ -208,12 +210,15 @@ static bool needsGot(RelExpr expr) {
+@@ -213,12 +213,15 @@ static bool needsGot(RelExpr expr) {
  static bool isRelExpr(RelExpr expr) {
    return oneof<R_PC, R_GOTREL, R_GOTPLTREL, R_MIPS_GOTREL, R_PPC64_CALL,
                 R_PPC64_RELAX_TOC, R_AARCH64_PAGE_PC, R_RELAX_GOT_PC,
@@ -935,7 +942,7 @@ index 1368d9053125..e6a1a1187aaa 100644
    case R_PPC64_CALL:
      return R_PPC64_CALL_PLT;
    case R_PC:
-@@ -232,6 +237,8 @@ static RelExpr fromPlt(RelExpr expr) {
+@@ -237,6 +240,8 @@ static RelExpr fromPlt(RelExpr expr) {
    case R_PLT_PC:
    case R_PPC32_PLTREL:
      return R_PC;
@@ -944,19 +951,31 @@ index 1368d9053125..e6a1a1187aaa 100644
    case R_PPC64_CALL_PLT:
      return R_PPC64_CALL;
    case R_PLT:
-@@ -946,7 +953,9 @@ bool RelocationScanner::isStaticLinkTimeConstant(RelExpr e, RelType type,
+@@ -951,7 +956,9 @@ bool RelocationScanner::isStaticLinkTimeConstant(RelExpr e, RelType type,
              R_MIPS_GOTREL, R_MIPS_GOT_OFF, R_MIPS_GOT_OFF32, R_MIPS_GOT_GP_PC,
              R_AARCH64_GOT_PAGE_PC, R_GOT_PC, R_GOTONLY_PC, R_GOTPLTONLY_PC,
              R_PLT_PC, R_PLT_GOTPLT, R_PPC32_PLTREL, R_PPC64_CALL_PLT,
 -            R_PPC64_RELAX_TOC, R_RISCV_ADD, R_AARCH64_GOT_PAGE>(e))
 +            R_PPC64_RELAX_TOC, R_RISCV_ADD, R_AARCH64_GOT_PAGE,
-+            R_LOONGARCH_PLT_PAGE_PC, R_LOONGARCH_GOT, R_LOONGARCH_GOT_TLSIE,
-+            R_LOONGARCH_GOT_PAGE_PC, R_LOONGARCH_GOT_TLSIE_PAGE_PC>(e))
++            R_LOONGARCH_PLT_PAGE_PC, R_LOONGARCH_GOT, R_LOONGARCH_GOT_PAGE_PC,
++            R_LOONGARCH_GOT_TLSIE_PAGE_PC>(e))
      return true;
  
    // These never do, except if the entire file is position dependent or if
-@@ -1082,7 +1091,8 @@ void RelocationScanner::processAux(RelExpr expr, RelType type, uint64_t offset,
-   bool canWrite = (sec->flags & SHF_WRITE) || !config->zText;
+@@ -1055,6 +1062,11 @@ void RelocationScanner::processAux(RelExpr expr, RelType type, uint64_t offset,
+       // for detailed description:
+       // ftp://www.linux-mips.org/pub/linux/mips/doc/ABI/mipsabi.pdf
+       in.mipsGot->addEntry(*sec->file, sym, addend, expr);
++    } else if (config->emachine == EM_LOONGARCH) {
++      // Many LoongArch TLS relocs reuse the R_LOONGARCH_GOT type, in which case
++      // the NEEDS_GOT flag shouldn't get set.
++      if (!sym.isTls())
++        sym.setFlags(NEEDS_GOT);
+     } else {
+       sym.setFlags(NEEDS_GOT);
+     }
+@@ -1095,7 +1107,8 @@ void RelocationScanner::processAux(RelExpr expr, RelType type, uint64_t offset,
+                     (isa<EhInputSection>(sec) && config->emachine != EM_MIPS));
    if (canWrite) {
      RelType rel = target->getDynRel(type);
 -    if (expr == R_GOT || (rel == target->symbolicRel && !sym.isPreemptible)) {
@@ -965,7 +984,7 @@ index 1368d9053125..e6a1a1187aaa 100644
        addRelativeReloc<true>(*sec, offset, sym, addend, expr, type);
        return;
      } else if (rel != 0) {
-@@ -1234,11 +1244,13 @@ static unsigned handleTlsRelocation(RelType type, Symbol &sym,
+@@ -1247,11 +1260,13 @@ static unsigned handleTlsRelocation(RelType type, Symbol &sym,
      return 1;
    }
  
@@ -981,7 +1000,7 @@ index 1368d9053125..e6a1a1187aaa 100644
                       config->emachine != EM_RISCV &&
                       !c.file->ppc64DisableTLSRelax;
  
-@@ -1255,8 +1267,7 @@ static unsigned handleTlsRelocation(RelType type, Symbol &sym,
+@@ -1268,8 +1283,7 @@ static unsigned handleTlsRelocation(RelType type, Symbol &sym,
    // being suitable for being dynamically loaded via dlopen. GOT[e0] is the
    // module index, with a special value of 0 for the current module. GOT[e1] is
    // unused. There only needs to be one module index entry.
@@ -991,7 +1010,7 @@ index 1368d9053125..e6a1a1187aaa 100644
      // Local-Dynamic relocs can be relaxed to Local-Exec.
      if (toExecRelax) {
        c.addReloc({target->adjustTlsExpr(type, R_RELAX_TLS_LD_TO_LE), type,
-@@ -1287,7 +1298,8 @@ static unsigned handleTlsRelocation(RelType type, Symbol &sym,
+@@ -1300,7 +1314,8 @@ static unsigned handleTlsRelocation(RelType type, Symbol &sym,
    }
  
    if (oneof<R_AARCH64_TLSDESC_PAGE, R_TLSDESC, R_TLSDESC_CALL, R_TLSDESC_PC,
@@ -1001,22 +1020,22 @@ index 1368d9053125..e6a1a1187aaa 100644
      if (!toExecRelax) {
        sym.setFlags(NEEDS_TLSGD);
        c.addReloc({expr, type, offset, addend, &sym});
-@@ -1307,8 +1319,8 @@ static unsigned handleTlsRelocation(RelType type, Symbol &sym,
+@@ -1320,8 +1335,8 @@ static unsigned handleTlsRelocation(RelType type, Symbol &sym,
      return target->getTlsGdRelaxSkip(type);
    }
  
 -  if (oneof<R_GOT, R_GOTPLT, R_GOT_PC, R_AARCH64_GOT_PAGE_PC, R_GOT_OFF,
 -            R_TLSIE_HINT>(expr)) {
-+  if (oneof<R_GOT, R_GOTPLT, R_GOT_PC, R_AARCH64_GOT_PAGE_PC, R_LOONGARCH_GOT_TLSIE,
++  if (oneof<R_GOT, R_GOTPLT, R_GOT_PC, R_AARCH64_GOT_PAGE_PC,
 +            R_LOONGARCH_GOT_TLSIE_PAGE_PC, R_GOT_OFF, R_TLSIE_HINT>(expr)) {
      ctx.hasTlsIe.store(true, std::memory_order_relaxed);
      // Initial-Exec relocs can be relaxed to Local-Exec if the symbol is locally
      // defined.
 diff --git a/lld/ELF/Relocations.h b/lld/ELF/Relocations.h
-index 29e3edeca6be..baa359f4a0b7 100644
+index 29e3edeca6be..18a2089d4d62 100644
 --- a/lld/ELF/Relocations.h
 +++ b/lld/ELF/Relocations.h
-@@ -102,6 +102,17 @@ enum RelExpr {
+@@ -102,6 +102,16 @@ enum RelExpr {
    R_PPC64_RELAX_GOT_PC,
    R_RISCV_ADD,
    R_RISCV_PC_INDIRECT,
@@ -1027,7 +1046,6 @@ index 29e3edeca6be..baa359f4a0b7 100644
 +  // LoongArch GOT relocs are also reused for TLS, so the required semantics
 +  // differ from everyone else.
 +  R_LOONGARCH_GOT,
-+  R_LOONGARCH_GOT_TLSIE,
 +  R_LOONGARCH_GOT_PAGE_PC,
 +  R_LOONGARCH_GOT_TLSGD_PAGE_PC,
 +  R_LOONGARCH_GOT_TLSIE_PAGE_PC,
@@ -1035,10 +1053,10 @@ index 29e3edeca6be..baa359f4a0b7 100644
  
  // Architecture-neutral representation of relocation.
 diff --git a/lld/ELF/ScriptParser.cpp b/lld/ELF/ScriptParser.cpp
-index bb09bde5d22e..c7b107515d31 100644
+index dea5ce6435e2..c7639249e1ae 100644
 --- a/lld/ELF/ScriptParser.cpp
 +++ b/lld/ELF/ScriptParser.cpp
-@@ -438,6 +438,8 @@ static std::pair<ELFKind, uint16_t> parseBfdName(StringRef s) {
+@@ -439,6 +439,8 @@ static std::pair<ELFKind, uint16_t> parseBfdName(StringRef s) {
        .Case("elf64-littleriscv", {ELF64LEKind, EM_RISCV})
        .Case("elf64-sparc", {ELF64BEKind, EM_SPARCV9})
        .Case("elf32-msp430", {ELF32LEKind, EM_MSP430})
@@ -1148,7 +1166,7 @@ index 000000000000..c94db3228f15
 +    lu52i.d $a1, $a1, %abs64_hi12(bar)
 diff --git a/lld/test/ELF/loongarch-branch-b16.s b/lld/test/ELF/loongarch-branch-b16.s
 new file mode 100644
-index 000000000000..0e79ddc844b6
+index 000000000000..f06ba40ec646
 --- /dev/null
 +++ b/lld/test/ELF/loongarch-branch-b16.s
 @@ -0,0 +1,40 @@
@@ -1177,8 +1195,8 @@ index 000000000000..0e79ddc844b6
 +
 +# RUN: not ld.lld %t.la32.o --defsym foo=_start+0x20000 --defsym bar=_start+4-0x20004 -o /dev/null 2>&1 | FileCheck --check-prefix=ERROR-RANGE %s
 +# RUN: not ld.lld %t.la64.o --defsym foo=_start+0x20000 --defsym bar=_start+4-0x20004 -o /dev/null 2>&1 | FileCheck --check-prefix=ERROR-RANGE %s
-+# ERROR-RANGE: relocation R_LARCH_B16 out of range: 131072 is not in [-131072, 131071]; references foo
-+# ERROR-RANGE: relocation R_LARCH_B16 out of range: -131076 is not in [-131072, 131071]; references bar
++# ERROR-RANGE: relocation R_LARCH_B16 out of range: 131072 is not in [-131072, 131071]; references 'foo'
++# ERROR-RANGE: relocation R_LARCH_B16 out of range: -131076 is not in [-131072, 131071]; references 'bar'
 +
 +# RUN: not ld.lld %t.la32.o --defsym foo=_start+1 --defsym bar=_start-1 -o /dev/null 2>&1 | FileCheck --check-prefix=ERROR-ALIGN-1 %s
 +# RUN: not ld.lld %t.la64.o --defsym foo=_start+1 --defsym bar=_start-1 -o /dev/null 2>&1 | FileCheck --check-prefix=ERROR-ALIGN-1 %s
@@ -1194,7 +1212,7 @@ index 000000000000..0e79ddc844b6
 +     bne $zero, $zero, bar
 diff --git a/lld/test/ELF/loongarch-branch-b21.s b/lld/test/ELF/loongarch-branch-b21.s
 new file mode 100644
-index 000000000000..e05ad12f6f0d
+index 000000000000..0eef428e469e
 --- /dev/null
 +++ b/lld/test/ELF/loongarch-branch-b21.s
 @@ -0,0 +1,40 @@
@@ -1223,8 +1241,8 @@ index 000000000000..e05ad12f6f0d
 +
 +# RUN: not ld.lld %t.la32.o --defsym foo=_start+0x400000 --defsym bar=_start+4-0x400004 -o /dev/null 2>&1 | FileCheck --check-prefix=ERROR-RANGE %s
 +# RUN: not ld.lld %t.la64.o --defsym foo=_start+0x400000 --defsym bar=_start+4-0x400004 -o /dev/null 2>&1 | FileCheck --check-prefix=ERROR-RANGE %s
-+# ERROR-RANGE: relocation R_LARCH_B21 out of range: 4194304 is not in [-4194304, 4194303]; references foo
-+# ERROR-RANGE: relocation R_LARCH_B21 out of range: -4194308 is not in [-4194304, 4194303]; references bar
++# ERROR-RANGE: relocation R_LARCH_B21 out of range: 4194304 is not in [-4194304, 4194303]; references 'foo'
++# ERROR-RANGE: relocation R_LARCH_B21 out of range: -4194308 is not in [-4194304, 4194303]; references 'bar'
 +
 +# RUN: not ld.lld %t.la32.o --defsym foo=_start+1 --defsym bar=_start-1 -o /dev/null 2>&1 | FileCheck --check-prefix=ERROR-ALIGN-1 %s
 +# RUN: not ld.lld %t.la64.o --defsym foo=_start+1 --defsym bar=_start-1 -o /dev/null 2>&1 | FileCheck --check-prefix=ERROR-ALIGN-1 %s
@@ -1240,7 +1258,7 @@ index 000000000000..e05ad12f6f0d
 +     bnez $s8, bar
 diff --git a/lld/test/ELF/loongarch-branch-b26.s b/lld/test/ELF/loongarch-branch-b26.s
 new file mode 100644
-index 000000000000..8fd80937a5b1
+index 000000000000..0097e938ac4d
 --- /dev/null
 +++ b/lld/test/ELF/loongarch-branch-b26.s
 @@ -0,0 +1,40 @@
@@ -1269,8 +1287,8 @@ index 000000000000..8fd80937a5b1
 +
 +# RUN: not ld.lld %t.la32.o --defsym foo=_start+0x8000000 --defsym bar=_start+4-0x8000004 -o /dev/null 2>&1 | FileCheck --check-prefix=ERROR-RANGE %s
 +# RUN: not ld.lld %t.la64.o --defsym foo=_start+0x8000000 --defsym bar=_start+4-0x8000004 -o /dev/null 2>&1 | FileCheck --check-prefix=ERROR-RANGE %s
-+# ERROR-RANGE: relocation R_LARCH_B26 out of range: 134217728 is not in [-134217728, 134217727]; references foo
-+# ERROR-RANGE: relocation R_LARCH_B26 out of range: -134217732 is not in [-134217728, 134217727]; references bar
++# ERROR-RANGE: relocation R_LARCH_B26 out of range: 134217728 is not in [-134217728, 134217727]; references 'foo'
++# ERROR-RANGE: relocation R_LARCH_B26 out of range: -134217732 is not in [-134217728, 134217727]; references 'bar'
 +
 +# RUN: not ld.lld %t.la32.o --defsym foo=_start+1 --defsym bar=_start-1 -o /dev/null 2>&1 | FileCheck --check-prefix=ERROR-ALIGN-1 %s
 +# RUN: not ld.lld %t.la64.o --defsym foo=_start+1 --defsym bar=_start-1 -o /dev/null 2>&1 | FileCheck --check-prefix=ERROR-ALIGN-1 %s
@@ -1714,18 +1732,432 @@ index 000000000000..fa7d5e2a8344
 +## foo is local and non-preemptible, no PLT is generated.
 +foo:
 +  ret
+diff --git a/lld/test/ELF/loongarch-reloc-pic.s b/lld/test/ELF/loongarch-reloc-pic.s
+new file mode 100644
+index 000000000000..a42568a88e13
+--- /dev/null
++++ b/lld/test/ELF/loongarch-reloc-pic.s
+@@ -0,0 +1,44 @@
++# REQUIRES: loongarch
++# RUN: rm -rf %t && split-file %s %t
++
++# RUN: llvm-mc -filetype=obj -triple=loongarch32 %t/32.s -o %t/32.o
++# RUN: llvm-mc -filetype=obj -triple=loongarch64 %t/64.s -o %t/64.o
++# RUN: ld.lld -shared %t/32.o -o %t/32.so
++# RUN: llvm-nm %t/32.so | FileCheck --check-prefix=NM32 %s
++# RUN: llvm-readobj -r %t/32.so | FileCheck --check-prefix=RELOC32 %s
++# RUN: ld.lld -shared %t/64.o -o %t/64.so
++# RUN: llvm-nm %t/64.so | FileCheck --check-prefix=NM64 %s
++# RUN: llvm-readobj -r %t/64.so | FileCheck --check-prefix=RELOC64 %s
++
++## R_LARCH_32 and R_LARCH_64 are absolute relocation types.
++## In PIC mode, they create relative relocations if the symbol is non-preemptable.
++
++# NM32: 000301fc d b
++# NM64: 00030350 d b
++
++# RELOC32:      .rela.dyn {
++# RELOC32-NEXT:   0x301FC R_LARCH_RELATIVE - 0x301FC
++# RELOC32-NEXT:   0x301F8 R_LARCH_32 a 0
++# RELOC32-NEXT: }
++# RELOC64:      .rela.dyn {
++# RELOC64-NEXT:   0x30350 R_LARCH_RELATIVE - 0x30350
++# RELOC64-NEXT:   0x30348 R_LARCH_64 a 0
++# RELOC64-NEXT: }
++
++#--- 32.s
++.globl a, b
++.hidden b
++
++.data
++.long a
++b:
++.long b
++
++#--- 64.s
++.globl a, b
++.hidden b
++
++.data
++.quad a
++b:
++.quad b
+diff --git a/lld/test/ELF/loongarch-tls-gd-and-ie.s b/lld/test/ELF/loongarch-tls-gd-and-ie.s
+new file mode 100644
+index 000000000000..9e01800afade
+--- /dev/null
++++ b/lld/test/ELF/loongarch-tls-gd-and-ie.s
+@@ -0,0 +1,43 @@
++# REQUIRES: loongarch
++
++# RUN: llvm-mc -filetype=obj --triple=loongarch32 %s -o %t.la32.o
++# RUN: ld.lld %t.la32.o -shared -o %t.la32
++# RUN: llvm-mc -filetype=obj --triple=loongarch64 %s -o %t.la64.o
++# RUN: ld.lld %t.la64.o -shared -o %t.la64
++
++# RUN: llvm-readelf -Wr %t.la32 | FileCheck --check-prefix=LA32-REL %s
++# RUN: llvm-objdump -d --no-show-raw-insn %t.la32 | FileCheck --check-prefix=LA32 %s
++
++# RUN: llvm-readelf -Wr %t.la64 | FileCheck --check-prefix=LA64-REL %s
++# RUN: llvm-objdump -d --no-show-raw-insn %t.la64 | FileCheck --check-prefix=LA64 %s
++
++# LA32-REL-NOT:  R_LARCH_32
++# LA32-REL:      00020240  00000206 R_LARCH_TLS_DTPMOD32   00000000   y + 0
++# LA32-REL-NEXT: 00020244  00000208 R_LARCH_TLS_DTPREL32   00000000   y + 0
++# LA32-REL-NEXT: 00020248  0000020a R_LARCH_TLS_TPREL32    00000000   y + 0
++
++# LA64-REL-NOT:  R_LARCH_64
++# LA64-REL:      00000000000203a8  0000000200000007 R_LARCH_TLS_DTPMOD64   0000000000000000 y + 0
++# LA64-REL-NEXT: 00000000000203b0  0000000200000009 R_LARCH_TLS_DTPREL64   0000000000000000 y + 0
++# LA64-REL-NEXT: 00000000000203b8  000000020000000b R_LARCH_TLS_TPREL64    0000000000000000 y + 0
++
++# LA32:      101d4: pcalau12i $a0, 16
++# LA32-NEXT:        ld.w $a0, $a0, 584
++# LA32-NEXT:        pcalau12i $a1, 16
++# LA32-NEXT:        addi.w $a1, $a1, 576
++
++# LA64:      102e0: pcalau12i $a0, 16
++# LA64-NEXT:        ld.d $a0, $a0, 952
++# LA64-NEXT:        pcalau12i $a1, 16
++# LA64-NEXT:        addi.d $a1, $a1, 936
++
++.global _start
++_start:
++la.tls.ie $a0, y  # should refer to the GOT entry relocated by the R_LARCH_TLS_TPRELnn record
++la.tls.gd $a1, y  # should refer to the GOT entry relocated by the R_LARCH_TLS_DTPMODnn record
++
++.section .tbss,"awT",@nobits
++.global y
++y:
++.word 0
++.size y, 4
+diff --git a/lld/test/ELF/loongarch-tls-gd.s b/lld/test/ELF/loongarch-tls-gd.s
+new file mode 100644
+index 000000000000..99251b4d51e8
+--- /dev/null
++++ b/lld/test/ELF/loongarch-tls-gd.s
+@@ -0,0 +1,140 @@
++# REQUIRES: loongarch
++# RUN: rm -rf %t && split-file %s %t
++
++## LoongArch psABI doesn't specify TLS relaxation. Though the code sequences are not
++## relaxed, dynamic relocations can be omitted for GD->LE relaxation.
++
++# RUN: llvm-mc -filetype=obj -triple=loongarch32 %t/a.s -o %t/a.32.o
++# RUN: llvm-mc -filetype=obj -triple=loongarch32 %t/bc.s -o %t/bc.32.o
++# RUN: ld.lld -shared -soname=bc.so %t/bc.32.o -o %t/bc.32.so
++# RUN: llvm-mc -filetype=obj -triple=loongarch32 %t/tga.s -o %t/tga.32.o
++# RUN: llvm-mc -filetype=obj -triple=loongarch64 %t/a.s -o %t/a.64.o
++# RUN: llvm-mc -filetype=obj -triple=loongarch64 %t/bc.s -o %t/bc.64.o
++# RUN: ld.lld -shared -soname=bc.so %t/bc.64.o -o %t/bc.64.so
++# RUN: llvm-mc -filetype=obj -triple=loongarch64 %t/tga.s -o %t/tga.64.o
++
++## LA32 GD
++# RUN: ld.lld -shared %t/a.32.o %t/bc.32.o -o %t/gd.32.so
++# RUN: llvm-readobj -r %t/gd.32.so | FileCheck --check-prefix=GD32-REL %s
++# RUN: llvm-objdump -d --no-show-raw-insn %t/gd.32.so | FileCheck --check-prefix=GD32 %s
++
++## LA32 GD -> LE
++# RUN: ld.lld %t/a.32.o %t/bc.32.o %t/tga.32.o -o %t/le.32
++# RUN: llvm-readelf -r %t/le.32 | FileCheck --check-prefix=NOREL %s
++# RUN: llvm-readelf -x .got %t/le.32 | FileCheck --check-prefix=LE32-GOT %s
++# RUN: ld.lld -pie %t/a.32.o %t/bc.32.o %t/tga.32.o -o %t/le-pie.32
++# RUN: llvm-readelf -r %t/le-pie.32 | FileCheck --check-prefix=NOREL %s
++# RUN: llvm-readelf -x .got %t/le-pie.32 | FileCheck --check-prefix=LE32-GOT %s
++
++## LA32 GD -> IE
++# RUN: ld.lld %t/a.32.o %t/bc.32.so %t/tga.32.o -o %t/ie.32
++# RUN: llvm-readobj -r %t/ie.32 | FileCheck --check-prefix=IE32-REL %s
++# RUN: llvm-readelf -x .got %t/ie.32 | FileCheck --check-prefix=IE32-GOT %s
++
++## LA64 GD
++# RUN: ld.lld -shared %t/a.64.o %t/bc.64.o -o %t/gd.64.so
++# RUN: llvm-readobj -r %t/gd.64.so | FileCheck --check-prefix=GD64-REL %s
++# RUN: llvm-objdump -d --no-show-raw-insn %t/gd.64.so | FileCheck --check-prefix=GD64 %s
++
++## LA64 GD -> LE
++# RUN: ld.lld %t/a.64.o %t/bc.64.o %t/tga.64.o -o %t/le.64
++# RUN: llvm-readelf -r %t/le.64 | FileCheck --check-prefix=NOREL %s
++# RUN: llvm-readelf -x .got %t/le.64 | FileCheck --check-prefix=LE64-GOT %s
++# RUN: ld.lld -pie %t/a.64.o %t/bc.64.o %t/tga.64.o -o %t/le-pie.64
++# RUN: llvm-readelf -r %t/le-pie.64 | FileCheck --check-prefix=NOREL %s
++# RUN: llvm-readelf -x .got %t/le-pie.64 | FileCheck --check-prefix=LE64-GOT %s
++
++## LA64 GD -> IE
++# RUN: ld.lld %t/a.64.o %t/bc.64.so %t/tga.64.o -o %t/ie.64
++# RUN: llvm-readobj -r %t/ie.64 | FileCheck --check-prefix=IE64-REL %s
++# RUN: llvm-readelf -x .got %t/ie.64 | FileCheck --check-prefix=IE64-GOT %s
++
++# GD32-REL:      .rela.dyn {
++# GD32-REL-NEXT:   0x20314 R_LARCH_TLS_DTPMOD32 a 0x0
++# GD32-REL-NEXT:   0x20318 R_LARCH_TLS_DTPREL32 a 0x0
++# GD32-REL-NEXT:   0x2031C R_LARCH_TLS_DTPMOD32 b 0x0
++# GD32-REL-NEXT:   0x20320 R_LARCH_TLS_DTPREL32 b 0x0
++# GD32-REL-NEXT: }
++
++## &DTPMOD(a) - . = 0x20314 - 0x10250: 0x10 pages, page offset 0x314
++# GD32:      10250: pcalau12i $a0, 16
++# GD32-NEXT:        addi.w $a0, $a0, 788
++# GD32-NEXT:        bl 56
++
++## &DTPMOD(b) - . = 0x2031c - 0x1025c: 0x10 pages, page offset 0x31c
++# GD32:      1025c: pcalau12i $a0, 16
++# GD32-NEXT:        addi.w $a0, $a0, 796
++# GD32-NEXT:        bl 44
++
++# GD64-REL:      .rela.dyn {
++# GD64-REL-NEXT:   0x204C8 R_LARCH_TLS_DTPMOD64 a 0x0
++# GD64-REL-NEXT:   0x204D0 R_LARCH_TLS_DTPREL64 a 0x0
++# GD64-REL-NEXT:   0x204D8 R_LARCH_TLS_DTPMOD64 b 0x0
++# GD64-REL-NEXT:   0x204E0 R_LARCH_TLS_DTPREL64 b 0x0
++# GD64-REL-NEXT: }
++
++## &DTPMOD(a) - . = 0x204c8 - 0x10398: 0x10 pages, page offset 0x4c8
++# GD64:      10398: pcalau12i $a0, 16
++# GD64-NEXT:        addi.d $a0, $a0, 1224
++# GD64-NEXT:        bl 48
++
++## &DTPMOD(b) - . = 0x204d8 - 0x103a4: 0x10 pages, page offset 0x4d8
++# GD64:      103a4: pcalau12i $a0, 16
++# GD64-NEXT:        addi.d $a0, $a0, 1240
++# GD64-NEXT:        bl 36
++
++# NOREL: no relocations
++
++## .got contains pre-populated values: [a@dtpmod, a@dtprel, b@dtpmod, b@dtprel]
++## a@dtprel = st_value(a) = 0x8
++## b@dtprel = st_value(b) = 0xc
++# LE32-GOT: section '.got':
++# LE32-GOT-NEXT: 0x[[#%x,A:]] [[#%x,GOT:]] 01000000 08000000 01000000
++# LE32-GOT-NEXT: 0x[[#%x,A:]] 0c000000
++# LE64-GOT: section '.got':
++# LE64-GOT-NEXT: 0x[[#%x,A:]] [[#%x,GOT:]] [[#%x,GOT:]] 01000000 00000000
++# LE64-GOT-NEXT: 0x[[#%x,A:]] 08000000 00000000 01000000 00000000
++# LE64-GOT-NEXT: 0x[[#%x,A:]] 0c000000 00000000
++
++## a is local - relaxed to LE - its DTPMOD/DTPREL slots are link-time constants.
++## b is external - DTPMOD/DTPREL dynamic relocations are required.
++# IE32-REL:      .rela.dyn {
++# IE32-REL-NEXT:   0x3022C R_LARCH_TLS_DTPMOD32 b 0x0
++# IE32-REL-NEXT:   0x30230 R_LARCH_TLS_DTPREL32 b 0x0
++# IE32-REL-NEXT: }
++# IE32-GOT:      section '.got':
++# IE32-GOT-NEXT: 0x00030220 c0010300 01000000 08000000 00000000
++# IE32-GOT-NEXT: 0x00030230 00000000
++
++# IE64-REL:      .rela.dyn {
++# IE64-REL-NEXT:   0x30390 R_LARCH_TLS_DTPMOD64 b 0x0
++# IE64-REL-NEXT:   0x30398 R_LARCH_TLS_DTPREL64 b 0x0
++# IE64-REL-NEXT: }
++# IE64-GOT:      section '.got':
++# IE64-GOT-NEXT: 0x00030378 b8020300 00000000 01000000 00000000
++# IE64-GOT-NEXT: 0x00030388 08000000 00000000 00000000 00000000
++# IE64-GOT-NEXT: 0x00030398 00000000 00000000
++
++#--- a.s
++la.tls.gd $a0, a
++bl %plt(__tls_get_addr)
++
++la.tls.gd $a0, b
++bl %plt(__tls_get_addr)
++
++.section .tbss
++.globl a
++.zero 8
++a:
++.zero 4
++
++#--- bc.s
++.tbss
++.globl b, c
++b:
++.zero 4
++c:
++
++#--- tga.s
++.globl __tls_get_addr
++__tls_get_addr:
+diff --git a/lld/test/ELF/loongarch-tls-ie.s b/lld/test/ELF/loongarch-tls-ie.s
+new file mode 100644
+index 000000000000..784116824a6a
+--- /dev/null
++++ b/lld/test/ELF/loongarch-tls-ie.s
+@@ -0,0 +1,115 @@
++# REQUIRES: loongarch
++# RUN: rm -rf %t && split-file %s %t
++
++# RUN: llvm-mc -filetype=obj -triple=loongarch32 %t/32.s -o %t/32.o
++# RUN: llvm-mc -filetype=obj -triple=loongarch64 %t/64.s -o %t/64.o
++
++## LA32 IE
++# RUN: ld.lld -shared %t/32.o -o %t/32.so
++# RUN: llvm-readobj -r -d %t/32.so | FileCheck --check-prefix=IE32-REL %s
++# RUN: llvm-objdump -d --no-show-raw-insn %t/32.so | FileCheck --check-prefixes=IE32 %s
++
++## LA32 IE -> LE
++# RUN: ld.lld %t/32.o -o %t/32
++# RUN: llvm-readelf -r %t/32 | FileCheck --check-prefix=NOREL %s
++# RUN: llvm-readelf -x .got %t/32 | FileCheck --check-prefix=LE32-GOT %s
++# RUN: llvm-objdump -d --no-show-raw-insn %t/32 | FileCheck --check-prefixes=LE32 %s
++
++## LA64 IE
++# RUN: ld.lld -shared %t/64.o -o %t/64.so
++# RUN: llvm-readobj -r -d %t/64.so | FileCheck --check-prefix=IE64-REL %s
++# RUN: llvm-objdump -d --no-show-raw-insn %t/64.so | FileCheck --check-prefixes=IE64 %s
++
++## LA64 IE -> LE
++# RUN: ld.lld %t/64.o -o %t/64
++# RUN: llvm-readelf -r %t/64 | FileCheck --check-prefix=NOREL %s
++# RUN: llvm-readelf -x .got %t/64 | FileCheck --check-prefix=LE64-GOT %s
++# RUN: llvm-objdump -d --no-show-raw-insn %t/64 | FileCheck --check-prefixes=LE64 %s
++
++# IE32-REL:      FLAGS STATIC_TLS
++# IE32-REL:      .rela.dyn {
++# IE32-REL-NEXT:   0x2021C R_LARCH_TLS_TPREL32 - 0xC
++# IE32-REL-NEXT:   0x20218 R_LARCH_TLS_TPREL32 a 0x0
++# IE32-REL-NEXT: }
++
++# IE64-REL:      FLAGS STATIC_TLS
++# IE64-REL:      .rela.dyn {
++# IE64-REL-NEXT:   0x20378 R_LARCH_TLS_TPREL64 - 0xC
++# IE64-REL-NEXT:   0x20370 R_LARCH_TLS_TPREL64 a 0x0
++# IE64-REL-NEXT: }
++
++## LA32:
++## &.got[0] - . = 0x20218 - 0x101a4: 0x10 pages, page offset 0x218
++## &.got[1] - . = 0x2021c - 0x101b0: 0x10 pages, page offset 0x21c
++# IE32:      101a4: pcalau12i $a4, 16
++# IE32-NEXT:        ld.w $a4, $a4, 536
++# IE32-NEXT:        add.w $a4, $a4, $tp
++# IE32-NEXT: 101b0: pcalau12i $a5, 16
++# IE32-NEXT:        ld.w $a5, $a5, 540
++# IE32-NEXT:        add.w $a5, $a5, $tp
++
++## LA64:
++## &.got[0] - . = 0x20370 - 0x102a0: 0x10 pages, page offset 0x370
++## &.got[1] - . = 0x20378 - 0x102ac: 0x10 pages, page offset 0x378
++# IE64:      102a0: pcalau12i $a4, 16
++# IE64-NEXT:        ld.d $a4, $a4, 880
++# IE64-NEXT:        add.d $a4, $a4, $tp
++# IE64-NEXT: 102ac: pcalau12i $a5, 16
++# IE64-NEXT:        ld.d $a5, $a5, 888
++# IE64-NEXT:        add.d $a5, $a5, $tp
++
++# NOREL: no relocations
++
++# a@tprel = st_value(a) = 0x8
++# b@tprel = st_value(a) = 0xc
++# LE32-GOT: section '.got':
++# LE32-GOT-NEXT: 0x0003012c 00000000 08000000 0c000000
++# LE64-GOT: section '.got':
++# LE64-GOT-NEXT: 0x000301e0 00000000 00000000 08000000 00000000
++# LE64-GOT-NEXT: 0x000301f0 0c000000 00000000
++
++## LA32:
++## &.got[0] - . = 0x30130 - 0x20114: 0x10 pages, page offset 0x130
++## &.got[1] - . = 0x30134 - 0x20120: 0x10 pages, page offset 0x134
++# LE32:      20114: pcalau12i $a4, 16
++# LE32-NEXT:        ld.w $a4, $a4, 304
++# LE32-NEXT:        add.w $a4, $a4, $tp
++# LE32-NEXT: 20120: pcalau12i $a5, 16
++# LE32-NEXT:        ld.w $a5, $a5, 308
++# LE32-NEXT:        add.w $a5, $a5, $tp
++
++## LA64:
++## &.got[0] - . = 0x301e8 - 0x201c8: 0x10 pages, page offset 0x1e8
++## &.got[1] - . = 0x301f0 - 0x201d4: 0x10 pages, page offset 0x1f0
++# LE64:      201c8: pcalau12i $a4, 16
++# LE64-NEXT:        ld.d $a4, $a4, 488
++# LE64-NEXT:        add.d $a4, $a4, $tp
++# LE64-NEXT: 201d4: pcalau12i $a5, 16
++# LE64-NEXT:        ld.d $a5, $a5, 496
++# LE64-NEXT:        add.d $a5, $a5, $tp
++
++#--- 32.s
++la.tls.ie $a4, a
++add.w $a4, $a4, $tp
++la.tls.ie $a5, b
++add.w $a5, $a5, $tp
++
++.section .tbss
++.globl a
++.zero 8
++a:
++.zero 4
++b:
++
++#--- 64.s
++la.tls.ie $a4, a
++add.d $a4, $a4, $tp
++la.tls.ie $a5, b
++add.d $a5, $a5, $tp
++
++.section .tbss
++.globl a
++.zero 8
++a:
++.zero 4
++b:
+diff --git a/lld/test/ELF/loongarch-tls-le.s b/lld/test/ELF/loongarch-tls-le.s
+new file mode 100644
+index 000000000000..dd1a1bb0bbb2
+--- /dev/null
++++ b/lld/test/ELF/loongarch-tls-le.s
+@@ -0,0 +1,42 @@
++# REQUIRES: loongarch
++
++# RUN: llvm-mc -filetype=obj -triple=loongarch32 %s -o %t.32.o
++# RUN: llvm-mc -filetype=obj -triple=loongarch64 %s -o %t.64.o
++
++# RUN: ld.lld %t.32.o -o %t.32
++# RUN: llvm-nm -p %t.32 | FileCheck --check-prefixes=NM %s
++# RUN: llvm-objdump -d --no-show-raw-insn %t.32 | FileCheck --check-prefixes=LE %s
++
++# RUN: ld.lld %t.64.o -o %t.64
++# RUN: llvm-objdump -d --no-show-raw-insn %t.64 | FileCheck --check-prefixes=LE %s
++
++# RUN: not ld.lld -shared %t.32.o -o /dev/null 2>&1 | FileCheck %s --check-prefix=ERR --implicit-check-not=error:
++
++# ERR: error: relocation R_LARCH_TLS_LE_HI20 against .LANCHOR0 cannot be used with -shared
++# ERR: error: relocation R_LARCH_TLS_LE_LO12 against .LANCHOR0 cannot be used with -shared
++# ERR: error: relocation R_LARCH_TLS_LE_HI20 against a cannot be used with -shared
++# ERR: error: relocation R_LARCH_TLS_LE_LO12 against a cannot be used with -shared
++
++# NM: {{0*}}00000008 b .LANCHOR0
++# NM: {{0*}}00000800 B a
++
++## .LANCHOR0@tprel = 8
++## a@tprel = 0x800
++# LE:      lu12i.w $a0, 0
++# LE-NEXT: ori $a0, $a0, 8
++# LE-NEXT: lu12i.w $a1, 0
++# LE-NEXT: ori $a1, $a1, 2048
++# LE-EMPTY:
++
++.text
++_start:
++la.tls.le $a0, .LANCHOR0
++la.tls.le $a1, a
++
++.section .tbss
++.space 8
++.LANCHOR0:
++.space 0x800-8
++.globl a
++a:
++.zero 4
 diff --git a/lld/test/lit.cfg.py b/lld/test/lit.cfg.py
-index 96a1d652573f..1b1f1e781240 100644
+index 2e60d9fef7df..490aa373a081 100644
 --- a/lld/test/lit.cfg.py
 +++ b/lld/test/lit.cfg.py
-@@ -68,6 +68,7 @@ llvm_config.feature_config(
-                           'ARM': 'arm',
-                           'AVR': 'avr',
-                           'Hexagon': 'hexagon',
-+                          'LoongArch': 'loongarch',
-                           'Mips': 'mips',
-                           'MSP430': 'msp430',
-                           'PowerPC': 'ppc',
+@@ -84,6 +84,7 @@ llvm_config.feature_config(
+                 "ARM": "arm",
+                 "AVR": "avr",
+                 "Hexagon": "hexagon",
++                "LoongArch": "loongarch",
+                 "Mips": "mips",
+                 "MSP430": "msp430",
+                 "PowerPC": "ppc",
 -- 
-2.39.0
+2.40.0
 

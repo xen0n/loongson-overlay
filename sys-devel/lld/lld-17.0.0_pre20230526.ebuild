@@ -12,11 +12,11 @@ HOMEPAGE="https://llvm.org/"
 LICENSE="Apache-2.0-with-LLVM-exceptions UoI-NCSA"
 SLOT="${LLVM_MAJOR}/${LLVM_SOABI}"
 KEYWORDS="~amd64 ~arm ~arm64 ~loong ~ppc ~ppc64 ~riscv ~x86"
-IUSE="debug test zstd"
+IUSE="+debug test zstd"
 RESTRICT="!test? ( test )"
 
 DEPEND="
-	~sys-devel/llvm-${PV}[zstd=]
+	~sys-devel/llvm-${PV}[debug=,zstd=]
 	sys-libs/zlib:=
 	zstd? ( app-arch/zstd:= )
 "
@@ -40,7 +40,6 @@ PATCHES=(
 )
 
 LLVM_COMPONENTS=( lld cmake libunwind/include/mach-o )
-LLVM_TEST_COMPONENTS=( llvm/utils third-party )
 llvm.org_set_globals
 
 python_check_deps() {
