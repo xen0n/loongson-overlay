@@ -1,4 +1,4 @@
-From ecb240e0c4676fd12e30ab848cd4ce946356a761 Mon Sep 17 00:00:00 2001
+From ca91ab1fa4a8a32e20bc50825b2a5bf44b170342 Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <git@xen0n.name>
 Date: Tue, 9 Aug 2022 13:33:31 +0800
 Subject: [PATCH] [lld][ELF] Support LoongArch
@@ -22,7 +22,7 @@ Differential Revision: https://reviews.llvm.org/D138135
  lld/ELF/Driver.cpp                            |  12 +-
  lld/ELF/InputFiles.cpp                        |   3 +
  lld/ELF/InputSection.cpp                      |  29 +
- lld/ELF/Relocations.cpp                       |  41 +-
+ lld/ELF/Relocations.cpp                       |  43 +-
  lld/ELF/Relocations.h                         |  10 +
  lld/ELF/ScriptParser.cpp                      |   2 +
  lld/ELF/Target.cpp                            |   2 +
@@ -41,9 +41,10 @@ Differential Revision: https://reviews.llvm.org/D138135
  lld/test/ELF/loongarch-tls-gd-and-ie.s        |  43 ++
  lld/test/ELF/loongarch-tls-gd.s               | 140 ++++
  lld/test/ELF/loongarch-tls-ie.s               | 115 +++
+ lld/test/ELF/loongarch-tls-ld.s               |  91 +++
  lld/test/ELF/loongarch-tls-le.s               |  42 ++
  lld/test/lit.cfg.py                           |   1 +
- 26 files changed, 1726 insertions(+), 17 deletions(-)
+ 27 files changed, 1818 insertions(+), 18 deletions(-)
  create mode 100644 lld/ELF/Arch/LoongArch.cpp
  create mode 100644 lld/test/ELF/loongarch-abs64.s
  create mode 100644 lld/test/ELF/loongarch-branch-b16.s
@@ -59,6 +60,7 @@ Differential Revision: https://reviews.llvm.org/D138135
  create mode 100644 lld/test/ELF/loongarch-tls-gd-and-ie.s
  create mode 100644 lld/test/ELF/loongarch-tls-gd.s
  create mode 100644 lld/test/ELF/loongarch-tls-ie.s
+ create mode 100644 lld/test/ELF/loongarch-tls-ld.s
  create mode 100644 lld/test/ELF/loongarch-tls-le.s
 
 diff --git a/lld/ELF/Arch/LoongArch.cpp b/lld/ELF/Arch/LoongArch.cpp
@@ -902,7 +904,7 @@ index 3057cedb4bdc..77ba5b3ae5b6 100644
      return in.got->getVA() + in.got->getTlsIndexOff() + a - in.gotPlt->getVA();
    case R_TLSLD_GOT:
 diff --git a/lld/ELF/Relocations.cpp b/lld/ELF/Relocations.cpp
-index 2f7fcd664c6a..bd7f387fe8cd 100644
+index 2f7fcd664c6a..25ed0b92b6b8 100644
 --- a/lld/ELF/Relocations.cpp
 +++ b/lld/ELF/Relocations.cpp
 @@ -195,8 +195,8 @@ static bool isAbsoluteValue(const Symbol &sym) {
@@ -916,25 +918,26 @@ index 2f7fcd664c6a..bd7f387fe8cd 100644
  }
  
  // Returns true if Expr refers a GOT entry. Note that this function
-@@ -205,7 +205,7 @@ static bool needsPlt(RelExpr expr) {
+@@ -205,7 +205,8 @@ static bool needsPlt(RelExpr expr) {
  static bool needsGot(RelExpr expr) {
    return oneof<R_GOT, R_GOT_OFF, R_MIPS_GOT_LOCAL_PAGE, R_MIPS_GOT_OFF,
                 R_MIPS_GOT_OFF32, R_AARCH64_GOT_PAGE_PC, R_GOT_PC, R_GOTPLT,
 -               R_AARCH64_GOT_PAGE>(expr);
-+               R_AARCH64_GOT_PAGE, R_LOONGARCH_GOT, R_LOONGARCH_GOT_PAGE_PC>(expr);
++               R_AARCH64_GOT_PAGE, R_LOONGARCH_GOT, R_LOONGARCH_GOT_PAGE_PC>(
++      expr);
  }
  
  // True if this expression is of the form Sym - X, where X is a position in the
-@@ -213,12 +213,15 @@ static bool needsGot(RelExpr expr) {
+@@ -213,12 +214,14 @@ static bool needsGot(RelExpr expr) {
  static bool isRelExpr(RelExpr expr) {
    return oneof<R_PC, R_GOTREL, R_GOTPLTREL, R_MIPS_GOTREL, R_PPC64_CALL,
                 R_PPC64_RELAX_TOC, R_AARCH64_PAGE_PC, R_RELAX_GOT_PC,
 -               R_RISCV_PC_INDIRECT, R_PPC64_RELAX_GOT_PC>(expr);
-+               R_RISCV_PC_INDIRECT, R_PPC64_RELAX_GOT_PC,
-+               R_LOONGARCH_PAGE_PC>(expr);
++               R_RISCV_PC_INDIRECT, R_PPC64_RELAX_GOT_PC, R_LOONGARCH_PAGE_PC>(
++      expr);
  }
  
- 
+-
  static RelExpr toPlt(RelExpr expr) {
    switch (expr) {
 +  case R_LOONGARCH_PAGE_PC:
@@ -957,8 +960,8 @@ index 2f7fcd664c6a..bd7f387fe8cd 100644
              R_PLT_PC, R_PLT_GOTPLT, R_PPC32_PLTREL, R_PPC64_CALL_PLT,
 -            R_PPC64_RELAX_TOC, R_RISCV_ADD, R_AARCH64_GOT_PAGE>(e))
 +            R_PPC64_RELAX_TOC, R_RISCV_ADD, R_AARCH64_GOT_PAGE,
-+            R_LOONGARCH_PLT_PAGE_PC, R_LOONGARCH_GOT, R_LOONGARCH_GOT_PAGE_PC,
-+            R_LOONGARCH_GOT_TLSIE_PAGE_PC>(e))
++            R_LOONGARCH_PLT_PAGE_PC, R_LOONGARCH_GOT, R_LOONGARCH_GOT_PAGE_PC>(
++          e))
      return true;
  
    // These never do, except if the entire file is position dependent or if
@@ -2098,6 +2101,103 @@ index 000000000000..784116824a6a
 +a:
 +.zero 4
 +b:
+diff --git a/lld/test/ELF/loongarch-tls-ld.s b/lld/test/ELF/loongarch-tls-ld.s
+new file mode 100644
+index 000000000000..75d9bf09c769
+--- /dev/null
++++ b/lld/test/ELF/loongarch-tls-ld.s
+@@ -0,0 +1,91 @@
++# REQUIRES: loongarch
++# RUN: rm -rf %t && split-file %s %t
++
++## LoongArch psABI doesn't specify TLS relaxation. Though the code sequences are not
++## relaxed, dynamic relocations can be omitted for LD->LE relaxation.
++
++# RUN: llvm-mc -filetype=obj -triple=loongarch32 -position-independent %t/a.s -o %t/a.32.o
++# RUN: llvm-mc -filetype=obj -triple=loongarch32 %t/tga.s -o %t/tga.32.o
++# RUN: llvm-mc -filetype=obj -triple=loongarch64 -position-independent %t/a.s -o %t/a.64.o
++# RUN: llvm-mc -filetype=obj -triple=loongarch64 %t/tga.s -o %t/tga.64.o
++
++## LA32 LD
++# RUN: ld.lld -shared %t/a.32.o -o %t/ld.32.so
++# RUN: llvm-readobj -r %t/ld.32.so | FileCheck --check-prefix=LD32-REL %s
++# RUN: llvm-readelf -x .got %t/ld.32.so | FileCheck --check-prefix=LD32-GOT %s
++# RUN: llvm-objdump -d --no-show-raw-insn %t/ld.32.so | FileCheck --check-prefixes=LD32 %s
++
++## LA32 LD -> LE
++# RUN: ld.lld %t/a.32.o %t/tga.32.o -o %t/le.32
++# RUN: llvm-readelf -r %t/le.32 | FileCheck --check-prefix=NOREL %s
++# RUN: llvm-readelf -x .got %t/le.32 | FileCheck --check-prefix=LE32-GOT %s
++# RUN: llvm-objdump -d --no-show-raw-insn %t/le.32 | FileCheck --check-prefixes=LE32 %s
++
++## LA64 LD
++# RUN: ld.lld -shared %t/a.64.o -o %t/ld.64.so
++# RUN: llvm-readobj -r %t/ld.64.so | FileCheck --check-prefix=LD64-REL %s
++# RUN: llvm-readelf -x .got %t/ld.64.so | FileCheck --check-prefix=LD64-GOT %s
++# RUN: llvm-objdump -d --no-show-raw-insn %t/ld.64.so | FileCheck --check-prefixes=LD64 %s
++
++## LA64 LD -> LE
++# RUN: ld.lld %t/a.64.o %t/tga.64.o -o %t/le.64
++# RUN: llvm-readelf -r %t/le.64 | FileCheck --check-prefix=NOREL %s
++# RUN: llvm-readelf -x .got %t/le.64 | FileCheck --check-prefix=LE64-GOT %s
++# RUN: llvm-objdump -d --no-show-raw-insn %t/le.64 | FileCheck --check-prefixes=LE64 %s
++
++## a@dtprel = st_value(a) = 0 is a link-time constant.
++# LD32-REL:      .rela.dyn {
++# LD32-REL-NEXT:   0x20284 R_LARCH_TLS_DTPMOD32 - 0x0
++# LD32-REL-NEXT: }
++# LD32-GOT:      section '.got':
++# LD32-GOT-NEXT: 0x00020280 10020200 00000000 00000000
++
++# LD64-REL:      .rela.dyn {
++# LD64-REL-NEXT:   0x20408 R_LARCH_TLS_DTPMOD64 - 0x0
++# LD64-REL-NEXT: }
++# LD64-GOT:      section '.got':
++# LD64-GOT-NEXT: 0x00020400 20030200 00000000 00000000 00000000
++# LD64-GOT-NEXT: 0x00020410 00000000 00000000
++
++## LA32: &DTPMOD(a) - . = 0x20284 - 0x101cc: 0x10 pages, page offset 0x284
++# LD32:      101cc: pcalau12i $a0, 16
++# LD32-NEXT:        addi.w $a0, $a0, 644
++# LD32-NEXT:        bl 44
++
++## LA64: &DTPMOD(a) - . = 0x20408 - 0x102e0: 0x10 pages, page offset 0x408
++# LD64:      102e0: pcalau12i $a0, 16
++# LD64-NEXT:        addi.d $a0, $a0, 1032
++# LD64-NEXT:        bl 40
++
++# NOREL: no relocations
++
++## a is local - its DTPMOD/DTPREL slots are link-time constants.
++## a@dtpmod = 1 (main module)
++# LE32-GOT: section '.got':
++# LE32-GOT-NEXT: 0x00030120 00000000 01000000 00000000
++
++# LE64-GOT: section '.got':
++# LE64-GOT-NEXT: 0x000301d8 00000000 00000000 01000000 00000000
++# LE64-GOT-NEXT: 0x000301e8 00000000 00000000
++
++## LA32: DTPMOD(.LANCHOR0) - . = 0x30124 - 0x20114: 0x10 pages, page offset 0x124
++# LE32:      20114: pcalau12i $a0, 16
++# LE32-NEXT:        addi.w $a0, $a0, 292
++# LE32-NEXT:        bl 4
++
++## LA64: DTPMOD(.LANCHOR0) - . = 0x301e0 - 0x201c8: 0x10 pages, page offset 0x1e0
++# LE64:      201c8: pcalau12i $a0, 16
++# LE64-NEXT:        addi.d $a0, $a0, 480
++# LE64-NEXT:        bl 4
++
++#--- a.s
++la.tls.ld $a0, .LANCHOR0
++bl %plt(__tls_get_addr)
++
++.section .tbss,"awT",@nobits
++.set .LANCHOR0, . + 0
++.zero 8
++
++#--- tga.s
++.globl __tls_get_addr
++__tls_get_addr:
 diff --git a/lld/test/ELF/loongarch-tls-le.s b/lld/test/ELF/loongarch-tls-le.s
 new file mode 100644
 index 000000000000..dd1a1bb0bbb2
