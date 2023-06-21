@@ -1,4 +1,4 @@
-From bb34f599842cd6887f418eb8e03807589f11226e Mon Sep 17 00:00:00 2001
+From 7461d29cebfb8e6b4612b1c987f132efb4a45369 Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <git@xen0n.name>
 Date: Tue, 9 Aug 2022 13:33:31 +0800
 Subject: [PATCH] [lld][ELF] Support LoongArch
@@ -17,7 +17,7 @@ tested to work as well.
 
 Differential Revision: https://reviews.llvm.org/D138135
 ---
- lld/ELF/Arch/LoongArch.cpp                    | 626 ++++++++++++++++++
+ lld/ELF/Arch/LoongArch.cpp                    | 621 ++++++++++++++++++
  lld/ELF/CMakeLists.txt                        |   1 +
  lld/ELF/Driver.cpp                            |  12 +-
  lld/ELF/InputFiles.cpp                        |   3 +
@@ -44,7 +44,7 @@ Differential Revision: https://reviews.llvm.org/D138135
  lld/test/ELF/loongarch-tls-ld.s               |  89 +++
  lld/test/ELF/loongarch-tls-le.s               |  42 ++
  lld/test/lit.cfg.py                           |   1 +
- 27 files changed, 1860 insertions(+), 19 deletions(-)
+ 27 files changed, 1855 insertions(+), 19 deletions(-)
  create mode 100644 lld/ELF/Arch/LoongArch.cpp
  create mode 100644 lld/test/ELF/emulation-loongarch.s
  create mode 100644 lld/test/ELF/loongarch-abs64.s
@@ -65,10 +65,10 @@ Differential Revision: https://reviews.llvm.org/D138135
 
 diff --git a/lld/ELF/Arch/LoongArch.cpp b/lld/ELF/Arch/LoongArch.cpp
 new file mode 100644
-index 000000000000..40823c55a078
+index 000000000000..8c2e6cfa4ed8
 --- /dev/null
 +++ b/lld/ELF/Arch/LoongArch.cpp
-@@ -0,0 +1,626 @@
+@@ -0,0 +1,621 @@
 +//===- LoongArch.cpp ------------------------------------------------------===//
 +//
 +// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
@@ -569,49 +569,47 @@ index 000000000000..40823c55a078
 +    write64le(loc, val);
 +    return;
 +
-+  case R_LARCH_B16: {
++  case R_LARCH_B16:
 +    checkInt(loc, val, 18, rel);
 +    checkAlignment(loc, val, 4, rel);
 +    write32le(loc, setK16(read32le(loc), val >> 2));
 +    return;
-+  }
 +
-+  case R_LARCH_B21: {
++  case R_LARCH_B21:
 +    checkInt(loc, val, 23, rel);
 +    checkAlignment(loc, val, 4, rel);
 +    write32le(loc, setD5k16(read32le(loc), val >> 2));
 +    return;
-+  }
 +
-+  case R_LARCH_B26: {
++  case R_LARCH_B26:
 +    checkInt(loc, val, 28, rel);
 +    checkAlignment(loc, val, 4, rel);
 +    write32le(loc, setD10k16(read32le(loc), val >> 2));
 +    return;
-+  }
 +
 +  // Relocs intended for `addi`, `ld` or `st`.
-+  case R_LARCH_ABS_LO12:
 +  case R_LARCH_PCALA_LO12:
-+  case R_LARCH_GOT_PC_LO12:
-+  case R_LARCH_GOT_LO12:
-+  case R_LARCH_TLS_LE_LO12:
-+  case R_LARCH_TLS_IE_PC_LO12:
-+  case R_LARCH_TLS_IE_LO12: {
-+    // Annoyingly, we have to again inspect the insn word to handle the
-+    // R_LARCH_PCALA_LO12 on JIRL case: JIRL wants its immediate's 2 lowest
-+    // zeroes removed by us, and the immediate slot width is in fact different.
++    // We have to again inspect the insn word to handle the R_LARCH_PCALA_LO12
++    // on JIRL case: firstly JIRL wants its immediate's 2 lowest zeroes
++    // removed by us (in contrast to regular R_LARCH_PCALA_LO12), secondly
++    // its immediate slot width is different too (16, not 12).
 +    // In this case, process like an R_LARCH_B16, but without overflow checking
 +    // and only taking the value's lowest 12 bits.
-+    if (rel.type == R_LARCH_PCALA_LO12 && isJirl(read32le(loc))) {
++    if (isJirl(read32le(loc))) {
 +      checkAlignment(loc, val, 4, rel);
 +      val = SignExtend64<12>(val);
 +      write32le(loc, setK16(read32le(loc), val >> 2));
 +      return;
 +    }
++    [[fallthrough]];
++  case R_LARCH_ABS_LO12:
++  case R_LARCH_GOT_PC_LO12:
++  case R_LARCH_GOT_LO12:
++  case R_LARCH_TLS_LE_LO12:
++  case R_LARCH_TLS_IE_PC_LO12:
++  case R_LARCH_TLS_IE_LO12:
 +    write32le(loc, setK12(read32le(loc), extractBits(val, 11, 0)));
 +    return;
-+  }
 +
 +  // Relocs intended for `lu12i.w` or `pcalau12i`.
 +  case R_LARCH_ABS_HI20:
@@ -624,10 +622,9 @@ index 000000000000..40823c55a078
 +  case R_LARCH_TLS_LD_PC_HI20:
 +  case R_LARCH_TLS_LD_HI20:
 +  case R_LARCH_TLS_GD_PC_HI20:
-+  case R_LARCH_TLS_GD_HI20: {
++  case R_LARCH_TLS_GD_HI20:
 +    write32le(loc, setJ20(read32le(loc), extractBits(val, 31, 12)));
 +    return;
-+  }
 +
 +  // Relocs intended for `lu32i.d`.
 +  case R_LARCH_ABS64_LO20:
@@ -636,10 +633,9 @@ index 000000000000..40823c55a078
 +  case R_LARCH_GOT64_LO20:
 +  case R_LARCH_TLS_LE64_LO20:
 +  case R_LARCH_TLS_IE64_PC_LO20:
-+  case R_LARCH_TLS_IE64_LO20: {
++  case R_LARCH_TLS_IE64_LO20:
 +    write32le(loc, setJ20(read32le(loc), extractBits(val, 51, 32)));
 +    return;
-+  }
 +
 +  // Relocs intended for `lu52i.d`.
 +  case R_LARCH_ABS64_HI12:
@@ -648,10 +644,9 @@ index 000000000000..40823c55a078
 +  case R_LARCH_GOT64_HI12:
 +  case R_LARCH_TLS_LE64_HI12:
 +  case R_LARCH_TLS_IE64_PC_HI12:
-+  case R_LARCH_TLS_IE64_HI12: {
++  case R_LARCH_TLS_IE64_HI12:
 +    write32le(loc, setK12(read32le(loc), extractBits(val, 63, 52)));
 +    return;
-+  }
 +
 +  case R_LARCH_ADD8:
 +    *loc += val;
