@@ -1,4 +1,4 @@
-From 7461d29cebfb8e6b4612b1c987f132efb4a45369 Mon Sep 17 00:00:00 2001
+From 84f8a838a014782ffe15d94fbaed0dd4fb5f2011 Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <git@xen0n.name>
 Date: Tue, 9 Aug 2022 13:33:31 +0800
 Subject: [PATCH] [lld][ELF] Support LoongArch
@@ -17,7 +17,7 @@ tested to work as well.
 
 Differential Revision: https://reviews.llvm.org/D138135
 ---
- lld/ELF/Arch/LoongArch.cpp                    | 621 ++++++++++++++++++
+ lld/ELF/Arch/LoongArch.cpp                    | 643 ++++++++++++++++++
  lld/ELF/CMakeLists.txt                        |   1 +
  lld/ELF/Driver.cpp                            |  12 +-
  lld/ELF/InputFiles.cpp                        |   3 +
@@ -32,7 +32,7 @@ Differential Revision: https://reviews.llvm.org/D138135
  lld/test/ELF/loongarch-branch-b16.s           |  36 +
  lld/test/ELF/loongarch-branch-b21.s           |  36 +
  lld/test/ELF/loongarch-branch-b26.s           |  36 +
- lld/test/ELF/loongarch-interlink.test         |  59 ++
+ lld/test/ELF/loongarch-interlink.test         |  84 +++
  lld/test/ELF/loongarch-pc-aligned.s           | 173 +++++
  .../ELF/loongarch-pcala-lo12-jirl-shared.s    |  60 ++
  lld/test/ELF/loongarch-pcala-lo12-jirl.s      |  42 ++
@@ -44,7 +44,7 @@ Differential Revision: https://reviews.llvm.org/D138135
  lld/test/ELF/loongarch-tls-ld.s               |  89 +++
  lld/test/ELF/loongarch-tls-le.s               |  42 ++
  lld/test/lit.cfg.py                           |   1 +
- 27 files changed, 1855 insertions(+), 19 deletions(-)
+ 27 files changed, 1902 insertions(+), 19 deletions(-)
  create mode 100644 lld/ELF/Arch/LoongArch.cpp
  create mode 100644 lld/test/ELF/emulation-loongarch.s
  create mode 100644 lld/test/ELF/loongarch-abs64.s
@@ -65,10 +65,10 @@ Differential Revision: https://reviews.llvm.org/D138135
 
 diff --git a/lld/ELF/Arch/LoongArch.cpp b/lld/ELF/Arch/LoongArch.cpp
 new file mode 100644
-index 000000000000..8c2e6cfa4ed8
+index 000000000000..4d38b2dc52e8
 --- /dev/null
 +++ b/lld/ELF/Arch/LoongArch.cpp
-@@ -0,0 +1,621 @@
+@@ -0,0 +1,643 @@
 +//===- LoongArch.cpp ------------------------------------------------------===//
 +//
 +// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
@@ -252,10 +252,22 @@ index 000000000000..8c2e6cfa4ed8
 +  ipltEntrySize = 16;
 +}
 +
-+static uint32_t getEFlags(InputFile *f) {
++static uint32_t getEFlags(const InputFile *f) {
 +  if (config->is64)
 +    return cast<ObjFile<ELF64LE>>(f)->getObj().getHeader().e_flags;
 +  return cast<ObjFile<ELF32LE>>(f)->getObj().getHeader().e_flags;
++}
++
++static bool inputFileHasCode(const InputFile *f) {
++  if (!f)
++    return false;
++
++  for (auto *sec : f->getSections()) {
++    if (sec && (sec->flags & SHF_EXECINSTR))
++      return true;
++  }
++
++  return false;
 +}
 +
 +uint32_t LoongArch::calcEFlags() const {
@@ -264,10 +276,20 @@ index 000000000000..8c2e6cfa4ed8
 +  if (ctx.objectFiles.empty())
 +    return 0;
 +
-+  uint32_t target = getEFlags(ctx.objectFiles.front());
-+
++  uint32_t target = 0;
 +  for (InputFile *f : ctx.objectFiles) {
-+    if ((getEFlags(f) & EF_LOONGARCH_ABI_MODIFIER_MASK) !=
++    // Do not enforce ABI compatibility if the input file does not contain code.
++    // This is useful for allowing linkage with data-only object files produced
++    // with tools like objcopy, that have zero e_flags.
++    if (!inputFileHasCode(f))
++      continue;
++
++    // Take the first non-zero e_flags as the reference.
++    uint32_t flags = getEFlags(f);
++    if (target == 0 && flags != 0)
++      target = flags;
++
++    if ((flags & EF_LOONGARCH_ABI_MODIFIER_MASK) !=
 +        (target & EF_LOONGARCH_ABI_MODIFIER_MASK))
 +      error(toString(f) +
 +            ": cannot link object files with different ABI");
@@ -287,7 +309,7 @@ index 000000000000..8c2e6cfa4ed8
 +    // These are not supported either due to the extremely small number of them,
 +    // and the few impacted users are advised to simply rebuild world or
 +    // reinstall a recent system.
-+    if ((getEFlags(f) & EF_LOONGARCH_OBJABI_MASK) != EF_LOONGARCH_OBJABI_V1)
++    if ((flags & EF_LOONGARCH_OBJABI_MASK) != EF_LOONGARCH_OBJABI_V1)
 +      error(toString(f) + ": unsupported object file ABI version");
 +  }
 +
@@ -703,10 +725,10 @@ index 8e6a746d219e..89955db67733 100644
    Arch/MipsArchTree.cpp
    Arch/MSP430.cpp
 diff --git a/lld/ELF/Driver.cpp b/lld/ELF/Driver.cpp
-index db5e9bc5ab04..4bd96e924a52 100644
+index 9c813f97bf57..c0fb36715f33 100644
 --- a/lld/ELF/Driver.cpp
 +++ b/lld/ELF/Driver.cpp
-@@ -169,6 +169,7 @@ static std::tuple<ELFKind, uint16_t, uint8_t> parseEmulation(StringRef emul) {
+@@ -172,6 +172,7 @@ static std::tuple<ELFKind, uint16_t, uint8_t> parseEmulation(StringRef emul) {
            .Case("elf32lriscv", {ELF32LEKind, EM_RISCV})
            .Cases("elf32ppc", "elf32ppclinux", {ELF32BEKind, EM_PPC})
            .Cases("elf32lppc", "elf32lppclinux", {ELF32LEKind, EM_PPC})
@@ -714,7 +736,7 @@ index db5e9bc5ab04..4bd96e924a52 100644
            .Case("elf64btsmip", {ELF64BEKind, EM_MIPS})
            .Case("elf64ltsmip", {ELF64LEKind, EM_MIPS})
            .Case("elf64lriscv", {ELF64LEKind, EM_RISCV})
-@@ -180,6 +181,7 @@ static std::tuple<ELFKind, uint16_t, uint8_t> parseEmulation(StringRef emul) {
+@@ -183,6 +184,7 @@ static std::tuple<ELFKind, uint16_t, uint8_t> parseEmulation(StringRef emul) {
            .Case("elf64_sparc", {ELF64BEKind, EM_SPARCV9})
            .Case("msp430elf", {ELF32LEKind, EM_MSP430})
            .Case("elf64_amdgpu", {ELF64LEKind, EM_AMDGPU})
@@ -722,7 +744,7 @@ index db5e9bc5ab04..4bd96e924a52 100644
            .Default({ELFNoneKind, EM_NONE});
  
    if (ret.first == ELFNoneKind)
-@@ -1057,8 +1059,9 @@ static bool getIsRela(opt::InputArgList &args) {
+@@ -1063,8 +1065,9 @@ static bool getIsRela(opt::InputArgList &args) {
  
    // Otherwise use the psABI defined relocation entry format.
    uint16_t m = config->emachine;
@@ -734,7 +756,7 @@ index db5e9bc5ab04..4bd96e924a52 100644
  }
  
  static void parseClangOption(StringRef opt, const Twine &msg) {
-@@ -1646,8 +1649,9 @@ static void setConfigs(opt::InputArgList &args) {
+@@ -1653,8 +1656,9 @@ static void setConfigs(opt::InputArgList &args) {
    // have support for reading Elf_Rel addends, so we only enable for a subset.
  #ifndef NDEBUG
    bool checkDynamicRelocsDefault = m == EM_AARCH64 || m == EM_ARM ||
@@ -1003,7 +1025,7 @@ index 3873c7a25e44..32bb2164a208 100644
      switch (config->ekind) {
      case ELF32LEKind:
 diff --git a/lld/ELF/Target.h b/lld/ELF/Target.h
-index 59534ab3256d..5a158a03b7eb 100644
+index dd0ae392deab..1b8d6d109dcb 100644
 --- a/lld/ELF/Target.h
 +++ b/lld/ELF/Target.h
 @@ -178,6 +178,7 @@ TargetInfo *getAMDGPUTargetInfo();
@@ -1021,7 +1043,7 @@ index 59534ab3256d..5a158a03b7eb 100644
 +uint64_t getLoongArchPageOffset(uint64_t dest, uint64_t pc);
  void riscvFinalizeRelax(int passes);
  void mergeRISCVAttributesSections();
- 
+ void addArmInputSectionMappingSymbols();
 diff --git a/lld/test/ELF/emulation-loongarch.s b/lld/test/ELF/emulation-loongarch.s
 new file mode 100644
 index 000000000000..343e836274a3
@@ -1300,33 +1322,65 @@ index 000000000000..0b9a395068d5
 +     bl bar
 diff --git a/lld/test/ELF/loongarch-interlink.test b/lld/test/ELF/loongarch-interlink.test
 new file mode 100644
-index 000000000000..b565eb7e56b6
+index 000000000000..7e3f5d025b29
 --- /dev/null
 +++ b/lld/test/ELF/loongarch-interlink.test
-@@ -0,0 +1,59 @@
+@@ -0,0 +1,84 @@
 +# REQUIRES: loongarch
 +# RUN: rm -rf %t && split-file %s %t
 +
++# RUN: yaml2obj %t/blob.yaml -o %t/blob.o
 +# RUN: yaml2obj %t/v0-lp64d.yaml -o %t/v0-lp64d.o
-+# RUN: yaml2obj %t/v1-lp64d.yaml -o %t/v1-lp64d.o
-+# RUN: yaml2obj %t/v1-lp64s.yaml -o %t/v1-lp64s.o
++# RUN: llvm-mc --filetype=obj --triple=loongarch64-unknown-gnu %t/start.s -o %t/v1-lp64d.o
++# RUN: llvm-mc --filetype=obj --triple=loongarch64-unknown-gnusf %t/start.s -o %t/v1-lp64s.o
++# RUN: llvm-mc --filetype=obj --triple=loongarch64-unknown-gnu %t/bar.s -o %t/v1-b-lp64d.o
 +
 +## Check that binary input results in e_flags=0 output.
-+# RUN: ld.lld -m elf64loongarch -b binary %t/blob.o -o %t/blob.out
++# RUN: ld.lld -m elf64loongarch -b binary %t/blob.bin -o %t/blob.out
 +# RUN: llvm-readobj -h %t/blob.out | FileCheck --check-prefix=EMPTY %s
 +# EMPTY:      Flags [
 +# EMPTY-NEXT: ]
 +
++## Check that interlink between e_flags=0 and normal input (that contain code)
++## is allowed.
++## Also check that the e_flags logic work as intended regardless of input file
++## order.
++# RUN: ld.lld %t/blob.o %t/v1-lp64d.o -o %t/v1-lp64d.out
++# RUN: ld.lld %t/v1-lp64s.o %t/blob.o -o %t/v1-lp64s.out
++# RUN: llvm-readobj -h %t/v1-lp64d.out | FileCheck --check-prefix=V1-LP64D %s
++# RUN: llvm-readobj -h %t/v1-lp64s.out | FileCheck --check-prefix=V1-LP64S %s
++# V1-LP64D:      Flags [ (0x43)
++# V1-LP64S:      Flags [ (0x41)
++
 +## Check that interlink between different ABIs is disallowed.
-+# RUN: not ld.lld %t/v1-lp64s.o %t/v1-lp64d.o -o /dev/null 2>&1 | FileCheck --check-prefix=INTERLINK-ERR %s
++# RUN: not ld.lld %t/v1-lp64s.o %t/v1-b-lp64d.o -o /dev/null 2>&1 | FileCheck --check-prefix=INTERLINK-ERR %s
 +# INTERLINK-ERR: cannot link object files with different ABI
 +
 +## Check that interlink between different object ABI versions is disallowed.
-+# RUN: not ld.lld %t/v0-lp64d.o %t/v1-lp64d.o -o /dev/null 2>&1 | FileCheck --check-prefix=VERSION-ERR %s
++# RUN: not ld.lld %t/v0-lp64d.o %t/v1-b-lp64d.o %t/blob.o -o /dev/null 2>&1 | FileCheck --check-prefix=VERSION-ERR %s
 +# VERSION-ERR: unsupported object file ABI version
 +
-+#--- blob.o
++#--- blob.bin
 +BLOB
++
++#--- blob.yaml
++--- !ELF
++FileHeader:
++  Class:           ELFCLASS64
++  Data:            ELFDATA2LSB
++  Type:            ET_REL
++  Machine:         EM_LOONGARCH
++  SectionHeaderStringTable: .strtab
++Sections:
++  - Name:            .data
++    Type:            SHT_PROGBITS
++    Flags:           [ SHF_WRITE, SHF_ALLOC ]
++    AddressAlign:    0x1
++    Content:         424C4F42
++Symbols:
++  - Name:            blob
++    Section:         .data
++    Binding:         STB_GLOBAL
 +
 +#--- v0-lp64d.yaml
 +--- !ELF
@@ -1335,34 +1389,27 @@ index 000000000000..b565eb7e56b6
 +  Data:            ELFDATA2LSB
 +  Type:            ET_REL
 +  Machine:         EM_LOONGARCH
-+  Flags: [
-+    EF_LOONGARCH_ABI_DOUBLE_FLOAT,
-+    EF_LOONGARCH_OBJABI_V0,
-+  ]
++  Flags:           [ EF_LOONGARCH_ABI_DOUBLE_FLOAT ]
++  SectionHeaderStringTable: .strtab
++Sections:
++  - Name:            .text
++    Type:            SHT_PROGBITS
++    Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
++    AddressAlign:    0x4
++    Content:         0000a002
 +
-+#--- v1-lp64d.yaml
-+--- !ELF
-+FileHeader:
-+  Class:           ELFCLASS64
-+  Data:            ELFDATA2LSB
-+  Type:            ET_REL
-+  Machine:         EM_LOONGARCH
-+  Flags: [
-+    EF_LOONGARCH_ABI_DOUBLE_FLOAT,
-+    EF_LOONGARCH_OBJABI_V1,
-+  ]
++#--- start.s
++.global _start
++_start:
++la $a0, blob
++ld.b $a0, $a0, 0
++li.w $a7, 94
++syscall 0
 +
-+#--- v1-lp64s.yaml
-+--- !ELF
-+FileHeader:
-+  Class:           ELFCLASS64
-+  Data:            ELFDATA2LSB
-+  Type:            ET_REL
-+  Machine:         EM_LOONGARCH
-+  Flags: [
-+    EF_LOONGARCH_ABI_SOFT_FLOAT,
-+    EF_LOONGARCH_OBJABI_V1,
-+  ]
++#--- bar.s
++bar:
++move $a0, $zero
++ret
 diff --git a/lld/test/ELF/loongarch-pc-aligned.s b/lld/test/ELF/loongarch-pc-aligned.s
 new file mode 100644
 index 000000000000..2bbeb71cd828
