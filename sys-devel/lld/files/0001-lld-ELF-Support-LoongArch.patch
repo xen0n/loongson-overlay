@@ -1,4 +1,4 @@
-From 84f8a838a014782ffe15d94fbaed0dd4fb5f2011 Mon Sep 17 00:00:00 2001
+From 5c582792ad8a05db6e90cf33588e3a9f9996deff Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <git@xen0n.name>
 Date: Tue, 9 Aug 2022 13:33:31 +0800
 Subject: [PATCH] [lld][ELF] Support LoongArch
@@ -17,7 +17,7 @@ tested to work as well.
 
 Differential Revision: https://reviews.llvm.org/D138135
 ---
- lld/ELF/Arch/LoongArch.cpp                    | 643 ++++++++++++++++++
+ lld/ELF/Arch/LoongArch.cpp                    | 652 ++++++++++++++++++
  lld/ELF/CMakeLists.txt                        |   1 +
  lld/ELF/Driver.cpp                            |  12 +-
  lld/ELF/InputFiles.cpp                        |   3 +
@@ -28,26 +28,28 @@ Differential Revision: https://reviews.llvm.org/D138135
  lld/ELF/Target.cpp                            |   2 +
  lld/ELF/Target.h                              |   2 +
  lld/test/ELF/emulation-loongarch.s            |  78 +++
- lld/test/ELF/loongarch-abs64.s                |  60 ++
+ lld/test/ELF/loongarch-abs64.s                |  65 ++
+ lld/test/ELF/loongarch-add-sub.s              |  36 +
  lld/test/ELF/loongarch-branch-b16.s           |  36 +
  lld/test/ELF/loongarch-branch-b21.s           |  36 +
  lld/test/ELF/loongarch-branch-b26.s           |  36 +
  lld/test/ELF/loongarch-interlink.test         |  84 +++
- lld/test/ELF/loongarch-pc-aligned.s           | 173 +++++
+ lld/test/ELF/loongarch-pc-aligned.s           | 283 ++++++++
  .../ELF/loongarch-pcala-lo12-jirl-shared.s    |  60 ++
  lld/test/ELF/loongarch-pcala-lo12-jirl.s      |  42 ++
  lld/test/ELF/loongarch-plt.s                  | 108 +++
  lld/test/ELF/loongarch-reloc-pic.s            |  44 ++
  lld/test/ELF/loongarch-tls-gd-edge-case.s     |  46 ++
  lld/test/ELF/loongarch-tls-gd.s               | 136 ++++
- lld/test/ELF/loongarch-tls-ie.s               | 114 ++++
+ lld/test/ELF/loongarch-tls-ie.s               | 114 +++
  lld/test/ELF/loongarch-tls-ld.s               |  89 +++
  lld/test/ELF/loongarch-tls-le.s               |  42 ++
  lld/test/lit.cfg.py                           |   1 +
- 27 files changed, 1902 insertions(+), 19 deletions(-)
+ 28 files changed, 2062 insertions(+), 19 deletions(-)
  create mode 100644 lld/ELF/Arch/LoongArch.cpp
  create mode 100644 lld/test/ELF/emulation-loongarch.s
  create mode 100644 lld/test/ELF/loongarch-abs64.s
+ create mode 100644 lld/test/ELF/loongarch-add-sub.s
  create mode 100644 lld/test/ELF/loongarch-branch-b16.s
  create mode 100644 lld/test/ELF/loongarch-branch-b21.s
  create mode 100644 lld/test/ELF/loongarch-branch-b26.s
@@ -65,10 +67,10 @@ Differential Revision: https://reviews.llvm.org/D138135
 
 diff --git a/lld/ELF/Arch/LoongArch.cpp b/lld/ELF/Arch/LoongArch.cpp
 new file mode 100644
-index 000000000000..4d38b2dc52e8
+index 000000000000..671beac03c7d
 --- /dev/null
 +++ b/lld/ELF/Arch/LoongArch.cpp
-@@ -0,0 +1,643 @@
+@@ -0,0 +1,652 @@
 +//===- LoongArch.cpp ------------------------------------------------------===//
 +//
 +// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
@@ -89,43 +91,6 @@ index 000000000000..4d38b2dc52e8
 +using namespace llvm::ELF;
 +using namespace lld;
 +using namespace lld::elf;
-+
-+// The LoongArch `pcalau12i` is behaviorally equivalent to the AArch64 `adrp`,
-+// so a similar concept of "page" also applies here. A "page" is in fact just
-+// another way to refer to the 12-bit range allowed by the immediate field of
-+// the addi/ld/st instructions.
-+//
-+// Note: "pcalau12i" stands for something like "PC aligned add upper, from 12th
-+// bit, immediate". (The official ISA manual gives no such "full names".)
-+static uint64_t getLoongArchPage(uint64_t p) {
-+  return p & ~static_cast<uint64_t>(0xfff);
-+}
-+
-+// Calculate the adjusted page offset between dest and PC.
-+//
-+// We must specially handle the cases when the low 12 bits of dest are seen
-+// as negative, because the instructions consuming it (ld, st, addi, etc.)
-+// all sign-extend the immediate, unlike AArch64. The higher bits need
-+// tweaking too, due to potential usage in patterns like:
-+//
-+//     pcalau12i A, %foo_hi20(sym)
-+//     addi.d    T, zero, %foo_lo12(sym)
-+//     lu32i.d   T, %foo64_lo20(sym)
-+//     lu52i.d   T, T, %foo64_hi12(sym)
-+//     ldx.d     A, A, T
-+//
-+// in which case the "pc + hi20" part is separately constructed from the rest
-+// which includes the higher 32-bit half and lo12, so the higher 32 bits need a
-+// conditional nudge too, due to the signed addition performed by the ldx/stx.
-+uint64_t elf::getLoongArchPageOffset(uint64_t dest, uint64_t pc) {
-+  uint64_t result = getLoongArchPage(dest) - getLoongArchPage(pc);
-+  if ((dest & 0xfff) > 0x7ff) {
-+    result += 0x1000;
-+    if (static_cast<int64_t>(result) > 0)
-+      result -= 0x100000000;
-+  }
-+  return result;
-+}
 +
 +namespace {
 +
@@ -174,6 +139,69 @@ index 000000000000..4d38b2dc52e8
 +  R_T3 = 15,
 +};
 +
++// Mask out the input's lowest 12 bits for use with `pcalau12i`, in sequences
++// like `pcalau12i + addi.[wd]` or `pcalau12i + {ld,st}.*` where the `pcalau12i`
++// produces a PC-relative intermediate value with the lowest 12 bits zeroed (the
++// "page") for the next instruction to add in the "page offset". (`pcalau12i`
++// stands for something like "PC ALigned Add Upper that starts from the 12th
++// bit, Immediate".)
++//
++// Here a "page" is in fact just another way to refer to the 12-bit range
++// allowed by the immediate field of the addi/ld/st instructions, and not
++// related to the system or the kernel's actual page size. The sematics happens
++// to match the AArch64 `adrp`, so the concept of "page" is borrowed here.
++static uint64_t getLoongArchPage(uint64_t p) {
++  return p & ~static_cast<uint64_t>(0xfff);
++}
++
++// Calculate the adjusted page delta between dest and PC.
++uint64_t elf::getLoongArchPageDelta(uint64_t dest, uint64_t pc) {
++  uint64_t result = getLoongArchPage(dest) - getLoongArchPage(pc);
++
++  // We must specially handle the cases when the low 12 bits of dest are seen
++  // as negative, because the instructions consuming it (ld, st, addi, etc.)
++  // all sign-extend the immediate.
++  bool signLo12 = (dest & 0xfff) > 0x7ff;
++  if (signLo12)
++    result += 0x1000;
++
++  // We have to check if the higher 32 bits need adjustment too, due to
++  // the large code model access pattern:
++  //
++  //     pcalau12i       A, %foo_hi20(sym)
++  //     addi.d          T, zero, %foo_lo12(sym)
++  //     lu32i.d         T, %foo64_lo20(sym)
++  //     lu52i.d         T, T, %foo64_hi12(sym)
++  //     {ldx,stx,add}.d A, A, T
++  //
++  // in which case the "pc + hi20" part is separately constructed from the
++  // rest containing the higher 32-bit half and lo12, so the higher 32 bits
++  // need a conditional nudge too if the signs of %foo_hi20 and %foo_lo12
++  // differ, due to the signed addition performed by the ldx/stx/add.
++  //
++  // For example:
++  //
++  // With dest=0x900'10000'abcde'f00 and pc=0x800'20345'ba987'654, we want:
++  //
++  // * page delta = 0x0ff'efcba'f1358'000
++  // * page offset = 0xf00
++  //
++  //     ; A = (0x800'20345'ba987 - 60584) << 12 = 0x800'20345'abcdf'000
++  //     pcalau12i A, -60584
++  //     addi.d    T, zero, -256  ; T = 0xfff'fffff'fffff'f00
++  //     lu32i.d   T, -66374      ; T = 0xfff'efcba'fffff'f00
++  //     lu52i.d   T, T, 255      ; T = 0x0ff'efcba'fffff'f00
++  //     ; A = *(0x800'20345'abcdf'000 + 0x0ff'efcba'fffff'f00) = *dest
++  //     ldx.d     A, A, T
++  bool signHi20 = (result & 0x80000000) != 0;
++  if (signLo12 && !signHi20)
++      result -= 0x100000000;
++  else if (!signLo12 && signHi20)
++      result += 0x100000000;
++
++  return result;
++}
++
 +static uint32_t hi20(uint32_t val) { return (val + 0x800) >> 12; }
 +static uint32_t lo12(uint32_t val) { return val & 0xfff; }
 +
@@ -221,9 +249,11 @@ index 000000000000..4d38b2dc52e8
 +  // "unlimited".
 +  // However, practically the maximum usable page size is constrained by the
 +  // kernel implementation, and 64KiB is the biggest non-huge page size
-+  // supported by Linux as of v6.3.
++  // supported by Linux as of v6.4. The most widespread page size in use,
++  // though, is 16KiB.
++  defaultCommonPageSize = 16384;
 +  defaultMaxPageSize = 65536;
-+  write32(trapInstr.data(), BREAK); // break 0
++  write32le(trapInstr.data(), BREAK); // break 0
 +
 +  copyRel = R_LARCH_COPY;
 +  pltRel = R_LARCH_JUMP_SLOT;
@@ -263,7 +293,7 @@ index 000000000000..4d38b2dc52e8
 +    return false;
 +
 +  for (auto *sec : f->getSections()) {
-+    if (sec && (sec->flags & SHF_EXECINSTR))
++    if (sec && sec->flags & SHF_EXECINSTR)
 +      return true;
 +  }
 +
@@ -277,6 +307,7 @@ index 000000000000..4d38b2dc52e8
 +    return 0;
 +
 +  uint32_t target = 0;
++  InputFile *targetFile;
 +  for (InputFile *f : ctx.objectFiles) {
 +    // Do not enforce ABI compatibility if the input file does not contain code.
 +    // This is useful for allowing linkage with data-only object files produced
@@ -286,13 +317,16 @@ index 000000000000..4d38b2dc52e8
 +
 +    // Take the first non-zero e_flags as the reference.
 +    uint32_t flags = getEFlags(f);
-+    if (target == 0 && flags != 0)
++    if (target == 0 && flags != 0) {
 +      target = flags;
++      targetFile = f;
++    }
 +
 +    if ((flags & EF_LOONGARCH_ABI_MODIFIER_MASK) !=
 +        (target & EF_LOONGARCH_ABI_MODIFIER_MASK))
 +      error(toString(f) +
-+            ": cannot link object files with different ABI");
++            ": cannot link object files with different ABI from " +
++            toString(targetFile));
 +
 +    // We cannot process psABI v1.x / object ABI v0 files (containing stack
 +    // relocations), unlike ld.bfd.
@@ -305,7 +339,7 @@ index 000000000000..4d38b2dc52e8
 +    // being considered here).
 +    //
 +    // There are briefly some new-world systems with object ABI v0 binaries too.
-+    // It is because these programs were built before v1 was finalized.
++    // It is because these systems were built before the new ABI was finalized.
 +    // These are not supported either due to the extremely small number of them,
 +    // and the few impacted users are advised to simply rebuild world or
 +    // reinstall a recent system.
@@ -365,17 +399,18 @@ index 000000000000..4d38b2dc52e8
 +  // in contrast to the AArch64-like page-offset scheme with `pcalau12i` that
 +  // is used everywhere else involving PC-relative operations in the LoongArch
 +  // ELF psABI v2.00.
++  //
 +  // The `pcrel_{hi20,lo12}` operators are illustrative only and not really
 +  // supported by LoongArch assemblers.
 +  //
-+  // 1: pcaddu12i $t2, %pcrel_hi20(.got.plt)
-+  //    sub.[wd]  $t1, $t1, $t3
-+  //    ld.[wd]   $t3, $t2, %pcrel_lo12(1b)  ; t3 = _dl_runtime_resolve
-+  //    addi.[wd] $t1, $t1, -pltHeaderSize-12; t1 = &.plt[i] - &.plt[0]
-+  //    addi.[wd] $t0, $t2, %pcrel_lo12(1b)
-+  //    srli.[wd] $t1, $t1, (is64?1:2)       ; t1 = &.got.plt[i] - &.got.plt[0]
-+  //    ld.[wd]   $t0, $t0, Wordsize(t0)     ; t0 = link_map
-+  //    jr        $t3
++  //   pcaddu12i $t2, %pcrel_hi20(.got.plt)
++  //   sub.[wd]  $t1, $t1, $t3
++  //   ld.[wd]   $t3, $t2, %pcrel_lo12(.got.plt)  ; t3 = _dl_runtime_resolve
++  //   addi.[wd] $t1, $t1, -pltHeaderSize-12      ; t1 = &.plt[i] - &.plt[0]
++  //   addi.[wd] $t0, $t2, %pcrel_lo12(.got.plt)
++  //   srli.[wd] $t1, $t1, (is64?1:2)             ; t1 = &.got.plt[i] - &.got.plt[0]
++  //   ld.[wd]   $t0, $t0, Wordsize               ; t0 = link_map
++  //   jr        $t3
 +  uint32_t offset = in.gotPlt->getVA() - in.plt->getVA();
 +  uint32_t sub = config->is64 ? SUB_D : SUB_W;
 +  uint32_t ld = config->is64 ? LD_D : LD_W;
@@ -396,10 +431,10 @@ index 000000000000..4d38b2dc52e8
 +  // See the comment in writePltHeader for reason why pcaddu12i is used instead
 +  // of the pcalau12i that's more commonly seen in the ELF psABI v2.0 days.
 +  //
-+  // 1: pcaddu12i $t3, %pcrel_hi20(f@.got.plt)
-+  //    ld.[wd]   $t3, $t3, %pcrel_lo12(1b)
-+  //    jirl      $t1, $t3, 0
-+  //    nop
++  //   pcaddu12i $t3, %pcrel_hi20(f@.got.plt)
++  //   ld.[wd]   $t3, $t3, %pcrel_lo12(f@.got.plt)
++  //   jirl      $t1, $t3, 0
++  //   nop
 +  uint32_t offset = sym.getGotPltVA() - pltEntryAddr;
 +  write32le(buf + 0, insn(PCADDU12I, R_T3, hi20(offset), 0));
 +  write32le(buf + 4,
@@ -428,41 +463,14 @@ index 000000000000..4d38b2dc52e8
 +  case R_LARCH_ABS64_HI12:
 +    return R_ABS;
 +  case R_LARCH_PCALA_LO12:
-+    // This may well be just R_ABS and nothing more, but unfortunately some
-+    // people had the brilliant idea of reusing the R_LARCH_PCALA_LO12 reloc on
-+    // JIRLs, for implementing the medium code model, seemingly for avoiding
-+    // having to add another reloc type just for that. The intended use case is
-+    // for making the libc_nonshared.a of glibc 2.37+ usable with large
-+    // applications like Firefox or Chromium, where an R_LARCH_B26 will overflow
-+    // otherwise. See [1] for details.
-+    //
-+    // This is bad for multiple reasons:
-+    //
-+    // * R_LARCH_PCALA_LO12 just places its computed value unmodified, but JIRL
-+    //   expects its immediate to be pre-shifted by 2 bits, making the reloc
-+    //   behavior dependent on the underlying input section content;
-+    // * R_LARCH_PCALA_LO12 leaves the upper 16-12+2=6 bits of JIRL's immediate
-+    //   operand unusable, making the usage forever a kludge: a proper reloc
-+    //   type has to be added *anyway*, to be able to leverage the PCADDU18I +
-+    //   JIRL combo, for example.
-+    //   (In this case an ISA revision (!) is arguably necessary, because there
-+    //   is not a PCALAU18I for stylistic consistency with the other psABI v2.00
-+    //   relocs. If PCADDU18I is to be used anyway, that would mean the new
-+    //   relocs are PCREL-style instead of PCALA; so for consistency, PCREL
-+    //   relocs for the other psABI v2.00 relocs should be added as well...)
-+    // * Inspection into the input section must be performed for every
-+    //   R_LARCH_PCALA_LO12 record, one of the most frequently used reloc types
-+    //   on LoongArch. But usage of the medium code model is not nearly as
-+    //   popular, so arguably ~100% of the checks are in fact wasted for very
-+    //   little gain.
-+    //
-+    // The problem is long known, and already reported with a suggested fix
-+    // back in September 2022 [2]. But no action has been taken and object
-+    // code with this usage has already appeared since glibc 2.37, so we have
-+    // to implement a similar workaround as the BFD linker does.
++    // We could just R_ABS, but the JIRL instruction reuses the relocation type
++    // for a different purpose. The questionable usage is part of glibc 2.37
++    // libc_nonshared.a [1], which is linked into user programs, so we have to
++    // work around it for a while, even if a new relocation type may be
++    // introduced in the future [2].
 +    //
 +    // [1]: https://sourceware.org/git/?p=glibc.git;a=commitdiff;h=9f482b73f41a9a1bbfb173aad0733d1c824c788a
-+    // [2]: https://github.com/loongson/LoongArch-Documentation/pull/69
++    // [2]: https://github.com/loongson/la-abi-specs/pull/3
 +    return isJirl(read32le(loc)) ? R_PLT : R_ABS;
 +  case R_LARCH_TLS_DTPREL32:
 +  case R_LARCH_TLS_DTPREL64:
@@ -486,6 +494,7 @@ index 000000000000..4d38b2dc52e8
 +    // the RelExpr to avoid code duplication.
 +    return R_RISCV_ADD;
 +  case R_LARCH_32_PCREL:
++  case R_LARCH_64_PCREL:
 +    return R_PC;
 +  case R_LARCH_B16:
 +  case R_LARCH_B21:
@@ -516,9 +525,9 @@ index 000000000000..4d38b2dc52e8
 +    // Unlike RISCV, our LO12 relocs *do not* point to their corresponding HI20
 +    // relocs, hence it is nearly impossible to 100% accurately determine each
 +    // HI20's "flavor" without taking big performance hits, in the presence of
-+    // edge cases (e.g. HI20 without pairing LO12, paired LO12 placed so far
++    // edge cases (e.g. HI20 without pairing LO12; paired LO12 placed so far
 +    // apart that relationship is not certain anymore), and programmer mistakes
-+    // (e.g. as outlined in https://github.com/loongson/LoongArch-Documentation/pull/69).
++    // (e.g. as outlined in https://github.com/loongson/la-abi-specs/pull/3).
 +    //
 +    // Ideally we would scan in an extra pass for all LO12s on JIRL, then mark
 +    // every HI20 reloc referring to the same symbol differently; this is not
@@ -526,8 +535,9 @@ index 000000000000..4d38b2dc52e8
 +    // allow for such inter-pass state.
 +    //
 +    // So, unfortunately we have to again workaround this quirk the same way as
-+    // BFD: assuming every R_LARCH_PCALA_HI20 is potentially PLT needing, only
-+    // relaxing to R_LOONGARCH_PAGE_PC if it's known not so at a later stage.
++    // BFD: assuming every R_LARCH_PCALA_HI20 is potentially PLT-needing, only
++    // relaxing back to R_LOONGARCH_PAGE_PC if it's known not so at a later
++    // stage.
 +    return R_LOONGARCH_PLT_PAGE_PC;
 +  case R_LARCH_PCALA64_LO20:
 +  case R_LARCH_PCALA64_HI12:
@@ -556,7 +566,7 @@ index 000000000000..4d38b2dc52e8
 +  // - relocs that are not used anywhere (R_LARCH_{ADD,SUB}_24 [1], and the
 +  //   two GNU vtable-related relocs).
 +  //
-+  // [1]: https://github.com/loongson/LoongArch-Documentation/issues/51
++  // [1]: https://web.archive.org/web/20230709064026/https://github.com/loongson/LoongArch-Documentation/issues/51
 +  default:
 +    error(getErrorLocation(loc) + "unknown relocation (" + Twine(type) +
 +          ") against symbol " + toString(s));
@@ -588,6 +598,7 @@ index 000000000000..4d38b2dc52e8
 +    return;
 +  case R_LARCH_64:
 +  case R_LARCH_TLS_DTPREL64:
++  case R_LARCH_64_PCREL:
 +    write64le(loc, val);
 +    return;
 +
@@ -725,7 +736,7 @@ index 8e6a746d219e..89955db67733 100644
    Arch/MipsArchTree.cpp
    Arch/MSP430.cpp
 diff --git a/lld/ELF/Driver.cpp b/lld/ELF/Driver.cpp
-index 9c813f97bf57..c0fb36715f33 100644
+index 1252e343cd42..8c46faf9a4b9 100644
 --- a/lld/ELF/Driver.cpp
 +++ b/lld/ELF/Driver.cpp
 @@ -172,6 +172,7 @@ static std::tuple<ELFKind, uint16_t, uint8_t> parseEmulation(StringRef emul) {
@@ -744,7 +755,7 @@ index 9c813f97bf57..c0fb36715f33 100644
            .Default({ELFNoneKind, EM_NONE});
  
    if (ret.first == ELFNoneKind)
-@@ -1063,8 +1065,9 @@ static bool getIsRela(opt::InputArgList &args) {
+@@ -1077,8 +1079,9 @@ static bool getIsRela(opt::InputArgList &args) {
  
    // Otherwise use the psABI defined relocation entry format.
    uint16_t m = config->emachine;
@@ -756,7 +767,7 @@ index 9c813f97bf57..c0fb36715f33 100644
  }
  
  static void parseClangOption(StringRef opt, const Twine &msg) {
-@@ -1653,8 +1656,9 @@ static void setConfigs(opt::InputArgList &args) {
+@@ -1672,8 +1675,9 @@ static void setConfigs(opt::InputArgList &args) {
    // have support for reading Elf_Rel addends, so we only enable for a subset.
  #ifndef NDEBUG
    bool checkDynamicRelocsDefault = m == EM_AARCH64 || m == EM_ARM ||
@@ -769,10 +780,10 @@ index 9c813f97bf57..c0fb36715f33 100644
    bool checkDynamicRelocsDefault = false;
  #endif
 diff --git a/lld/ELF/InputFiles.cpp b/lld/ELF/InputFiles.cpp
-index 5f24af5a9c6f..5f8fd851ac64 100644
+index 7c5029135219..d96b47b3585b 100644
 --- a/lld/ELF/InputFiles.cpp
 +++ b/lld/ELF/InputFiles.cpp
-@@ -1558,6 +1558,9 @@ static uint16_t getBitcodeMachineKind(StringRef path, const Triple &t) {
+@@ -1575,6 +1575,9 @@ static uint16_t getBitcodeMachineKind(StringRef path, const Triple &t) {
      return EM_AVR;
    case Triple::hexagon:
      return EM_HEXAGON;
@@ -783,7 +794,7 @@ index 5f24af5a9c6f..5f8fd851ac64 100644
    case Triple::mipsel:
    case Triple::mips64:
 diff --git a/lld/ELF/InputSection.cpp b/lld/ELF/InputSection.cpp
-index 6ad468f70768..0a4f17e22ccd 100644
+index 6ad468f70768..ab04113141ca 100644
 --- a/lld/ELF/InputSection.cpp
 +++ b/lld/ELF/InputSection.cpp
 @@ -610,6 +610,7 @@ static int64_t getTlsTpOffset(const Symbol &s) {
@@ -816,8 +827,8 @@ index 6ad468f70768..0a4f17e22ccd 100644
      return sym.getGotVA() + a - p;
 +  case R_LOONGARCH_GOT_PAGE_PC:
 +    if (sym.hasFlag(NEEDS_TLSGD))
-+      return getLoongArchPageOffset(in.got->getGlobalDynAddr(sym) + a, p);
-+    return getLoongArchPageOffset(sym.getGotVA() + a, p);
++      return getLoongArchPageDelta(in.got->getGlobalDynAddr(sym) + a, p);
++    return getLoongArchPageDelta(sym.getGotVA() + a, p);
    case R_MIPS_GOTREL:
      return sym.getVA(a) - in.mipsGot->getGp(file);
    case R_MIPS_GOT_GP:
@@ -826,7 +837,7 @@ index 6ad468f70768..0a4f17e22ccd 100644
      return 0;
    }
 +  case R_LOONGARCH_PAGE_PC:
-+    return getLoongArchPageOffset(sym.getVA(a), p);
++    return getLoongArchPageDelta(sym.getVA(a), p);
    case R_PC:
    case R_ARM_PCA: {
      uint64_t dest;
@@ -835,7 +846,7 @@ index 6ad468f70768..0a4f17e22ccd 100644
    case R_PPC64_CALL_PLT:
      return sym.getPltVA() + a - p;
 +  case R_LOONGARCH_PLT_PAGE_PC:
-+    return getLoongArchPageOffset(sym.getPltVA() + a, p);
++    return getLoongArchPageDelta(sym.getPltVA() + a, p);
    case R_PLT_GOTPLT:
      return sym.getPltVA() + a - in.gotPlt->getVA();
    case R_PPC32_PLTREL:
@@ -844,7 +855,7 @@ index 6ad468f70768..0a4f17e22ccd 100644
    case R_TLSGD_PC:
      return in.got->getGlobalDynAddr(sym) + a - p;
 +  case R_LOONGARCH_TLSGD_PAGE_PC:
-+    return getLoongArchPageOffset(in.got->getGlobalDynAddr(sym) + a, p);
++    return getLoongArchPageDelta(in.got->getGlobalDynAddr(sym) + a, p);
    case R_TLSLD_GOTPLT:
      return in.got->getVA() + in.got->getTlsIndexOff() + a - in.gotPlt->getVA();
    case R_TLSLD_GOT:
@@ -999,7 +1010,7 @@ index 29e3edeca6be..5d9449eb13c6 100644
  
  // Architecture-neutral representation of relocation.
 diff --git a/lld/ELF/ScriptParser.cpp b/lld/ELF/ScriptParser.cpp
-index 85cee08999cd..ac192cd8158d 100644
+index 9f20cefe4c5f..a566d4d9da26 100644
 --- a/lld/ELF/ScriptParser.cpp
 +++ b/lld/ELF/ScriptParser.cpp
 @@ -439,6 +439,8 @@ static std::pair<ELFKind, uint16_t> parseBfdName(StringRef s) {
@@ -1025,10 +1036,10 @@ index 3873c7a25e44..32bb2164a208 100644
      switch (config->ekind) {
      case ELF32LEKind:
 diff --git a/lld/ELF/Target.h b/lld/ELF/Target.h
-index dd0ae392deab..1b8d6d109dcb 100644
+index 18219d366e79..9d4f22dd93f1 100644
 --- a/lld/ELF/Target.h
 +++ b/lld/ELF/Target.h
-@@ -178,6 +178,7 @@ TargetInfo *getAMDGPUTargetInfo();
+@@ -179,6 +179,7 @@ TargetInfo *getAMDGPUTargetInfo();
  TargetInfo *getARMTargetInfo();
  TargetInfo *getAVRTargetInfo();
  TargetInfo *getHexagonTargetInfo();
@@ -1036,11 +1047,11 @@ index dd0ae392deab..1b8d6d109dcb 100644
  TargetInfo *getMSP430TargetInfo();
  TargetInfo *getPPC64TargetInfo();
  TargetInfo *getPPCTargetInfo();
-@@ -221,6 +222,7 @@ void writePrefixedInstruction(uint8_t *loc, uint64_t insn);
- void addPPC64SaveRestore();
+@@ -225,6 +226,7 @@ void addPPC64SaveRestore();
  uint64_t getPPC64TocBase();
  uint64_t getAArch64Page(uint64_t expr);
-+uint64_t getLoongArchPageOffset(uint64_t dest, uint64_t pc);
+ template <typename ELFT> void writeARMCmseImportLib();
++uint64_t getLoongArchPageDelta(uint64_t dest, uint64_t pc);
  void riscvFinalizeRelax(int passes);
  void mergeRISCVAttributesSections();
  void addArmInputSectionMappingSymbols();
@@ -1130,10 +1141,10 @@ index 000000000000..343e836274a3
 +_start:
 diff --git a/lld/test/ELF/loongarch-abs64.s b/lld/test/ELF/loongarch-abs64.s
 new file mode 100644
-index 000000000000..719fd4d7b49b
+index 000000000000..7ce098a905ff
 --- /dev/null
 +++ b/lld/test/ELF/loongarch-abs64.s
-@@ -0,0 +1,60 @@
+@@ -0,0 +1,65 @@
 +# REQUIRES: loongarch
 +
 +# RUN: llvm-mc --filetype=obj --triple=loongarch64-unknown-elf %s -o %t.la64.o
@@ -1185,15 +1196,62 @@ index 000000000000..719fd4d7b49b
 +.global _start
 +
 +_start:
++1:
 +    lu12i.w $a0, %abs_hi20(foo)
++.reloc 1b, R_LARCH_MARK_LA, foo
 +    ori     $a0, $a0, %abs_lo12(foo)
 +    lu32i.d $a0, %abs64_lo20(foo)
 +    lu52i.d $a0, $a0, %abs64_hi12(foo)
 +
++2:
 +    lu12i.w $a1, %abs_hi20(bar)
++.reloc 1b, R_LARCH_MARK_LA, bar
 +    ori     $a1, $a1, %abs_lo12(bar)
 +    lu32i.d $a1, %abs64_lo20(bar)
 +    lu52i.d $a1, $a1, %abs64_hi12(bar)
++
+diff --git a/lld/test/ELF/loongarch-add-sub.s b/lld/test/ELF/loongarch-add-sub.s
+new file mode 100644
+index 000000000000..963e4cbbe0fc
+--- /dev/null
++++ b/lld/test/ELF/loongarch-add-sub.s
+@@ -0,0 +1,36 @@
++# REQUIRES: loongarch
++
++# RUN: llvm-mc --filetype=obj --triple=loongarch64-unknown-elf %s -o %t.la64.o
++
++# RUN: ld.lld --section-start=.rodata=0x1234567890 --section-start=.text=0x9876543210 %t.la64.o -o %t.la64
++# RUN: llvm-readelf -x .rodata %t.la64 | FileCheck --check-prefix=CHECK %s
++# CHECK:      section '.rodata':
++# CHECK-NEXT: 0x1234567890 10325476 98badcfe 80b9fd41 86000000
++# CHECK-NEXT: 0x12345678a0 80b9fd41 80b980
++
++.global _start
++
++_start:
++1:
++    break 0
++
++.rodata
++2:
++    .dword 0xfedcba9876543210
++
++foo:
++    .dword 0
++    .reloc foo, R_LARCH_ADD64, 1b
++    .reloc foo, R_LARCH_SUB64, 2b
++bar:
++    .word 0
++    .reloc bar, R_LARCH_ADD32, 1b
++    .reloc bar, R_LARCH_SUB32, 2b
++baz:
++    .short 0
++    .reloc baz, R_LARCH_ADD16, 1b
++    .reloc baz, R_LARCH_SUB16, 2b
++quux:
++    .byte 0
++    .reloc quux, R_LARCH_ADD8, 1b
++    .reloc quux, R_LARCH_SUB8, 2b
 diff --git a/lld/test/ELF/loongarch-branch-b16.s b/lld/test/ELF/loongarch-branch-b16.s
 new file mode 100644
 index 000000000000..f7d8e27760e0
@@ -1322,7 +1380,7 @@ index 000000000000..0b9a395068d5
 +     bl bar
 diff --git a/lld/test/ELF/loongarch-interlink.test b/lld/test/ELF/loongarch-interlink.test
 new file mode 100644
-index 000000000000..7e3f5d025b29
+index 000000000000..ef7d3ed03d85
 --- /dev/null
 +++ b/lld/test/ELF/loongarch-interlink.test
 @@ -0,0 +1,84 @@
@@ -1354,7 +1412,7 @@ index 000000000000..7e3f5d025b29
 +
 +## Check that interlink between different ABIs is disallowed.
 +# RUN: not ld.lld %t/v1-lp64s.o %t/v1-b-lp64d.o -o /dev/null 2>&1 | FileCheck --check-prefix=INTERLINK-ERR %s
-+# INTERLINK-ERR: cannot link object files with different ABI
++# INTERLINK-ERR: cannot link object files with different ABI from
 +
 +## Check that interlink between different object ABI versions is disallowed.
 +# RUN: not ld.lld %t/v0-lp64d.o %t/v1-b-lp64d.o %t/blob.o -o /dev/null 2>&1 | FileCheck --check-prefix=VERSION-ERR %s
@@ -1412,10 +1470,10 @@ index 000000000000..7e3f5d025b29
 +ret
 diff --git a/lld/test/ELF/loongarch-pc-aligned.s b/lld/test/ELF/loongarch-pc-aligned.s
 new file mode 100644
-index 000000000000..2bbeb71cd828
+index 000000000000..4e4d751d28d7
 --- /dev/null
 +++ b/lld/test/ELF/loongarch-pc-aligned.s
-@@ -0,0 +1,173 @@
+@@ -0,0 +1,283 @@
 +# REQUIRES: loongarch
 +# RUN: rm -rf %t && split-file %s %t
 +
@@ -1423,149 +1481,260 @@ index 000000000000..2bbeb71cd828
 +# RUN: llvm-mc --filetype=obj --triple=loongarch64 %t/a.s -o %t/a.la64.o
 +# RUN: llvm-mc --filetype=obj --triple=loongarch64 %t/extreme.s -o %t/extreme.o
 +
-+# RUN: ld.lld %t/a.la32.o -T %t/case1.t -o %t/case1.la32
-+# RUN: ld.lld %t/a.la64.o -T %t/case1.t -o %t/case1.la64
++# RUN: ld.lld %t/a.la32.o --section-start=.rodata=0x11000 --section-start=.text=0x11ffc -o %t/case1.la32
++# RUN: ld.lld %t/a.la64.o --section-start=.rodata=0x11000 --section-start=.text=0x11ffc -o %t/case1.la64
 +# RUN: llvm-objdump -d --no-show-raw-insn %t/case1.la32 | FileCheck %s --check-prefix=CASE1
 +# RUN: llvm-objdump -d --no-show-raw-insn %t/case1.la64 | FileCheck %s --check-prefix=CASE1
 +# CASE1:      pcalau12i $a0, 0
 +# CASE1-NEXT: ld.w      $a0, $a0, 0
-+#--- case1.t
-+SECTIONS {
-+ .rodata 0x1000: { *(.rodata) }
-+ .text   0x1ffc: { *(.text) }
-+}
 +
-+# RUN: ld.lld %t/a.la32.o -T %t/case2.t -o %t/case2.la32
-+# RUN: ld.lld %t/a.la64.o -T %t/case2.t -o %t/case2.la64
++# RUN: ld.lld %t/a.la32.o --section-start=.rodata=0x11000 --section-start=.text=0x12000 -o %t/case2.la32
++# RUN: ld.lld %t/a.la64.o --section-start=.rodata=0x11000 --section-start=.text=0x12000 -o %t/case2.la64
 +# RUN: llvm-objdump -d --no-show-raw-insn %t/case2.la32 | FileCheck %s --check-prefix=CASE2
 +# RUN: llvm-objdump -d --no-show-raw-insn %t/case2.la64 | FileCheck %s --check-prefix=CASE2
 +# CASE2:      pcalau12i $a0, -1
 +# CASE2-NEXT: ld.w      $a0, $a0, 0
-+#--- case2.t
-+SECTIONS {
-+ .rodata 0x1000: { *(.rodata) }
-+ .text   0x2000: { *(.text) }
-+}
 +
-+# RUN: ld.lld %t/a.la32.o -T %t/case3.t -o %t/case3.la32
-+# RUN: ld.lld %t/a.la64.o -T %t/case3.t -o %t/case3.la64
++# RUN: ld.lld %t/a.la32.o --section-start=.rodata=0x117ff --section-start=.text=0x12000 -o %t/case3.la32
++# RUN: ld.lld %t/a.la64.o --section-start=.rodata=0x117ff --section-start=.text=0x12000 -o %t/case3.la64
 +# RUN: llvm-objdump -d --no-show-raw-insn %t/case3.la32 | FileCheck %s --check-prefix=CASE3
 +# RUN: llvm-objdump -d --no-show-raw-insn %t/case3.la64 | FileCheck %s --check-prefix=CASE3
 +# CASE3:      pcalau12i $a0, -1
 +# CASE3-NEXT: ld.w      $a0, $a0, 2047
-+#--- case3.t
-+SECTIONS {
-+ .rodata 0x17ff: { *(.rodata) }
-+ .text   0x2000: { *(.text) }
-+}
 +
-+# RUN: ld.lld %t/a.la32.o -T %t/case4.t -o %t/case4.la32
-+# RUN: ld.lld %t/a.la64.o -T %t/case4.t -o %t/case4.la64
++# RUN: ld.lld %t/a.la32.o --section-start=.rodata=0x11800 --section-start=.text=0x12000 -o %t/case4.la32
++# RUN: ld.lld %t/a.la64.o --section-start=.rodata=0x11800 --section-start=.text=0x12000 -o %t/case4.la64
 +# RUN: llvm-objdump -d --no-show-raw-insn %t/case4.la32 | FileCheck %s --check-prefix=CASE4
 +# RUN: llvm-objdump -d --no-show-raw-insn %t/case4.la64 | FileCheck %s --check-prefix=CASE4
 +# CASE4:      pcalau12i $a0, 0
 +# CASE4-NEXT: ld.w      $a0, $a0, -2048
-+#--- case4.t
-+SECTIONS {
-+ .rodata 0x1800: { *(.rodata) }
-+ .text   0x2000: { *(.text) }
-+}
 +
-+# RUN: ld.lld %t/a.la32.o -T %t/case5.t -o %t/case5.la32
-+# RUN: ld.lld %t/a.la64.o -T %t/case5.t -o %t/case5.la64
++# RUN: ld.lld %t/a.la32.o --section-start=.rodata=0x12004 --section-start=.text=0x11ffc -o %t/case5.la32
++# RUN: ld.lld %t/a.la64.o --section-start=.rodata=0x12004 --section-start=.text=0x11ffc -o %t/case5.la64
 +# RUN: llvm-objdump -d --no-show-raw-insn %t/case5.la32 | FileCheck %s --check-prefix=CASE5
 +# RUN: llvm-objdump -d --no-show-raw-insn %t/case5.la64 | FileCheck %s --check-prefix=CASE5
 +# CASE5:      pcalau12i $a0, 1
 +# CASE5-NEXT: ld.w      $a0, $a0, 4
-+#--- case5.t
-+SECTIONS {
-+ .text   0x001ffc: { *(.text) }
-+ .rodata 0x002004: { *(.rodata) }
-+}
 +
-+# RUN: ld.lld %t/a.la32.o -T %t/case6.t -o %t/case6.la32
-+# RUN: ld.lld %t/a.la64.o -T %t/case6.t -o %t/case6.la64
++# RUN: ld.lld %t/a.la32.o --section-start=.rodata=0x12800 --section-start=.text=0x11ffc -o %t/case6.la32
++# RUN: ld.lld %t/a.la64.o --section-start=.rodata=0x12800 --section-start=.text=0x11ffc -o %t/case6.la64
 +# RUN: llvm-objdump -d --no-show-raw-insn %t/case6.la32 | FileCheck %s --check-prefix=CASE6
 +# RUN: llvm-objdump -d --no-show-raw-insn %t/case6.la64 | FileCheck %s --check-prefix=CASE6
 +# CASE6:      pcalau12i $a0, 2
 +# CASE6-NEXT: ld.w      $a0, $a0, -2048
-+#--- case6.t
-+SECTIONS {
-+ .text   0x001ffc: { *(.text) }
-+ .rodata 0x002800: { *(.rodata) }
-+}
 +
-+# RUN: ld.lld %t/a.la32.o -T %t/case7.t -o %t/case7.la32
-+# RUN: ld.lld %t/a.la64.o -T %t/case7.t -o %t/case7.la64
++# RUN: ld.lld %t/a.la32.o --section-start=.rodata=0x7ffff123 --section-start=.text=0x0 -o %t/case7.la32
++# RUN: ld.lld %t/a.la64.o --section-start=.rodata=0x7ffff123 --section-start=.text=0x0 -o %t/case7.la64
 +# RUN: llvm-objdump -d --no-show-raw-insn %t/case7.la32 | FileCheck %s --check-prefix=CASE7
 +# RUN: llvm-objdump -d --no-show-raw-insn %t/case7.la64 | FileCheck %s --check-prefix=CASE7
 +# CASE7:      pcalau12i $a0, 524287
 +# CASE7-NEXT: ld.w      $a0, $a0, 291
-+#--- case7.t
-+SECTIONS {
-+ .text   0x0: { *(.text) }
-+ .rodata 0x7ffff123: { *(.rodata) }
-+}
 +
-+# RUN: ld.lld %t/a.la32.o -T %t/case8.t -o %t/case8.la32
-+# RUN: ld.lld %t/a.la64.o -T %t/case8.t -o %t/case8.la64
++# RUN: ld.lld %t/a.la32.o --section-start=.rodata=0x7ffffabc --section-start=.text=0x0 -o %t/case8.la32
++# RUN: ld.lld %t/a.la64.o --section-start=.rodata=0x7ffffabc --section-start=.text=0x0 -o %t/case8.la64
 +# RUN: llvm-objdump -d --no-show-raw-insn %t/case8.la32 | FileCheck %s --check-prefix=CASE8
 +# RUN: llvm-objdump -d --no-show-raw-insn %t/case8.la64 | FileCheck %s --check-prefix=CASE8
 +# CASE8:      pcalau12i $a0, -524288
 +# CASE8-NEXT: ld.w      $a0, $a0, -1348
-+#--- case8.t
-+SECTIONS {
-+ .text   0x0: { *(.text) }
-+ .rodata 0x7ffffabc: { *(.rodata) }
-+}
 +
-+# RUN: ld.lld %t/a.la32.o -T %t/case9.t -o %t/case9.la32
-+# RUN: ld.lld %t/a.la64.o -T %t/case9.t -o %t/case9.la64
++# RUN: ld.lld %t/a.la32.o --section-start=.rodata=0x10123 --section-start=.text=0x80010000 -o %t/case9.la32
++# RUN: ld.lld %t/a.la64.o --section-start=.rodata=0x10123 --section-start=.text=0x80010000 -o %t/case9.la64
 +# RUN: llvm-objdump -d --no-show-raw-insn %t/case9.la32 | FileCheck %s --check-prefix=CASE9
 +# RUN: llvm-objdump -d --no-show-raw-insn %t/case9.la64 | FileCheck %s --check-prefix=CASE9
 +# CASE9:      pcalau12i $a0, -524288
 +# CASE9-NEXT: ld.w      $a0, $a0, 291
-+#--- case9.t
-+SECTIONS {
-+ .rodata 0x123: { *(.rodata) }
-+ .text   0x80000000: { *(.text) }
-+}
 +
-+# RUN: ld.lld %t/extreme.o -T %t/extreme1.t -o %t/extreme1
++## page delta = 0x4443333322222000, page offset = 0x111
++## %pc_lo12   = 0x111 = 273
++## %pc_hi20   = 0x22222 = 139810
++## %pc64_lo20 = 0x33333 = 209715
++## %pc64_hi12 = 0x444 = 1092
++# RUN: ld.lld %t/extreme.o --section-start=.rodata=0x4443333334567111 --section-start=.text=0x0000000012345678 -o %t/extreme0
++# RUN: llvm-objdump -d --no-show-raw-insn %t/extreme0 | FileCheck %s --check-prefix=EXTREME0
++# EXTREME0:      addi.d $t0, $zero, 273
++# EXTREME0-NEXT: pcalau12i $t1, 139810
++# EXTREME0-NEXT: lu32i.d   $t0, 209715
++# EXTREME0-NEXT: lu52i.d   $t0, $t0, 1092
++
++## page delta = 0x4443333222223000, page offset = 0x888
++## %pc_lo12   = 0x888 = -1912
++## %pc_hi20   = 0x22223 = 139811
++## %pc64_lo20 = 0x33332 = 209714
++## %pc64_hi12 = 0x444 = 1092
++# RUN: ld.lld %t/extreme.o --section-start=.rodata=0x4443333334567888 --section-start=.text=0x0000000012345678 -o %t/extreme1
 +# RUN: llvm-objdump -d --no-show-raw-insn %t/extreme1 | FileCheck %s --check-prefix=EXTREME1
-+# EXTREME1:      addi.d    $t0, $zero, 291
-+# EXTREME1-NEXT: lu32i.d   $t0, -284281
-+# EXTREME1-NEXT: lu52i.d   $t0, $t0, -292
-+# EXTREME1-NEXT: pcalau12i $t1, 414771
-+#--- extreme1.t
-+SECTIONS {
-+ .rodata 0x123: { *(.rodata) }
-+ .text   0x123456789abcdef0: { *(.text) }
-+}
++# EXTREME1:      addi.d $t0, $zero, -1912
++# EXTREME1-NEXT: pcalau12i $t1, 139811
++# EXTREME1-NEXT: lu32i.d   $t0, 209714
++# EXTREME1-NEXT: lu52i.d   $t0, $t0, 1092
 +
-+# RUN: ld.lld %t/extreme.o -T %t/extreme2.t -o %t/extreme2
++## page delta = 0x4443333499999000, page offset = 0x111
++## %pc_lo12   = 0x111 = 273
++## %pc_hi20   = 0x99999 = -419431
++## %pc64_lo20 = 0x33334 = 209716
++## %pc64_hi12 = 0x444 = 1092
++# RUN: ld.lld %t/extreme.o --section-start=.rodata=0x44433333abcde111 --section-start=.text=0x0000000012345678 -o %t/extreme2
 +# RUN: llvm-objdump -d --no-show-raw-insn %t/extreme2 | FileCheck %s --check-prefix=EXTREME2
-+# EXTREME2:      addi.d    $t0, $zero, -820
-+# EXTREME2-NEXT: lu32i.d   $t0, -69907
-+# EXTREME2-NEXT: lu52i.d   $t0, $t0, 2047
-+# EXTREME2-NEXT: pcalau12i $t1, -139810
-+#--- extreme2.t
-+SECTIONS {
-+ .text   0x0: { *(.text) }
-+ .rodata 0x7ffeeeeedddddccc: { *(.rodata) }
-+}
++# EXTREME2:      addi.d $t0, $zero, 273
++# EXTREME2-NEXT: pcalau12i $t1, -419431
++# EXTREME2-NEXT: lu32i.d   $t0, 209716
++# EXTREME2-NEXT: lu52i.d   $t0, $t0, 1092
 +
-+# RUN: ld.lld %t/extreme.o -T %t/extreme3.t -o %t/extreme3
++## page delta = 0x444333339999a000, page offset = 0x888
++## %pc_lo12   = 0x888 = -1912
++## %pc_hi20   = 0x9999a = -419430
++## %pc64_lo20 = 0x33333 = 209715
++## %pc64_hi12 = 0x444 = 1092
++# RUN: ld.lld %t/extreme.o --section-start=.rodata=0x44433333abcde888 --section-start=.text=0x0000000012345678 -o %t/extreme3
 +# RUN: llvm-objdump -d --no-show-raw-insn %t/extreme3 | FileCheck %s --check-prefix=EXTREME3
-+# EXTREME3:      addi.d    $t0, $zero, -820
-+# EXTREME3-NEXT: lu32i.d   $t0, -69906
-+# EXTREME3-NEXT: lu52i.d   $t0, $t0, -2048
-+# EXTREME3-NEXT: pcalau12i $t1, -139810
-+#--- extreme3.t
-+SECTIONS {
-+ .text   0x0: { *(.text) }
-+ .rodata 0x800eeeeedddddccc: { *(.rodata) }
-+}
++# EXTREME3:      addi.d $t0, $zero, -1912
++# EXTREME3-NEXT: pcalau12i $t1, -419430
++# EXTREME3-NEXT: lu32i.d   $t0, 209715
++# EXTREME3-NEXT: lu52i.d   $t0, $t0, 1092
++
++## page delta = 0x444aaaaa22222000, page offset = 0x111
++## %pc_lo12   = 0x111 = 273
++## %pc_hi20   = 0x22222 = 139810
++## %pc64_lo20 = 0xaaaaa = -349526
++## %pc64_hi12 = 0x444 = 1092
++# RUN: ld.lld %t/extreme.o --section-start=.rodata=0x444aaaaa34567111 --section-start=.text=0x0000000012345678 -o %t/extreme4
++# RUN: llvm-objdump -d --no-show-raw-insn %t/extreme4 | FileCheck %s --check-prefix=EXTREME4
++# EXTREME4:      addi.d $t0, $zero, 273
++# EXTREME4-NEXT: pcalau12i $t1, 139810
++# EXTREME4-NEXT: lu32i.d   $t0, -349526
++# EXTREME4-NEXT: lu52i.d   $t0, $t0, 1092
++
++## page delta = 0x444aaaa922223000, page offset = 0x888
++## %pc_lo12   = 0x888 = -1912
++## %pc_hi20   = 0x22223 = 139811
++## %pc64_lo20 = 0xaaaa9 = -349527
++## %pc64_hi12 = 0x444 = 1092
++# RUN: ld.lld %t/extreme.o --section-start=.rodata=0x444aaaaa34567888 --section-start=.text=0x0000000012345678 -o %t/extreme5
++# RUN: llvm-objdump -d --no-show-raw-insn %t/extreme5 | FileCheck %s --check-prefix=EXTREME5
++# EXTREME5:      addi.d $t0, $zero, -1912
++# EXTREME5-NEXT: pcalau12i $t1, 139811
++# EXTREME5-NEXT: lu32i.d   $t0, -349527
++# EXTREME5-NEXT: lu52i.d   $t0, $t0, 1092
++
++## page delta = 0x444aaaab99999000, page offset = 0x111
++## %pc_lo12   = 0x111 = 273
++## %pc_hi20   = 0x99999 = -419431
++## %pc64_lo20 = 0xaaaab = -349525
++## %pc64_hi12 = 0x444 = 1092
++# RUN: ld.lld %t/extreme.o --section-start=.rodata=0x444aaaaaabcde111 --section-start=.text=0x0000000012345678 -o %t/extreme6
++# RUN: llvm-objdump -d --no-show-raw-insn %t/extreme6 | FileCheck %s --check-prefix=EXTREME6
++# EXTREME6:      addi.d $t0, $zero, 273
++# EXTREME6-NEXT: pcalau12i $t1, -419431
++# EXTREME6-NEXT: lu32i.d   $t0, -349525
++# EXTREME6-NEXT: lu52i.d   $t0, $t0, 1092
++
++## page delta = 0x444aaaaa9999a000, page offset = 0x888
++## %pc_lo12   = 0x888 = -1912
++## %pc_hi20   = 0x9999a = -419430
++## %pc64_lo20 = 0xaaaaa = -349526
++## %pc64_hi12 = 0x444 = 1092
++# RUN: ld.lld %t/extreme.o --section-start=.rodata=0x444aaaaaabcde888 --section-start=.text=0x0000000012345678 -o %t/extreme7
++# RUN: llvm-objdump -d --no-show-raw-insn %t/extreme7 | FileCheck %s --check-prefix=EXTREME7
++# EXTREME7:      addi.d $t0, $zero, -1912
++# EXTREME7-NEXT: pcalau12i $t1, -419430
++# EXTREME7-NEXT: lu32i.d   $t0, -349526
++# EXTREME7-NEXT: lu52i.d   $t0, $t0, 1092
++
++## page delta = 0xbbb3333322222000, page offset = 0x111
++## %pc_lo12   = 0x111 = 273
++## %pc_hi20   = 0x22222 = 139810
++## %pc64_lo20 = 0x33333 = 209715
++## %pc64_hi12 = 0xbbb = -1093
++# RUN: ld.lld %t/extreme.o --section-start=.rodata=0xbbb3333334567111 --section-start=.text=0x0000000012345678 -o %t/extreme8
++# RUN: llvm-objdump -d --no-show-raw-insn %t/extreme8 | FileCheck %s --check-prefix=EXTREME8
++# EXTREME8:      addi.d $t0, $zero, 273
++# EXTREME8-NEXT: pcalau12i $t1, 139810
++# EXTREME8-NEXT: lu32i.d   $t0, 209715
++# EXTREME8-NEXT: lu52i.d   $t0, $t0, -1093
++
++## page delta = 0xbbb3333222223000, page offset = 0x888
++## %pc_lo12   = 0x888 = -1912
++## %pc_hi20   = 0x22223 = 139811
++## %pc64_lo20 = 0x33332 = 209714
++## %pc64_hi12 = 0xbbb = -1093
++# RUN: ld.lld %t/extreme.o --section-start=.rodata=0xbbb3333334567888 --section-start=.text=0x0000000012345678 -o %t/extreme9
++# RUN: llvm-objdump -d --no-show-raw-insn %t/extreme9 | FileCheck %s --check-prefix=EXTREME9
++# EXTREME9:      addi.d $t0, $zero, -1912
++# EXTREME9-NEXT: pcalau12i $t1, 139811
++# EXTREME9-NEXT: lu32i.d   $t0, 209714
++# EXTREME9-NEXT: lu52i.d   $t0, $t0, -1093
++
++## page delta = 0xbbb3333499999000, page offset = 0x111
++## %pc_lo12   = 0x111 = 273
++## %pc_hi20   = 0x99999 = -419431
++## %pc64_lo20 = 0x33334 = 209716
++## %pc64_hi12 = 0xbbb = -1093
++# RUN: ld.lld %t/extreme.o --section-start=.rodata=0xbbb33333abcde111 --section-start=.text=0x0000000012345678 -o %t/extreme10
++# RUN: llvm-objdump -d --no-show-raw-insn %t/extreme10 | FileCheck %s --check-prefix=EXTREME10
++# EXTREME10:      addi.d $t0, $zero, 273
++# EXTREME10-NEXT: pcalau12i $t1, -419431
++# EXTREME10-NEXT: lu32i.d   $t0, 209716
++# EXTREME10-NEXT: lu52i.d   $t0, $t0, -1093
++
++## page delta = 0xbbb333339999a000, page offset = 0x888
++## %pc_lo12   = 0x888 = -1912
++## %pc_hi20   = 0x9999a = -419430
++## %pc64_lo20 = 0x33333 = 209715
++## %pc64_hi12 = 0xbbb = -1093
++# RUN: ld.lld %t/extreme.o --section-start=.rodata=0xbbb33333abcde888 --section-start=.text=0x0000000012345678 -o %t/extreme11
++# RUN: llvm-objdump -d --no-show-raw-insn %t/extreme11 | FileCheck %s --check-prefix=EXTREME11
++# EXTREME11:      addi.d $t0, $zero, -1912
++# EXTREME11-NEXT: pcalau12i $t1, -419430
++# EXTREME11-NEXT: lu32i.d   $t0, 209715
++# EXTREME11-NEXT: lu52i.d   $t0, $t0, -1093
++
++## page delta = 0xbbbaaaaa22222000, page offset = 0x111
++## %pc_lo12   = 0x111 = 273
++## %pc_hi20   = 0x22222 = 139810
++## %pc64_lo20 = 0xaaaaa = -349526
++## %pc64_hi12 = 0xbbb = -1093
++# RUN: ld.lld %t/extreme.o --section-start=.rodata=0xbbbaaaaa34567111 --section-start=.text=0x0000000012345678 -o %t/extreme12
++# RUN: llvm-objdump -d --no-show-raw-insn %t/extreme12 | FileCheck %s --check-prefix=EXTREME12
++# EXTREME12:      addi.d $t0, $zero, 273
++# EXTREME12-NEXT: pcalau12i $t1, 139810
++# EXTREME12-NEXT: lu32i.d   $t0, -349526
++# EXTREME12-NEXT: lu52i.d   $t0, $t0, -1093
++
++## page delta = 0xbbbaaaa922223000, page offset = 0x888
++## %pc_lo12   = 0x888 = -1912
++## %pc_hi20   = 0x22223 = 139811
++## %pc64_lo20 = 0xaaaa9 = -349527
++## %pc64_hi12 = 0xbbb = -1093
++# RUN: ld.lld %t/extreme.o --section-start=.rodata=0xbbbaaaaa34567888 --section-start=.text=0x0000000012345678 -o %t/extreme13
++# RUN: llvm-objdump -d --no-show-raw-insn %t/extreme13 | FileCheck %s --check-prefix=EXTREME13
++# EXTREME13:      addi.d $t0, $zero, -1912
++# EXTREME13-NEXT: pcalau12i $t1, 139811
++# EXTREME13-NEXT: lu32i.d   $t0, -349527
++# EXTREME13-NEXT: lu52i.d   $t0, $t0, -1093
++
++## page delta = 0xbbbaaaab99999000, page offset = 0x111
++## %pc_lo12   = 0x111 = 273
++## %pc_hi20   = 0x99999 = -419431
++## %pc64_lo20 = 0xaaaab = -349525
++## %pc64_hi12 = 0xbbb = -1093
++# RUN: ld.lld %t/extreme.o --section-start=.rodata=0xbbbaaaaaabcde111 --section-start=.text=0x0000000012345678 -o %t/extreme14
++# RUN: llvm-objdump -d --no-show-raw-insn %t/extreme14 | FileCheck %s --check-prefix=EXTREME14
++# EXTREME14:      addi.d $t0, $zero, 273
++# EXTREME14-NEXT: pcalau12i $t1, -419431
++# EXTREME14-NEXT: lu32i.d   $t0, -349525
++# EXTREME14-NEXT: lu52i.d   $t0, $t0, -1093
++
++## page delta = 0xbbbaaaaa9999a000, page offset = 0x888
++## %pc_lo12   = 0x888 = -1912
++## %pc_hi20   = 0x9999a = -419430
++## %pc64_lo20 = 0xaaaaa = -349526
++## %pc64_hi12 = 0xbbb = -1093
++# RUN: ld.lld %t/extreme.o --section-start=.rodata=0xbbbaaaaaabcde888 --section-start=.text=0x0000000012345678 -o %t/extreme15
++# RUN: llvm-objdump -d --no-show-raw-insn %t/extreme15 | FileCheck %s --check-prefix=EXTREME15
++# EXTREME15:      addi.d $t0, $zero, -1912
++# EXTREME15-NEXT: pcalau12i $t1, -419430
++# EXTREME15-NEXT: lu32i.d   $t0, -349526
++# EXTREME15-NEXT: lu52i.d   $t0, $t0, -1093
 +
 +#--- a.s
 +.rodata
@@ -1585,10 +1754,9 @@ index 000000000000..2bbeb71cd828
 +.global _start
 +_start:
 +  addi.d    $t0, $zero, %pc_lo12(x)
++  pcalau12i $t1, %pc_hi20(x)
 +  lu32i.d   $t0, %pc64_lo20(x)
 +  lu52i.d   $t0, $t0, %pc64_hi12(x)
-+  pcalau12i $t1, %pc_hi20(x)
-+  add.d     $t0, $t0, $t1
 diff --git a/lld/test/ELF/loongarch-pcala-lo12-jirl-shared.s b/lld/test/ELF/loongarch-pcala-lo12-jirl-shared.s
 new file mode 100644
 index 000000000000..dddc73bf1732
