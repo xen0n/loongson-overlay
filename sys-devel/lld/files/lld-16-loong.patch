@@ -1,4 +1,4 @@
-From 62ac59c12763e6da7d7270198ee2bada73284b45 Mon Sep 17 00:00:00 2001
+From 4ad28f741ef7398fb30b171e4be0a165ccb7801c Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <git@xen0n.name>
 Date: Tue, 9 Aug 2022 13:33:31 +0800
 Subject: [PATCH] [lld][ELF] Support LoongArch
@@ -17,7 +17,7 @@ tested to work as well.
 
 Differential Revision: https://reviews.llvm.org/D138135
 ---
- lld/ELF/Arch/LoongArch.cpp                    | 658 ++++++++++++++++++
+ lld/ELF/Arch/LoongArch.cpp                    | 656 ++++++++++++++++++
  lld/ELF/CMakeLists.txt                        |   1 +
  lld/ELF/Driver.cpp                            |  12 +-
  lld/ELF/InputFiles.cpp                        |   3 +
@@ -43,7 +43,7 @@ Differential Revision: https://reviews.llvm.org/D138135
  lld/test/ELF/loongarch-tls-ld.s               |  89 +++
  lld/test/ELF/loongarch-tls-le.s               |  42 ++
  lld/test/lit.cfg.py                           |   1 +
- 26 files changed, 2027 insertions(+), 19 deletions(-)
+ 26 files changed, 2025 insertions(+), 19 deletions(-)
  create mode 100644 lld/ELF/Arch/LoongArch.cpp
  create mode 100644 lld/test/ELF/emulation-loongarch.s
  create mode 100644 lld/test/ELF/loongarch-abs64.s
@@ -63,10 +63,10 @@ Differential Revision: https://reviews.llvm.org/D138135
 
 diff --git a/lld/ELF/Arch/LoongArch.cpp b/lld/ELF/Arch/LoongArch.cpp
 new file mode 100644
-index 000000000000..53872fd6d95f
+index 000000000000..adfec9ed4cd2
 --- /dev/null
 +++ b/lld/ELF/Arch/LoongArch.cpp
-@@ -0,0 +1,658 @@
+@@ -0,0 +1,656 @@
 +//===- LoongArch.cpp ------------------------------------------------------===//
 +//
 +// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
@@ -496,7 +496,6 @@ index 000000000000..53872fd6d95f
 +    // the RelExpr to avoid code duplication.
 +    return R_RISCV_ADD;
 +  case R_LARCH_32_PCREL:
-+  case R_LARCH_64_PCREL:
 +    return R_PC;
 +  case R_LARCH_B16:
 +  case R_LARCH_B21:
@@ -600,7 +599,6 @@ index 000000000000..53872fd6d95f
 +    return;
 +  case R_LARCH_64:
 +  case R_LARCH_TLS_DTPREL64:
-+  case R_LARCH_64_PCREL:
 +    write64le(loc, val);
 +    return;
 +
