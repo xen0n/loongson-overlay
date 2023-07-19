@@ -36,7 +36,7 @@ PDEPEND="
 "
 
 PATCHES=(
-	"${FILESDIR}/0001-lld-ELF-Support-LoongArch.patch"
+	"${FILESDIR}/lld-${LLVM_MAJOR}-loong.patch"
 )
 
 LLVM_COMPONENTS=( lld cmake libunwind/include/mach-o )
