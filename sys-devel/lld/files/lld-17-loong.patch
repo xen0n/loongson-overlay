@@ -1088,62 +1088,6 @@ index 18219d366e79..9d4f22dd93f1 100644
  void riscvFinalizeRelax(int passes);
  void mergeRISCVAttributesSections();
  void addArmInputSectionMappingSymbols();
-diff --git a/lld/docs/ReleaseNotes.rst b/lld/docs/ReleaseNotes.rst
-index 0b2ff6eabdb5..d8e34d1e6c74 100644
---- a/lld/docs/ReleaseNotes.rst
-+++ b/lld/docs/ReleaseNotes.rst
-@@ -51,6 +51,7 @@ ELF Improvements
- * Program header assignment can now be used within ``OVERLAY``. This functionality was accidentally lost in 2020.
-   (`D150445 <https://reviews.llvm.org/D150445>`_)
- * Operators ``^`` and ``^=`` can now be used in linker scripts.
-+* LoongArch is now supported.
- * ``DT_AARCH64_MEMTAG_*`` dynamic tags are now supported.
-   (`D143769 <https://reviews.llvm.org/D143769>`_)
- * AArch32 port now supports BE-8 and BE-32 modes for big-endian.
-diff --git a/lld/docs/index.rst b/lld/docs/index.rst
-index bf7cf4846e85..6281b6893cc1 100644
---- a/lld/docs/index.rst
-+++ b/lld/docs/index.rst
-@@ -22,10 +22,11 @@ Features
-   machine, you can expect that LLD runs more than twice as fast as the GNU
-   gold linker. Your mileage may vary, though.
- 
--- It supports various CPUs/ABIs including AArch64, AMDGPU, ARM, Hexagon, MIPS
--  32/64 big/little-endian, PowerPC, PowerPC64, RISC-V, SPARC V9, x86-32 and
--  x86-64. Among these, AArch64, ARM (>= v4), PowerPC, PowerPC64, RISC-V, x86-32
--  and x86-64 have production quality. MIPS seems decent too.
-+- It supports various CPUs/ABIs including AArch64, AMDGPU, ARM, Hexagon,
-+  LoongArch, MIPS 32/64 big/little-endian, PowerPC, PowerPC64, RISC-V,
-+  SPARC V9, x86-32 and x86-64. Among these, AArch64, ARM (>= v4), LoongArch,
-+  PowerPC, PowerPC64, RISC-V, x86-32 and x86-64 have production quality.
-+  MIPS seems decent too.
- 
- - It is always a cross-linker, meaning that it always supports all the
-   above targets however it was built. In fact, we don't provide a
-diff --git a/lld/docs/ld.lld.1 b/lld/docs/ld.lld.1
-index 898ec30dfe6f..0a5e4293deda 100644
---- a/lld/docs/ld.lld.1
-+++ b/lld/docs/ld.lld.1
-@@ -4,7 +4,7 @@
- .\"
- .\" This man page documents only lld's ELF linking support, obtained originally
- .\" from FreeBSD.
--.Dd Feb 9, 2023
-+.Dd Jul 25, 2023
- .Dt LD.LLD 1
- .Os
- .Sh NAME
-@@ -27,8 +27,8 @@ It accepts most of the same command line arguments and linker scripts
- as GNU linkers.
- .Pp
- .Nm
--currently supports i386, x86-64, ARM, AArch64, PowerPC32, PowerPC64,
--MIPS32, MIPS64, RISC-V, AMDGPU, Hexagon and SPARC V9 targets.
-+currently supports i386, x86-64, ARM, AArch64, LoongArch, PowerPC32,
-+PowerPC64, MIPS32, MIPS64, RISC-V, AMDGPU, Hexagon and SPARC V9 targets.
- .Nm
- acts as a Microsoft link.exe-compatible linker if invoked as
- .Nm lld-link
 diff --git a/lld/test/ELF/emulation-loongarch.s b/lld/test/ELF/emulation-loongarch.s
 new file mode 100644
 index 000000000000..343e836274a3
