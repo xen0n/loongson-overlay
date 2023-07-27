@@ -6,5 +6,4 @@ dev-libs/libgnome-games-support ~*
 media-libs/clutter ~*
 media-libs/clutter-gtk ~*
 media-libs/cogl ~*
-dev-libs/libmanette ~*
 dev-libs/qqwing ~*
