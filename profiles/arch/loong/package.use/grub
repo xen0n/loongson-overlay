@@ -1,2 +1,0 @@
-# LoongArch systems boot with EFI
-sys-boot/grub:2 grub_platforms_efi-64
