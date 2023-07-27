@@ -1,9 +1,0 @@
-gnome-base/dconf-editor ~*
-net-misc/gnome-online-miners ~*
-net-libs/libzapojit ~*
-media-plugins/gst-plugins-gdkpixbuf ~*
-dev-libs/libgnome-games-support ~*
-media-libs/clutter ~*
-media-libs/clutter-gtk ~*
-media-libs/cogl ~*
-dev-libs/qqwing ~*
