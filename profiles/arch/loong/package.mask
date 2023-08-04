@@ -1,0 +1,8 @@
+# WANG Xuerui <xen0n@gentoo.org> (2023-08-04)
+# Unnecessary since ages: Linux/LoongArch already requires updated firmware
+# from day one (ever since it's upstreamed), in which case this fix is either
+# no-op (for 3A5000 systems), or incorrect (for systems with CPU models other
+# than 3A5000). You can just uninstall this package without any harm.
+#
+# Removal on 2023-09-04.
+sys-boot/loongarch-acpi-tables-fix
