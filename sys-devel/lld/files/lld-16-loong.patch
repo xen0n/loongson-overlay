@@ -1,7 +1,7 @@
-From 4ad28f741ef7398fb30b171e4be0a165ccb7801c Mon Sep 17 00:00:00 2001
+From d0619e1c1b9ee71d4eebe10732c5815718aa8156 Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <git@xen0n.name>
-Date: Tue, 9 Aug 2022 13:33:31 +0800
-Subject: [PATCH] [lld][ELF] Support LoongArch
+Date: Tue, 25 Jul 2023 17:03:28 +0800
+Subject: [PATCH 1/3] [lld][ELF] Support LoongArch
 
 This adds support for the LoongArch ELF psABI v2.00 [1] relocation
 model to LLD. The deprecated stack-machine-based psABI v1 relocs are not
@@ -15,9 +15,13 @@ tested to work as well.
 
 [1]: https://loongson.github.io/LoongArch-Documentation/LoongArch-ELF-ABI-EN.html
 
+Reviewed By: MaskRay, SixWeining
+
 Differential Revision: https://reviews.llvm.org/D138135
+
+(cherry picked from commit 6084ee742064cf8121444febee342133b0cb7abd)
 ---
- lld/ELF/Arch/LoongArch.cpp                    | 656 ++++++++++++++++++
+ lld/ELF/Arch/LoongArch.cpp                    | 687 ++++++++++++++++++
  lld/ELF/CMakeLists.txt                        |   1 +
  lld/ELF/Driver.cpp                            |  12 +-
  lld/ELF/InputFiles.cpp                        |   3 +
@@ -27,8 +31,9 @@ Differential Revision: https://reviews.llvm.org/D138135
  lld/ELF/ScriptParser.cpp                      |   2 +
  lld/ELF/Target.cpp                            |   2 +
  lld/ELF/Target.h                              |   2 +
- lld/test/ELF/emulation-loongarch.s            |  78 +++
- lld/test/ELF/loongarch-abs64.s                |  65 ++
+ lld/docs/ld.lld.1                             |   6 +-
+ lld/test/ELF/emulation-loongarch.s            |  78 ++
+ lld/test/ELF/loongarch-abs64.s                |  64 ++
  lld/test/ELF/loongarch-add-sub.s              |  36 +
  lld/test/ELF/loongarch-branch.s               |  68 ++
  lld/test/ELF/loongarch-interlink.test         |  84 +++
@@ -43,7 +48,7 @@ Differential Revision: https://reviews.llvm.org/D138135
  lld/test/ELF/loongarch-tls-ld.s               |  89 +++
  lld/test/ELF/loongarch-tls-le.s               |  42 ++
  lld/test/lit.cfg.py                           |   1 +
- 26 files changed, 2025 insertions(+), 19 deletions(-)
+ 27 files changed, 2058 insertions(+), 22 deletions(-)
  create mode 100644 lld/ELF/Arch/LoongArch.cpp
  create mode 100644 lld/test/ELF/emulation-loongarch.s
  create mode 100644 lld/test/ELF/loongarch-abs64.s
@@ -63,10 +68,10 @@ Differential Revision: https://reviews.llvm.org/D138135
 
 diff --git a/lld/ELF/Arch/LoongArch.cpp b/lld/ELF/Arch/LoongArch.cpp
 new file mode 100644
-index 000000000000..adfec9ed4cd2
+index 000000000000..7cf38741cbf0
 --- /dev/null
 +++ b/lld/ELF/Arch/LoongArch.cpp
-@@ -0,0 +1,656 @@
+@@ -0,0 +1,687 @@
 +//===- LoongArch.cpp ------------------------------------------------------===//
 +//
 +// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
@@ -89,7 +94,6 @@ index 000000000000..adfec9ed4cd2
 +using namespace lld::elf;
 +
 +namespace {
-+
 +class LoongArch final : public TargetInfo {
 +public:
 +  LoongArch();
@@ -107,7 +111,6 @@ index 000000000000..adfec9ed4cd2
 +  void relocate(uint8_t *loc, const Relocation &rel,
 +                uint64_t val) const override;
 +};
-+
 +} // end anonymous namespace
 +
 +enum Op {
@@ -150,66 +153,97 @@ index 000000000000..adfec9ed4cd2
 +  return p & ~static_cast<uint64_t>(0xfff);
 +}
 +
++static uint32_t lo12(uint32_t val) { return val & 0xfff; }
++
 +// Calculate the adjusted page delta between dest and PC.
 +uint64_t elf::getLoongArchPageDelta(uint64_t dest, uint64_t pc) {
++  // Consider the large code model access pattern, of which the smaller code
++  // models' access patterns are a subset:
++  //
++  //     pcalau12i       U, %foo_hi20(sym)        ; b in [-0x80000, 0x7ffff]
++  //     addi.d          T, zero, %foo_lo12(sym)  ; a in [-0x800, 0x7ff]
++  //     lu32i.d         T, %foo64_lo20(sym)      ; c in [-0x80000, 0x7ffff]
++  //     lu52i.d         T, T, %foo64_hi12(sym)   ; d in [-0x800, 0x7ff]
++  //     {ldx,stx,add}.* dest, U, T
++  //
++  // Let page(pc) = 0xRRR'QQQQQ'PPPPP'000 and dest = 0xZZZ'YYYYY'XXXXX'AAA,
++  // with RQ, P, ZY, X and A representing the respective bitfields as unsigned
++  // integers. We have:
++  //
++  //     page(dest) = 0xZZZ'YYYYY'XXXXX'000
++  //     - page(pc) = 0xRRR'QQQQQ'PPPPP'000
++  //     ----------------------------------
++  //                  0xddd'ccccc'bbbbb'000
++  //
++  // Now consider the above pattern's actual effects:
++  //
++  //     page(pc)                     0xRRR'QQQQQ'PPPPP'000
++  //     pcalau12i                  + 0xiii'iiiii'bbbbb'000
++  //     addi                       + 0xjjj'jjjjj'kkkkk'AAA
++  //     lu32i.d & lu52i.d          + 0xddd'ccccc'00000'000
++  //     --------------------------------------------------
++  //     dest = U + T
++  //          = ((RQ<<32) + (P<<12) + i + (b<<12)) + (j + k + A + (cd<<32))
++  //          = (((RQ+cd)<<32) + i + j) + (((P+b)<<12) + k) + A
++  //          = (ZY<<32)                + (X<<12)           + A
++  //
++  //     ZY<<32 = (RQ<<32)+(cd<<32)+i+j, X<<12 = (P<<12)+(b<<12)+k
++  //     cd<<32 = (ZY<<32)-(RQ<<32)-i-j, b<<12 = (X<<12)-(P<<12)-k
++  //
++  // where i and k are terms representing the effect of b's and A's sign
++  // extension respectively.
++  //
++  //     i = signed b < 0 ? -0x10000'0000 : 0
++  //     k = signed A < 0 ? -0x1000 : 0
++  //
++  // The j term is a bit complex: it represents the higher half of
++  // sign-extended bits from A that are effectively lost if i == 0 but k != 0,
++  // due to overwriting by lu32i.d & lu52i.d.
++  //
++  //     j = signed A < 0 && signed b >= 0 ? 0x10000'0000 : 0
++  //
++  // The actual effect of the instruction sequence before the final addition,
++  // i.e. our desired result value, is thus:
++  //
++  //     result = (cd<<32) + (b<<12)
++  //            = (ZY<<32)-(RQ<<32)-i-j + (X<<12)-(P<<12)-k
++  //            = ((ZY<<32)+(X<<12)) - ((RQ<<32)+(P<<12)) - i - j - k
++  //            = page(dest) - page(pc) - i - j - k
++  //
++  // when signed A >= 0 && signed b >= 0:
++  //
++  //     i = j = k = 0
++  //     result = page(dest) - page(pc)
++  //
++  // when signed A >= 0 && signed b < 0:
++  //
++  //     i = -0x10000'0000, j = k = 0
++  //     result = page(dest) - page(pc) + 0x10000'0000
++  //
++  // when signed A < 0 && signed b >= 0:
++  //
++  //     i = 0, j = 0x10000'0000, k = -0x1000
++  //     result = page(dest) - page(pc) - 0x10000'0000 + 0x1000
++  //
++  // when signed A < 0 && signed b < 0:
++  //
++  //     i = -0x10000'0000, j = 0, k = -0x1000
++  //     result = page(dest) - page(pc) + 0x1000
 +  uint64_t result = getLoongArchPage(dest) - getLoongArchPage(pc);
++  bool negativeA = lo12(dest) > 0x7ff;
++  bool negativeB = (result & 0x8000'0000) != 0;
 +
-+  // We must specially handle the cases when the low 12 bits of dest are seen
-+  // as negative, because the instructions consuming it (ld, st, addi, etc.)
-+  // all sign-extend the immediate.
-+  bool signLo12 = (dest & 0xfff) > 0x7ff;
-+  if (signLo12)
++  if (negativeA)
 +    result += 0x1000;
-+
-+  // We have to check if the higher 32 bits need adjustment too, due to
-+  // the large code model access pattern:
-+  //
-+  //     pcalau12i       A, %foo_hi20(sym)
-+  //     addi.d          T, zero, %foo_lo12(sym)
-+  //     lu32i.d         T, %foo64_lo20(sym)
-+  //     lu52i.d         T, T, %foo64_hi12(sym)
-+  //     {ldx,stx,add}.* A, A, T
-+  //
-+  // in which case the "pc + hi20" part is separately constructed from the
-+  // rest containing the higher 32-bit half and lo12, so the higher 32 bits
-+  // need a conditional nudge too if the signs of %foo_hi20 and %foo_lo12
-+  // differ, due to the signed addition performed by the ldx/stx/add.
-+  //
-+  // For example, with pc=0x111'22222'33333'000 the two cases are:
-+  //
-+  //     ; dest       = 0x110'22224'33333'fff
-+  //     ; page delta = 0xfff'00001'00001'000, page offset = 0xfff
-+  //     ; signs of components, MSB to LSB: (-, +, +, -), signLo12 && !signHi20
-+  //     pcalau12i A, 1 ; A = ((pc >> 12) + 1) << 12 = 0x111'22222'33334'000
-+  //     addi.d    T, zero, -1  ; T = 0xfff'fffff'fffff'fff
-+  //     lu32i.d   T, 1         ; T = 0x000'00001'fffff'fff
-+  //     lu52i.d   T, T, -1     ; T = 0xfff'00001'fffff'fff
-+  //     ; A = 0x111'22222'33334'000 + 0xfff'00001'fffff'fff
-+  //     ;   = 0x111'22222'33334'000 - 0x000'ffffe'00000'001 = dest
-+  //     add.d     A, A, T
-+  //
-+  // and:
-+  //
-+  //     ; dest       = 0x113'22221'33332'001
-+  //     ; page delta = 0x001'fffff'fffff'000, page offset = 0x001
-+  //     ; signs of components, MSB to LSB: (+, -, -, +), !signLo12 && signHi20
-+  //     pcalau12i A, -1 ; A = ((pc >> 12) - 1) << 12 = 0x111'22222'33332'000
-+  //     addi.d    T, zero, 1  ; T = 0x000'00000'00000'001
-+  //     lu32i.d   T, -1       ; T = 0xfff'fffff'00000'001
-+  //     lu52i.d   T, T, 1     ; T = 0x001'fffff'00000'001
-+  //     ; A = 0x111'22222'33332'000 + 0x001'fffff'00000'001 = dest
-+  //     add.d     A, A, T
-+  bool signHi20 = (result & 0x80000000) != 0;
-+  if (signLo12 && !signHi20)
-+    result -= 0x100000000;
-+  else if (!signLo12 && signHi20)
-+    result += 0x100000000;
++  if (negativeA && !negativeB)
++    result -= 0x10000'0000;
++  else if (!negativeA && negativeB)
++    result += 0x10000'0000;
 +
 +  return result;
 +}
 +
 +static uint32_t hi20(uint32_t val) { return (val + 0x800) >> 12; }
-+static uint32_t lo12(uint32_t val) { return val & 0xfff; }
 +
 +static uint32_t insn(uint32_t op, uint32_t d, uint32_t j, uint32_t k) {
 +  return op | d | (j << 5) | (k << 10);
@@ -295,7 +329,7 @@ index 000000000000..adfec9ed4cd2
 +}
 +
 +static bool inputFileHasCode(const InputFile *f) {
-+  for (auto *sec : f->getSections())
++  for (const auto *sec : f->getSections())
 +    if (sec && sec->flags & SHF_EXECINSTR)
 +      return true;
 +
@@ -309,8 +343,8 @@ index 000000000000..adfec9ed4cd2
 +    return 0;
 +
 +  uint32_t target = 0;
-+  InputFile *targetFile;
-+  for (InputFile *f : ctx.objectFiles) {
++  const InputFile *targetFile;
++  for (const InputFile *f : ctx.objectFiles) {
 +    // Do not enforce ABI compatibility if the input file does not contain code.
 +    // This is useful for allowing linkage with data-only object files produced
 +    // with tools like objcopy, that have zero e_flags.
@@ -496,6 +530,7 @@ index 000000000000..adfec9ed4cd2
 +    // the RelExpr to avoid code duplication.
 +    return R_RISCV_ADD;
 +  case R_LARCH_32_PCREL:
++  case 109 /* R_LARCH_64_PCREL */:
 +    return R_PC;
 +  case R_LARCH_B16:
 +  case R_LARCH_B21:
@@ -599,6 +634,7 @@ index 000000000000..adfec9ed4cd2
 +    return;
 +  case R_LARCH_64:
 +  case R_LARCH_TLS_DTPREL64:
++  case 109 /* R_LARCH_64_PCREL */:
 +    write64le(loc, val);
 +    return;
 +
@@ -1054,6 +1090,30 @@ index e6a78169058a..d1a4fb195b89 100644
  void riscvFinalizeRelax(int passes);
  void mergeRISCVAttributesSections();
  
+diff --git a/lld/docs/ld.lld.1 b/lld/docs/ld.lld.1
+index edeb7c4bfe37..4889d04b924f 100644
+--- a/lld/docs/ld.lld.1
++++ b/lld/docs/ld.lld.1
+@@ -4,7 +4,7 @@
+ .\"
+ .\" This man page documents only lld's ELF linking support, obtained originally
+ .\" from FreeBSD.
+-.Dd May 12, 2019
++.Dd Jul 25, 2023
+ .Dt LD.LLD 1
+ .Os
+ .Sh NAME
+@@ -27,8 +27,8 @@ It accepts most of the same command line arguments and linker scripts
+ as GNU linkers.
+ .Pp
+ .Nm
+-currently supports i386, x86-64, ARM, AArch64, PowerPC32, PowerPC64,
+-MIPS32, MIPS64, RISC-V, AMDGPU, Hexagon and SPARC V9 targets.
++currently supports i386, x86-64, ARM, AArch64, LoongArch, PowerPC32,
++PowerPC64, MIPS32, MIPS64, RISC-V, AMDGPU, Hexagon and SPARC V9 targets.
+ .Nm
+ acts as a Microsoft link.exe-compatible linker if invoked as
+ .Nm lld-link
 diff --git a/lld/test/ELF/emulation-loongarch.s b/lld/test/ELF/emulation-loongarch.s
 new file mode 100644
 index 000000000000..343e836274a3
@@ -1140,10 +1200,10 @@ index 000000000000..343e836274a3
 +_start:
 diff --git a/lld/test/ELF/loongarch-abs64.s b/lld/test/ELF/loongarch-abs64.s
 new file mode 100644
-index 000000000000..7ce098a905ff
+index 000000000000..4bfe7df9135a
 --- /dev/null
 +++ b/lld/test/ELF/loongarch-abs64.s
-@@ -0,0 +1,65 @@
+@@ -0,0 +1,64 @@
 +# REQUIRES: loongarch
 +
 +# RUN: llvm-mc --filetype=obj --triple=loongarch64-unknown-elf %s -o %t.la64.o
@@ -1208,7 +1268,6 @@ index 000000000000..7ce098a905ff
 +    ori     $a1, $a1, %abs_lo12(bar)
 +    lu32i.d $a1, %abs64_lo20(bar)
 +    lu52i.d $a1, $a1, %abs64_hi12(bar)
-+
 diff --git a/lld/test/ELF/loongarch-add-sub.s b/lld/test/ELF/loongarch-add-sub.s
 new file mode 100644
 index 000000000000..963e4cbbe0fc
@@ -1253,7 +1312,7 @@ index 000000000000..963e4cbbe0fc
 +    .reloc quux, R_LARCH_SUB8, 2b
 diff --git a/lld/test/ELF/loongarch-branch.s b/lld/test/ELF/loongarch-branch.s
 new file mode 100644
-index 000000000000..b223ff95bd89
+index 000000000000..0090ae11454a
 --- /dev/null
 +++ b/lld/test/ELF/loongarch-branch.s
 @@ -0,0 +1,68 @@
@@ -1286,12 +1345,12 @@ index 000000000000..b223ff95bd89
 +
 +# RUN: not ld.lld %t.la32.o --defsym foo16=b16+0x20000 --defsym bar16=b16+4-0x20004 --defsym foo21=b21+0x400000 --defsym bar21=b21+4-0x400004 --defsym foo26=b26+0x8000000 --defsym bar26=b26+4-0x8000004 -o /dev/null 2>&1 | FileCheck -DFILE=%t.la32.o --check-prefix=ERROR-RANGE %s
 +# RUN: not ld.lld %t.la64.o --defsym foo16=b16+0x20000 --defsym bar16=b16+4-0x20004 --defsym foo21=b21+0x400000 --defsym bar21=b21+4-0x400004 --defsym foo26=b26+0x8000000 --defsym bar26=b26+4-0x8000004 -o /dev/null 2>&1 | FileCheck -DFILE=%t.la64.o --check-prefix=ERROR-RANGE %s
-+# ERROR-RANGE: error: [[FILE]]:(.text+0x0): relocation R_LARCH_B16 out of range: 131072 is not in [-131072, 131071]; references 'foo16'
-+# ERROR-RANGE: error: [[FILE]]:(.text+0x4): relocation R_LARCH_B16 out of range: -131076 is not in [-131072, 131071]; references 'bar16'
-+# ERROR-RANGE: error: [[FILE]]:(.text+0x8): relocation R_LARCH_B21 out of range: 4194304 is not in [-4194304, 4194303]; references 'foo21'
-+# ERROR-RANGE: error: [[FILE]]:(.text+0xc): relocation R_LARCH_B21 out of range: -4194308 is not in [-4194304, 4194303]; references 'bar21'
-+# ERROR-RANGE: error: [[FILE]]:(.text+0x10): relocation R_LARCH_B26 out of range: 134217728 is not in [-134217728, 134217727]; references 'foo26'
-+# ERROR-RANGE: error: [[FILE]]:(.text+0x14): relocation R_LARCH_B26 out of range: -134217732 is not in [-134217728, 134217727]; references 'bar26'
++# ERROR-RANGE: error: [[FILE]]:(.text+0x0): relocation R_LARCH_B16 out of range: 131072 is not in [-131072, 131071]; references foo16
++# ERROR-RANGE: error: [[FILE]]:(.text+0x4): relocation R_LARCH_B16 out of range: -131076 is not in [-131072, 131071]; references bar16
++# ERROR-RANGE: error: [[FILE]]:(.text+0x8): relocation R_LARCH_B21 out of range: 4194304 is not in [-4194304, 4194303]; references foo21
++# ERROR-RANGE: error: [[FILE]]:(.text+0xc): relocation R_LARCH_B21 out of range: -4194308 is not in [-4194304, 4194303]; references bar21
++# ERROR-RANGE: error: [[FILE]]:(.text+0x10): relocation R_LARCH_B26 out of range: 134217728 is not in [-134217728, 134217727]; references foo26
++# ERROR-RANGE: error: [[FILE]]:(.text+0x14): relocation R_LARCH_B26 out of range: -134217732 is not in [-134217728, 134217727]; references bar26
 +
 +# RUN: not ld.lld %t.la32.o --defsym foo16=b16+1 --defsym bar16=b16-1 --defsym foo21=b21+1 --defsym bar21=b21-1 --defsym foo26=b26+1 --defsym bar26=b26-1 -o /dev/null 2>&1 | FileCheck -DFILE=%t.la32.o --check-prefix=ERROR-ALIGN-1 %s
 +# RUN: not ld.lld %t.la64.o --defsym foo16=b16+1 --defsym bar16=b16-1 --defsym foo21=b21+1 --defsym bar21=b21-1 --defsym foo26=b26+1 --defsym bar26=b26-1 -o /dev/null 2>&1 | FileCheck -DFILE=%t.la64.o --check-prefix=ERROR-ALIGN-1 %s
@@ -1706,7 +1765,7 @@ index 000000000000..9df3492d1877
 +    lu52i.d   $t0, $t0, %pc64_hi12(x)
 diff --git a/lld/test/ELF/loongarch-pcala-lo12-jirl-shared.s b/lld/test/ELF/loongarch-pcala-lo12-jirl-shared.s
 new file mode 100644
-index 000000000000..dddc73bf1732
+index 000000000000..991f8fbe974f
 --- /dev/null
 +++ b/lld/test/ELF/loongarch-pcala-lo12-jirl-shared.s
 @@ -0,0 +1,60 @@
@@ -1725,11 +1784,11 @@ index 000000000000..dddc73bf1732
 +## PLT should be present in this case.
 +# DIS:        Disassembly of section .plt:
 +# DIS:        <.plt>:
-+# DIS:        234020:   pcaddu12i   $t3, 510
-+# DIS32-NEXT: 234024:   ld.w    $t3, $t3, 84
-+# DIS64-NEXT: 234024:   ld.d    $t3, $t3, 184
-+# DIS-NEXT:   234028:   jirl    $t1, $t3, 0
-+# DIS-NEXT:   23402c:   nop
++# DIS:        234020: pcaddu12i $t3, 510
++# DIS32-NEXT:         ld.w $t3, $t3, 84
++# DIS64-NEXT:         ld.d $t3, $t3, 184
++# DIS-NEXT:           jirl $t1, $t3, 0
++# DIS-NEXT:           nop
 +
 +# DIS:      Disassembly of section .text:
 +# DIS:      <foo>:
@@ -1737,7 +1796,7 @@ index 000000000000..dddc73bf1732
 +# DIS-NEXT: nop
 +# DIS-NEXT: nop
 +# DIS-NEXT: pcalau12i $t0, -510
-+# DIS-NEXT: jirl  $zero, $t0, 32
++# DIS-NEXT: jirl $zero, $t0, 32
 +
 +# RUN: llvm-mc --filetype=obj --triple=loongarch32-unknown-elf %t/error.s -o %t/error.la32.o
 +# RUN: llvm-mc --filetype=obj --triple=loongarch64-unknown-elf %t/error.s -o %t/error.la64.o
@@ -2452,5 +2511,126 @@ index 96a1d652573f..1b1f1e781240 100644
                            'MSP430': 'msp430',
                            'PowerPC': 'ppc',
 -- 
-2.40.0
+2.41.0
+
+From c570537d0f7d314a33017f60f76f6890ca628178 Mon Sep 17 00:00:00 2001
+From: Weining Lu <luweining@loongson.cn>
+Date: Wed, 9 Aug 2023 09:54:41 +0800
+Subject: [PATCH 2/3] [lld][LoongArch] Support the R_LARCH_PCREL20_S2
+ relocation type
+
+`R_LARCH_PCREL20_S2` is a new added relocation type in LoongArch ELF
+psABI v2.10 [1] which is not corvered by D138135 except `R_LARCH_64_PCREL`.
+
+A motivation to support `R_LARCH_PCREL20_S2` in lld is to build the
+runtime of .NET core (a.k.a `CoreCLR`) in which strict PC-relative
+semantics need to be guaranteed [2]. The normal `pcalau12i + addi.d`
+approach doesn't work because the code will be copied to other places
+with different "page" and offsets. To achieve this, we can use `pcaddi`
+with explicit `R_LARCH_PCREL20_S2` reloc to address +-2MB PC-relative
+range with 4-bytes aligned.
+
+[1]: https://github.com/loongson/la-abi-specs/releases/tag/v2.10
+[2]: https://github.com/dotnet/runtime/blob/release/7.0/src/coreclr/vm/loongarch64/asmhelpers.S#L307
+
+Reviewed By: xen0n, MaskRay
+
+Differential Revision: https://reviews.llvm.org/D156772
+
+(cherry picked from commit 8a31f7ddb8436fa2a8ad754eb51618139cf63415)
+---
+ lld/ELF/Arch/LoongArch.cpp          |  7 +++++++
+ lld/test/ELF/loongarch-pcrel20-s2.s | 32 +++++++++++++++++++++++++++++
+ 2 files changed, 39 insertions(+)
+ create mode 100644 lld/test/ELF/loongarch-pcrel20-s2.s
+
+diff --git a/lld/ELF/Arch/LoongArch.cpp b/lld/ELF/Arch/LoongArch.cpp
+index 7cf38741cbf0..08a121b84349 100644
+--- a/lld/ELF/Arch/LoongArch.cpp
++++ b/lld/ELF/Arch/LoongArch.cpp
+@@ -457,6 +457,7 @@ RelExpr LoongArch::getRelExpr(const RelType type, const Symbol &s,
+     return R_RISCV_ADD;
+   case R_LARCH_32_PCREL:
+   case 109 /* R_LARCH_64_PCREL */:
++  case 103 /* R_LARCH_PCREL20_S2 */:
+     return R_PC;
+   case R_LARCH_B16:
+   case R_LARCH_B21:
+@@ -564,6 +565,12 @@ void LoongArch::relocate(uint8_t *loc, const Relocation &rel,
+     write64le(loc, val);
+     return;
+ 
++  case 103 /* R_LARCH_PCREL20_S2 */:
++    checkInt(loc, val, 22, rel);
++    checkAlignment(loc, val, 4, rel);
++    write32le(loc, setJ20(read32le(loc), val >> 2));
++    return;
++
+   case R_LARCH_B16:
+     checkInt(loc, val, 18, rel);
+     checkAlignment(loc, val, 4, rel);
+diff --git a/lld/test/ELF/loongarch-pcrel20-s2.s b/lld/test/ELF/loongarch-pcrel20-s2.s
+new file mode 100644
+index 000000000000..8a4bafb8a27f
+--- /dev/null
++++ b/lld/test/ELF/loongarch-pcrel20-s2.s
+@@ -0,0 +1,32 @@
++# REQUIRES: loongarch
++
++# RUN: llvm-mc --filetype=obj --triple=loongarch32-unknown-elf %s -o %t.la32.o
++# RUN: llvm-mc --filetype=obj --triple=loongarch64-unknown-elf %s -o %t.la64.o
++
++# RUN: ld.lld %t.la32.o --section-start=.text=0x20000 --section-start=.data=0x20008 -o %t.la32.1
++# RUN: ld.lld %t.la64.o --section-start=.text=0x20000 --section-start=.data=0x20008 -o %t.la64.1
++# RUN: llvm-objdump --no-show-raw-insn -d %t.la32.1 | FileCheck --match-full-lines %s
++# RUN: llvm-objdump --no-show-raw-insn -d %t.la64.1 | FileCheck --match-full-lines %s
++# CHECK: 20000: pcaddi $t0, 2
++
++# RUN: not ld.lld %t.la32.o --section-start=.text=0x20000 --section-start=.data=0x220000 -o /dev/null 2>&1 | \
++# RUN:   FileCheck -DFILE=%t.la32.o --check-prefix=ERROR-RANGE %s
++# RUN: not ld.lld %t.la64.o --section-start=.text=0x20000 --section-start=.data=0x220000 -o /dev/null 2>&1 | \
++# RUN:   FileCheck -DFILE=%t.la64.o --check-prefix=ERROR-RANGE %s
++# ERROR-RANGE: error: [[FILE]]:(.text+0x0): relocation R_LARCH_PCREL20_S2 out of range: 2097152 is not in [-2097152, 2097151]; references section '.data'
++
++# RUN: not ld.lld %t.la32.o --section-start=.text=0x20000 --section-start=.data=0x40001 -o /dev/null 2>&1 | \
++# RUN:   FileCheck -DFILE=%t.la32.o --check-prefix=ERROR-ALIGN %s
++# RUN: not ld.lld %t.la64.o --section-start=.text=0x20000 --section-start=.data=0x40001 -o /dev/null 2>&1 | \
++# RUN:   FileCheck -DFILE=%t.la64.o --check-prefix=ERROR-ALIGN %s
++# ERROR-ALIGN: error: [[FILE]]:(.text+0x0): improper alignment for relocation R_LARCH_PCREL20_S2: 0x20001 is not aligned to 4 bytes
++
++.global _start
++
++_start:
++1:
++  pcaddi $t0, 0
++  .reloc 1b, R_LARCH_PCREL20_S2, .data
++
++.data
++  .word 0
+-- 
+2.41.0
+
+From 60dcc4908245f31f89bd689d50817705ea01dbc4 Mon Sep 17 00:00:00 2001
+From: WANG Xuerui <git@xen0n.name>
+Date: Mon, 28 Aug 2023 01:44:11 +0800
+Subject: [PATCH 3/3] [lld][LoongArch] Ignore R_LARCH_ALIGN for now
+
+---
+ lld/ELF/Arch/LoongArch.cpp | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/lld/ELF/Arch/LoongArch.cpp b/lld/ELF/Arch/LoongArch.cpp
+index 08a121b84349..fdc636ee0a49 100644
+--- a/lld/ELF/Arch/LoongArch.cpp
++++ b/lld/ELF/Arch/LoongArch.cpp
+@@ -519,6 +519,7 @@ RelExpr LoongArch::getRelExpr(const RelType type, const Symbol &s,
+   case R_LARCH_TLS_GD_HI20:
+     return R_TLSGD_GOT;
+   case R_LARCH_RELAX:
++  case 102 /* R_LARCH_ALIGN */:
+     // LoongArch linker relaxation is not implemented yet.
+     return R_NONE;
+ 
+-- 
+2.41.0
 
