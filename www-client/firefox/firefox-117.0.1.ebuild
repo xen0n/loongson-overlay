@@ -653,6 +653,8 @@ src_prepare() {
 
 	eapply "${WORKDIR}/firefox-patches"
 
+	use loong && eapply "${FILESDIR}/firefox-117-loong.patch"
+
 	# Allow user to apply any additional patches without modifing ebuild
 	eapply_user
 
@@ -848,7 +850,7 @@ src_configure() {
 	# amd64, arm, arm64 & x86.
 	# Might want to flip the logic around if Firefox is to support more arches.
 	# bug 833001, bug 903411#c8
-	if use ppc64 || use riscv; then
+	if use loong || use ppc64 || use riscv; then
 		mozconfig_add_options_ac '' --disable-sandbox
 	elif use valgrind; then
 		mozconfig_add_options_ac 'valgrind requirement' --disable-sandbox
