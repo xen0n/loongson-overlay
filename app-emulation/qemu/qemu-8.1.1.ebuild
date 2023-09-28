@@ -41,8 +41,10 @@ else
 		SRC_URI+=" !doc? ( https://dev.gentoo.org/~${QEMU_DOCS_PREBUILT_DEV}/distfiles/${CATEGORY}/${PN}/${PN}-${QEMU_DOCS_VERSION}-docs.tar.xz )"
 	fi
 
+	SRC_URI+=" https://dev.gentoo.org/~xen0n/distfiles/${CATEGORY}/${PN}/${PN}-8.1.1-loong-patches-20230928.tar.xz"
+
 	S="${WORKDIR}/${MY_P}"
-	[[ "${PV}" != *_rc* ]] && KEYWORDS="~amd64 ~arm ~arm64 ~loong ~ppc ~ppc64 ~riscv ~x86"
+	[[ "${PV}" != *_rc* ]] && KEYWORDS="~loong"
 fi
 
 DESCRIPTION="QEMU + Kernel-based Virtual Machine userland tools"
@@ -446,6 +448,10 @@ src_prepare() {
 	check_targets IUSE_USER_TARGETS linux-user
 
 	default
+
+	ebegin "Applying LoongArch extra patches (KVM & LASX)"
+	eapply "${WORKDIR}/loong-patches"/*.patch
+	eend $?
 
 	# Use correct toolchain to fix cross-compiling
 	tc-export AR AS LD NM OBJCOPY PKG_CONFIG RANLIB STRINGS
