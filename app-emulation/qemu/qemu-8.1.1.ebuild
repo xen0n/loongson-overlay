@@ -41,7 +41,7 @@ else
 		SRC_URI+=" !doc? ( https://dev.gentoo.org/~${QEMU_DOCS_PREBUILT_DEV}/distfiles/${CATEGORY}/${PN}/${PN}-${QEMU_DOCS_VERSION}-docs.tar.xz )"
 	fi
 
-	SRC_URI+=" https://dev.gentoo.org/~xen0n/distfiles/${CATEGORY}/${PN}/${PN}-8.1.1-loong-patches-20230928.tar.xz"
+	SRC_URI+=" https://dev.gentoo.org/~xen0n/distfiles/${CATEGORY}/${PN}/${PN}-8.1.1-loong-patches-20230929.tar.xz"
 
 	S="${WORKDIR}/${MY_P}"
 	[[ "${PV}" != *_rc* ]] && KEYWORDS="~loong"
