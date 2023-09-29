@@ -44,7 +44,7 @@ else
 	SRC_URI+=" https://dev.gentoo.org/~xen0n/distfiles/${CATEGORY}/${PN}/${PN}-8.1.1-loong-patches-20230929.tar.xz"
 
 	S="${WORKDIR}/${MY_P}"
-	[[ "${PV}" != *_rc* ]] && KEYWORDS="~loong"
+	#[[ "${PV}" != *_rc* ]] && KEYWORDS="~loong"
 fi
 
 DESCRIPTION="QEMU + Kernel-based Virtual Machine userland tools"
