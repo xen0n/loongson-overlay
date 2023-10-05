@@ -8,6 +8,7 @@ Subject: [PATCH] Add support for LoongArch
 Adapted from LoongArchLinux.
 
 Co-Authored-By: loongson <loongson@loongson.cn>
+Co-Authored-By: WANG Xuerui <xen0n@gentoo.org>  # rebased for 118 branch
 --- a/third_party/libwebrtc/build/build_config.h
 +++ b/third_party/libwebrtc/build/build_config.h
 @@ -210,6 +210,10 @@
@@ -21,6 +22,22 @@ Co-Authored-By: loongson <loongson@loongson.cn>
  #else
  #error Please add support for your architecture in build/build_config.h
  #endif
+--- a/third_party/rust/cty/.cargo-checksum.json
++++ b/third_party/rust/cty/.cargo-checksum.json
+@@ -1 +1 @@
+-{"files":{"CHANGELOG.md":"077c738b5f2c05d66a12209edaabca887091db727d61164a7a414da23d8bf08f","Cargo.toml":"94a517ea6c7dad4634a9a2bd356f3a8035927e7ff8367bd5a975b4db4ccf8e6e","LICENSE-APACHE":"a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2","LICENSE-MIT":"035e70219855119df4273b3c5b97543ae82e0dd60c520416e759107c602f651b","README.md":"19687c50697e6abc991e4c35e6d674db56bd5e5ae0d5b833440718f8f154a74d","ci/install.sh":"9b34273d9e79ec59f63d5e3e7aea27b0db66194667f9730a21158740fa1b99f1","ci/script.sh":"54962430ca4d3528e5c0d44ff590b1504be13147db5cbe8bb82f1358528ef5f3","src/lib.rs":"33a38ce6df718fb0191f34ff2cefdcbd3ad9d93f0c4073b78eaf937c07fb7614"},"package":"b365fabc795046672053e29c954733ec3b05e4be654ab130fe8f1f94d7051f35"}
+\ No newline at end of file
++{"files":{"CHANGELOG.md":"077c738b5f2c05d66a12209edaabca887091db727d61164a7a414da23d8bf08f","Cargo.toml":"94a517ea6c7dad4634a9a2bd356f3a8035927e7ff8367bd5a975b4db4ccf8e6e","LICENSE-APACHE":"a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2","LICENSE-MIT":"035e70219855119df4273b3c5b97543ae82e0dd60c520416e759107c602f651b","README.md":"19687c50697e6abc991e4c35e6d674db56bd5e5ae0d5b833440718f8f154a74d","ci/install.sh":"9b34273d9e79ec59f63d5e3e7aea27b0db66194667f9730a21158740fa1b99f1","ci/script.sh":"54962430ca4d3528e5c0d44ff590b1504be13147db5cbe8bb82f1358528ef5f3","src/lib.rs":"3e9ec28a0d13cfb47546e044b8fc3a32007f7c76994704c4164c4430a7167e39"},"package":"b365fabc795046672053e29c954733ec3b05e4be654ab130fe8f1f94d7051f35"}
+--- a/third_party/rust/cty/src/lib.rs
++++ b/third_party/rust/cty/src/lib.rs
+@@ -24,6 +24,7 @@ pub use pwd::*;
+           target_arch = "powerpc",
+           target_arch = "powerpc64",
+           target_arch = "s390x",
++          target_arch = "loongarch64",
+           target_arch = "riscv32",
+           target_arch = "riscv64"))]
+ mod ad {
 --- a/third_party/rust/nix/.cargo-checksum.json
 +++ b/third_party/rust/nix/.cargo-checksum.json
 @@ -1 +1 @@
@@ -49,7 +66,7 @@ Co-Authored-By: loongson <loongson@loongson.cn>
  #include <zlib.h>
 --- a/toolkit/moz.configure
 +++ b/toolkit/moz.configure
-@@ -2436,7 +2436,7 @@ with only_when(compile_environment | artifact_builds):
+@@ -2333,7 +2333,7 @@ with only_when(compile_environment | artifact_builds):
                  use_nasm = False
          elif target.cpu == "x86_64":
              flags = ["-D__x86_64__", "-DPIC", "-DELF", "-Pconfig_unix64.asm"]
