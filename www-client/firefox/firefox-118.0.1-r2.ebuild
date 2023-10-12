@@ -7,7 +7,7 @@ FIREFOX_PATCHSET="firefox-118-patches-02.tar.xz"
 
 LLVM_MAX_SLOT=17
 
-PYTHON_COMPAT=( python3_{10..12} )
+PYTHON_COMPAT=( python3_{10..11} )
 PYTHON_REQ_USE="ncurses,sqlite,ssl"
 
 WANT_AUTOCONF="2.1"
