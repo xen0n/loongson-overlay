@@ -3,7 +3,7 @@
 
 EAPI=8
 
-FIREFOX_PATCHSET="firefox-118-patches-02.tar.xz"
+FIREFOX_PATCHSET="firefox-118-patches-04.tar.xz"
 
 LLVM_MAX_SLOT=17
 
@@ -929,6 +929,9 @@ src_configure() {
 	if use hardened ; then
 		mozconfig_add_options_ac "+hardened" --enable-hardening
 		append-ldflags "-Wl,-z,relro -Wl,-z,now"
+
+		# Increase the FORTIFY_SOURCE value, #910071.
+		sed -i -e '/-D_FORTIFY_SOURCE=/s:2:3:' "${S}"/build/moz.configure/toolchain.configure || die
 	fi
 
 	local myaudiobackends=""
@@ -1423,8 +1426,6 @@ pkg_postinst() {
 	fi
 
 	readme.gentoo_print_elog
-
-	elog
 
 	optfeature_header "Optional programs for extra features:"
 	optfeature "desktop notifications" x11-libs/libnotify
