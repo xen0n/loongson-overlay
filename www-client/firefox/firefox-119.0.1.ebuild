@@ -1065,11 +1065,20 @@ src_configure() {
 
 	# elf-hack
 	if use amd64 || use x86 ; then
-		if use clang ; then
-			mozconfig_add_options_ac 'relr elf-hack with clang' --enable-elf-hack=relr
+		if tc-ld-is-mold ; then
+			# relr-elf-hack is currently broken with mold, bgo#916259
+			mozconfig_add_options_ac 'disable elf-hack with mold linker' --disable-elf-hack
 		else
-			mozconfig_add_options_ac 'legacy elf-hack with gcc' --enable-elf-hack=legacy
+			if use clang ; then
+				mozconfig_add_options_ac 'relr elf-hack with clang' --enable-elf-hack=relr
+			else
+				mozconfig_add_options_ac 'legacy elf-hack with gcc' --enable-elf-hack=legacy
+			fi
 		fi
+	elif use loong || use ppc64 ; then
+		# '--disable-elf-hack' is not recognized on ppc64, bgo#917049
+		# also loong
+		:;
 	else
 		mozconfig_add_options_ac 'disable elf-hack on non-supported arches' --disable-elf-hack
 	fi
