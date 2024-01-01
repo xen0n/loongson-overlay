@@ -1,8 +1,14 @@
-https://github.com/AOSC-Dev/aosc-os-abbs/blob/15f8befda304d0924221e2772ba2148ca10a347e/app-web/firefox/autobuild/patches/0005-Remove-architectural-limit-on-VA-API-support.patch
+From b25c3742c98c87de9621eac8b672f9381e15c088 Mon Sep 17 00:00:00 2001
 From: Jiangjin Wang <kaymw@aosc.io>
 Date: Tue, 14 Nov 2023 18:16:46 -0800
-Subject: [PATCH] Remove architectural limit on VA-API support
+Subject: [PATCH 3/5] Remove architectural limit on VA-API support
 
+---
+ toolkit/moz.configure | 9 ++-------
+ 1 file changed, 2 insertions(+), 7 deletions(-)
+
+diff --git a/toolkit/moz.configure b/toolkit/moz.configure
+index a4aa84cc7c45e..67fc08237bba4 100644
 --- a/toolkit/moz.configure
 +++ b/toolkit/moz.configure
 @@ -537,11 +537,8 @@ set_define("MOZ_WAYLAND", depends_if(wayland_headers)(lambda _: True))
@@ -30,5 +36,5 @@ Subject: [PATCH] Remove architectural limit on VA-API support
  
  
 -- 
-2.39.1
+2.43.0
 
