@@ -25,6 +25,7 @@ IUSE="split-usr"
 DEPEND=""
 RDEPEND="${DEPEND}"
 BDEPEND=""
+PDEPEND="app-emulation/la-ow-syscall"
 
 S="${WORKDIR}"
 
