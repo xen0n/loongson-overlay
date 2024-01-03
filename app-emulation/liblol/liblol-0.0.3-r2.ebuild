@@ -18,7 +18,7 @@ QA_PREBUILT="*"
 # TODO: automate license discovery from the deb package
 LICENSE="GPL-2"
 SLOT="0"
-#KEYWORDS="-* ~loong"
+KEYWORDS="-* ~loong"
 
 IUSE="split-usr"
 
