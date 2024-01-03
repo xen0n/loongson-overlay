@@ -40,8 +40,10 @@ src_install() {
 
 	if use split-usr; then
 		dosym ../opt/lol/lib/loongarch64-aosc-linux-gnuow/ld.so.1 /lib/ld.so.1
+		dosym ../lib/ld.so.1 /lib64/ld.so.1
 	else
 		# /lib is a symlink to /usr/lib
 		dosym ../../opt/lol/lib/loongarch64-aosc-linux-gnuow/ld.so.1 /usr/lib/ld.so.1
+		dosym ../lib/ld.so.1 /usr/lib64/ld.so.1
 	fi
 }
