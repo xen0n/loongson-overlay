@@ -20,7 +20,7 @@ case ${PV} in
 	MY_P="la_ow_syscall-${MY_COMMIT}"
 	SRC_URI="https://codeload.github.com/AOSC-Dev/la_ow_syscall/zip/${MY_COMMIT} -> ${MY_P}.zip"
 	S="${WORKDIR}/${MY_P}"
-	#KEYWORDS="-* ~loong"
+	KEYWORDS="-* ~loong"
 	;;
 esac
 
