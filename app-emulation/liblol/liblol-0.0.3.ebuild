@@ -29,8 +29,7 @@ BDEPEND=""
 S="${WORKDIR}"
 
 src_install() {
-	insinto /opt/lol
-	doins -r "${S}"/opt/lol/*
+	cp -r "${S}"/opt "${D}" || die
 
 	if use split-usr; then
 		insinto /lib
