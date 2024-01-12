@@ -14,7 +14,8 @@ inherit ${GIT_ECLASS} flag-o-matic meson-multilib multiprocessing toolchain-func
 DESCRIPTION="Low-level pixel manipulation routines"
 HOMEPAGE="http://www.pixman.org/ https://gitlab.freedesktop.org/pixman/pixman/"
 if [[ ${PV} != 9999* ]]; then
-	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~ia64 ~loong ~m68k ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86 ~amd64-linux ~x86-linux ~arm64-macos ~ppc-macos ~x64-macos ~x64-solaris"
+	#KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~ia64 ~loong ~m68k ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86 ~amd64-linux ~x86-linux ~arm64-macos ~ppc-macos ~x64-macos ~x64-solaris"
+	KEYWORDS="~loong"
 	SRC_URI="https://www.x.org/releases/individual/lib/${P}.tar.xz"
 fi
 
@@ -22,6 +23,10 @@ LICENSE="MIT"
 SLOT="0"
 IUSE="cpu_flags_ppc_altivec cpu_flags_arm_iwmmxt cpu_flags_arm_iwmmxt2 cpu_flags_arm_neon loongson2f cpu_flags_x86_mmxext cpu_flags_x86_sse2 cpu_flags_x86_ssse3 static-libs test"
 RESTRICT="!test? ( test )"
+
+PATCHES=(
+	"${FILESDIR}"/loong-simd.patch
+)
 
 pkg_pretend() {
 	[[ ${MERGE_TYPE} != binary ]] && use test && tc-check-openmp
