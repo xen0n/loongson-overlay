@@ -33,19 +33,3 @@
 
 #--- END OF EXAMPLES ---
 
-# WANG Xuerui <xen0n@gentoo.org> (2024-01-18)
-# No longer maintained, cannot keep up with the ever-raising psABI baseline.
-# Please just use the latest lld in ::gentoo.
-#
-# Removal on 2024-02-01.
-=sys-devel/lld-16.0.6-r2
-
-# WANG Xuerui <xen0n@gentoo.org> (2024-01-12)
-# No longer relevant: today's best practice is to just flash latest firmware
-# from https://github.com/loongson/Firmware that provides real new-world
-# interfaces, or simply do nothing as most boards from 2022 onwards have the
-# "legacy boot mode" switch right in their stock firmware, that one simply
-# ensures to be disbled.
-#
-# Removal on 2024-02-01.
-sys-boot/loongarch-acpi-tables-fix
