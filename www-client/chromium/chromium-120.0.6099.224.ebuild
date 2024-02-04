@@ -39,12 +39,16 @@ inherit python-any-r1 qmake-utils readme.gentoo-r1 toolchain-funcs virtualx xdg-
 DESCRIPTION="Open-source version of Google Chrome web browser"
 HOMEPAGE="https://www.chromium.org/"
 PATCHSET_PPC64="120.0.6099.199-1raptor0~deb12u1"
+PATCHSET_LOONG="805792980fd1bb232a75d440540f41c2ab372ff5"
 PATCH_V="${PV%%\.*}"
 SRC_URI="https://commondatastorage.googleapis.com/chromium-browser-official/${P}.tar.xz
 	https://gitlab.com/Matt.Jolly/chromium-patches/-/archive/${PATCH_V}/chromium-patches-${PATCH_V}.tar.bz2
 	ppc64? (
 		https://quickbuild.io/~raptor-engineering-public/+archive/ubuntu/chromium/+files/chromium_${PATCHSET_PPC64}.debian.tar.xz
 		https://deps.gentoo.zip/chromium-ppc64le-gentoo-patches-1.tar.xz
+	)
+	loong? (
+		https://github.com/AOSC-Dev/chromium-loongarch64/archive/${PATCHSET_LOONG}.zip
 	)
 	pgo? ( https://github.com/elkablo/chromium-profiler/releases/download/v0.2/chromium-profiler-0.2.tar )"
 
@@ -375,7 +379,14 @@ src_prepare() {
 		done
 		PATCHES+=( "${WORKDIR}/ppc64le" )
 	fi
-
+	if use loong ; then
+		local p
+		for p in $(find "${WORKDIR}/chromium-loongarch64-${PATCHSET_LOONG}/chromium" -name "chromium-${PV}.loongarch64*" || die);
+		do
+			eapply "${p}"
+		done
+		PATCHES+=( "${FILESDIR}/chromium-120.0.6099.224-gentoo-loong.patch" )
+	fi
 	if has_version ">=dev-libs/icu-74.1" && use system-icu ; then
 		PATCHES+=( "${FILESDIR}/chromium-119.0.6045.159-icu-74.patch" )
 	fi
@@ -664,6 +675,10 @@ src_prepare() {
 	if use arm64 || use ppc64 ; then
 		keeplibs+=( third_party/swiftshader/third_party/llvm-10.0 )
 	fi
+	if use loong ; then
+		keeplibs+=( third_party/swiftshader/third_party/llvm-16.0 )
+	fi
+
 	# we need to generate ppc64 stuff because upstream does not ship it yet
 	# it has to be done before unbundling.
 	if use ppc64; then
@@ -884,7 +899,9 @@ chromium_configure() {
 		if [[ ${myarch} == amd64 ]]; then
 			filter-flags -mno-mmx -mno-sse2 -mno-ssse3 -mno-sse4.1 -mno-avx -mno-avx2 -mno-fma -mno-fma4 -mno-xop -mno-sse4a
 		fi
-
+		if [[ ${myarch} == loong ]]; then
+			append-flags -mcmodel=medium
+		fi
 		if tc-is-gcc; then
 			# https://bugs.gentoo.org/904455
 			local -x CPP="$(tc-getCXX) -E"
@@ -911,6 +928,9 @@ chromium_configure() {
 	elif [[ $myarch = ppc64 ]] ; then
 		myconf_gn+=" target_cpu=\"ppc64\""
 		ffmpeg_target_arch=ppc64
+        elif [[ $myarch = loong ]] ; then
+                myconf_gn+=" target_cpu=\"loong64\""
+                ffmpeg_target_arch=loong64
 	else
 		die "Failed to determine target arch, got '$myarch'."
 	fi

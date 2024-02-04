@@ -1,0 +1,138 @@
+--- chromium-120.0.6099.224/third_party/swiftshader/src/Vulkan/BUILD.gn	2024-01-17 04:56:32.174125700 +0800
++++ chromium-120.0.6099.224-new/third_party/swiftshader/src/Vulkan/BUILD.gn	2024-01-31 11:01:20.286482445 +0800
+@@ -204,6 +204,9 @@ swiftshader_shared_library("swiftshader_
+       "-Wl,-Bsymbolic",
+       "-Wl,--version-script=" +
+           rebase_path("vk_swiftshader.lds", root_build_dir) ]
++    if (current_cpu == "loong64") {
++      libs += [ "gcc_s" ]
++    }
+   }
+ 
+   deps = [
+--- chromium-120.0.6099.224/components/power_metrics/energy_metrics_provider_linux.cc	2024-01-17 04:55:35.601033700 +0800
++++ chromium-120.0.6099.224-new/components/power_metrics/energy_metrics_provider_linux.cc	2024-01-31 12:52:30.849316693 +0800
+@@ -61,9 +61,9 @@ bool ReadDoubleFromFile(base::FilePath p
+ // value of less than 1. Here, we only consider cpu0. See details in
+ // https://man7.org/linux/man-pages/man2/perf_event_open.2.html.
+ base::ScopedFD OpenPerfEvent(perf_event_attr* perf_attr) {
+-  base::ScopedFD perf_fd{syscall(__NR_perf_event_open, perf_attr, /*pid=*/-1,
++  base::ScopedFD perf_fd{static_cast<int>(syscall(__NR_perf_event_open, perf_attr, /*pid=*/-1,
+                                  /*cpu=*/0, /*group_fd=*/-1,
+-                                 PERF_FLAG_FD_CLOEXEC)};
++                                 PERF_FLAG_FD_CLOEXEC))};
+   return perf_fd;
+ }
+ 
+--- chromium-120.0.6099.224/cc/layers/mirror_layer_impl.h	2024-01-17 04:55:23.631956600 +0800
++++ chromium-120.0.6099.224-new/cc/layers/mirror_layer_impl.h	2024-01-31 15:21:07.583113497 +0800
+@@ -56,7 +56,7 @@ class CC_EXPORT MirrorLayerImpl : public
+  private:
+   const char* LayerTypeAsString() const override;
+   viz::CompositorRenderPassId mirrored_layer_render_pass_id() const {
+-    return viz::CompositorRenderPassId{mirrored_layer_id()};
++    return viz::CompositorRenderPassId{static_cast<unsigned long>(mirrored_layer_id())};
+   }
+ 
+   int mirrored_layer_id_ = 0;
+--- chromium-120.0.6099.224/third_party/webrtc/pc/legacy_stats_collector.cc	2024-01-31 17:03:00.762605272 +0800
++++ chromium-120.0.6099.224-new/third_party/webrtc/pc/legacy_stats_collector.cc	2024-01-31 17:01:29.778492706 +0800
+@@ -188,9 +188,9 @@ void ExtractStats(const cricket::VoiceRe
+       {StatsReport::kStatsValueNameAccelerateRate, info.accelerate_rate},
+       {StatsReport::kStatsValueNamePreemptiveExpandRate,
+        info.preemptive_expand_rate},
+-      {StatsReport::kStatsValueNameTotalAudioEnergy, info.total_output_energy},
++      {StatsReport::kStatsValueNameTotalAudioEnergy, static_cast<float>(info.total_output_energy)},
+       {StatsReport::kStatsValueNameTotalSamplesDuration,
+-       info.total_output_duration}};
++       static_cast<float>(info.total_output_duration)}};
+ 
+   const IntForAdd ints[] = {
+       {StatsReport::kStatsValueNameCurrentDelayMs, info.delay_estimate_ms},
+@@ -244,9 +244,9 @@ void ExtractStats(const cricket::VoiceSe
+   SetAudioProcessingStats(report, info.apm_statistics);
+ 
+   const FloatForAdd floats[] = {
+-      {StatsReport::kStatsValueNameTotalAudioEnergy, info.total_input_energy},
++      {StatsReport::kStatsValueNameTotalAudioEnergy, static_cast<float>(info.total_input_energy)},
+       {StatsReport::kStatsValueNameTotalSamplesDuration,
+-       info.total_input_duration}};
++       static_cast<float>(info.total_input_duration)}};
+ 
+   RTC_DCHECK_GE(info.audio_level, 0);
+   const IntForAdd ints[] = {
+@@ -340,7 +340,7 @@ void ExtractStats(const cricket::VideoRe
+       {StatsReport::kStatsValueNamePlisSent, info.plis_sent},
+       {StatsReport::kStatsValueNameRenderDelayMs, info.render_delay_ms},
+       {StatsReport::kStatsValueNameTargetDelayMs, info.target_delay_ms},
+-      {StatsReport::kStatsValueNameFramesDecoded, info.frames_decoded},
++      {StatsReport::kStatsValueNameFramesDecoded, static_cast<int>(info.frames_decoded)},
+   };
+ 
+   for (const auto& i : ints)
+@@ -384,15 +384,15 @@ void ExtractStats(const cricket::VideoSe
+        info.encode_usage_percent},
+       {StatsReport::kStatsValueNameFirsReceived, info.firs_received},
+       {StatsReport::kStatsValueNameFrameHeightSent, info.send_frame_height},
+-      {StatsReport::kStatsValueNameFrameRateInput, round(info.framerate_input)},
++      {StatsReport::kStatsValueNameFrameRateInput, static_cast<int>(round(info.framerate_input))},
+       {StatsReport::kStatsValueNameFrameRateSent, info.framerate_sent},
+       {StatsReport::kStatsValueNameFrameWidthSent, info.send_frame_width},
+-      {StatsReport::kStatsValueNameNacksReceived, info.nacks_received},
++      {StatsReport::kStatsValueNameNacksReceived, static_cast<int>(info.nacks_received)},
+       {StatsReport::kStatsValueNamePacketsLost, info.packets_lost},
+       {StatsReport::kStatsValueNamePacketsSent, info.packets_sent},
+       {StatsReport::kStatsValueNamePlisReceived, info.plis_received},
+-      {StatsReport::kStatsValueNameFramesEncoded, info.frames_encoded},
+-      {StatsReport::kStatsValueNameHugeFramesSent, info.huge_frames_sent},
++      {StatsReport::kStatsValueNameFramesEncoded, static_cast<int>(info.frames_encoded)},
++      {StatsReport::kStatsValueNameHugeFramesSent, static_cast<int>(info.huge_frames_sent)},
+   };
+ 
+   for (const auto& i : ints)
+@@ -780,19 +780,19 @@ StatsReport* LegacyStatsCollector::AddCo
+                 AddCandidateReport(remote_candidate_stats, false)->id());
+ 
+   const Int64ForAdd int64s[] = {
+-      {StatsReport::kStatsValueNameBytesReceived, info.recv_total_bytes},
+-      {StatsReport::kStatsValueNameBytesSent, info.sent_total_bytes},
+-      {StatsReport::kStatsValueNamePacketsSent, info.sent_total_packets},
+-      {StatsReport::kStatsValueNameRtt, info.rtt},
++      {StatsReport::kStatsValueNameBytesReceived, static_cast<long>(info.recv_total_bytes)},
++      {StatsReport::kStatsValueNameBytesSent, static_cast<long>(info.sent_total_bytes)},
++      {StatsReport::kStatsValueNamePacketsSent, static_cast<long>(info.sent_total_packets)},
++      {StatsReport::kStatsValueNameRtt, static_cast<long>(info.rtt)},
+       {StatsReport::kStatsValueNameSendPacketsDiscarded,
+-       info.sent_discarded_packets},
++       static_cast<long>(info.sent_discarded_packets)},
+       {StatsReport::kStatsValueNameSentPingRequestsTotal,
+-       info.sent_ping_requests_total},
++       static_cast<long>(info.sent_ping_requests_total)},
+       {StatsReport::kStatsValueNameSentPingRequestsBeforeFirstResponse,
+-       info.sent_ping_requests_before_first_response},
+-      {StatsReport::kStatsValueNameSentPingResponses, info.sent_ping_responses},
+-      {StatsReport::kStatsValueNameRecvPingRequests, info.recv_ping_requests},
+-      {StatsReport::kStatsValueNameRecvPingResponses, info.recv_ping_responses},
++       static_cast<long>(info.sent_ping_requests_before_first_response)},
++      {StatsReport::kStatsValueNameSentPingResponses, static_cast<long>(info.sent_ping_responses)},
++      {StatsReport::kStatsValueNameRecvPingRequests, static_cast<long>(info.recv_ping_requests)},
++      {StatsReport::kStatsValueNameRecvPingResponses, static_cast<long>(info.recv_ping_responses)},
+   };
+   for (const auto& i : int64s)
+     report->AddInt64(i.name, i.value);
+--- chromium-120.0.6099.224/components/variations/service/variations_field_trial_creator_base.cc	2024-02-04 10:16:42.170836853 +0800
++++ chromium-120.0.6099.224-new/components/variations/service/variations_field_trial_creator_base.cc	2024-02-04 10:12:15.269022073 +0800
+@@ -295,11 +295,12 @@ bool VariationsFieldTrialCreatorBase::Se
+   auto entropy_providers = metrics_state_manager->CreateEntropyProviders();
+ 
+   bool used_seed = false;
++#if !defined(__loongarch_lp64)
+   if (!used_testing_config) {
+     used_seed = CreateTrialsFromSeed(*entropy_providers, feature_list.get(),
+                                      safe_seed_manager);
+   }
+-
++#endif
+   platform_field_trials->SetUpClientSideFieldTrials(
+       used_seed, *entropy_providers, feature_list.get());
+ 
