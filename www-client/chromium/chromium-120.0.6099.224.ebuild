@@ -74,7 +74,7 @@ COMMON_X_DEPEND="
 
 COMMON_SNAPSHOT_DEPEND="
 	system-icu? ( >=dev-libs/icu-71.1:= )
-	>=dev-libs/libxml2-2.9.4-r3:=[icu]
+	<dev-libs/libxml2-2.12.0:=[icu]
 	dev-libs/nspr:=
 	>=dev-libs/nss-3.26:=
 	dev-libs/libxslt:=
@@ -719,10 +719,11 @@ chromium_configure() {
 		myconf_gn+=" is_clang=false"
 	fi
 
+	# https://bugs.gentoo.org/918897#c32
+	append-ldflags $(test-flags-CCLD -Wl,--undefined-version)
+
 	# Force lld for lto and pgo builds, otherwise disable, bug 641556
-	if needs_lld || use lto || use pgo; then
-		# https://bugs.gentoo.org/918897#c32
-		append-ldflags -Wl,--undefined-version
+	if needs_lld || tc-ld-is-lld || use lto || use pgo; then
 		myconf_gn+=" use_lld=true"
 	else
 		myconf_gn+=" use_lld=false"
