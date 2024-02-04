@@ -48,7 +48,7 @@ SRC_URI="https://commondatastorage.googleapis.com/chromium-browser-official/${P}
 		https://deps.gentoo.zip/chromium-ppc64le-gentoo-patches-1.tar.xz
 	)
 	loong? (
-		https://github.com/AOSC-Dev/chromium-loongarch64/archive/${PATCHSET_LOONG}.zip
+		https://github.com/AOSC-Dev/chromium-loongarch64/archive/${PATCHSET_LOONG}.zip -> chromium-loongarch64-aosc-patches-${PATCHSET_LOONG}.zip
 	)
 	pgo? ( https://github.com/elkablo/chromium-profiler/releases/download/v0.2/chromium-profiler-0.2.tar )"
 
@@ -370,6 +370,13 @@ src_prepare() {
 		"${FILESDIR}/chromium-111-InkDropHost-crash.patch"
 	)
 
+	if use loong ; then
+		local p
+		for p in "${WORKDIR}/chromium-loongarch64-${PATCHSET_LOONG}/chromium"/"chromium-${PV}".loongarch64*; do
+			eapply "${p}"
+		done
+		PATCHES+=( "${FILESDIR}/chromium-120.0.6099.224-gentoo-loong.patch" )
+	fi
 	if use ppc64 ; then
 		local p
 		for p in $(grep -v "^#" "${WORKDIR}"/debian/patches/series | grep "^ppc64le" || die); do
@@ -378,14 +385,6 @@ src_prepare() {
 			fi
 		done
 		PATCHES+=( "${WORKDIR}/ppc64le" )
-	fi
-	if use loong ; then
-		local p
-		for p in $(find "${WORKDIR}/chromium-loongarch64-${PATCHSET_LOONG}/chromium" -name "chromium-${PV}.loongarch64*" || die);
-		do
-			eapply "${p}"
-		done
-		PATCHES+=( "${FILESDIR}/chromium-120.0.6099.224-gentoo-loong.patch" )
 	fi
 	if has_version ">=dev-libs/icu-74.1" && use system-icu ; then
 		PATCHES+=( "${FILESDIR}/chromium-119.0.6045.159-icu-74.patch" )
@@ -900,9 +899,13 @@ chromium_configure() {
 		if [[ ${myarch} == amd64 ]]; then
 			filter-flags -mno-mmx -mno-sse2 -mno-ssse3 -mno-sse4.1 -mno-avx -mno-avx2 -mno-fma -mno-fma4 -mno-xop -mno-sse4a
 		fi
+
+		# The linked text section of Chromium won't fit within limits of the
+		# default normal code model.
 		if [[ ${myarch} == loong ]]; then
 			append-flags -mcmodel=medium
 		fi
+
 		if tc-is-gcc; then
 			# https://bugs.gentoo.org/904455
 			local -x CPP="$(tc-getCXX) -E"
@@ -926,12 +929,12 @@ chromium_configure() {
 	elif [[ $myarch = arm64 ]] ; then
 		myconf_gn+=" target_cpu=\"arm64\""
 		ffmpeg_target_arch=arm64
+	elif [[ $myarch = loong ]] ; then
+		myconf_gn+=" target_cpu=\"loong64\""
+		ffmpeg_target_arch=loong64
 	elif [[ $myarch = ppc64 ]] ; then
 		myconf_gn+=" target_cpu=\"ppc64\""
 		ffmpeg_target_arch=ppc64
-        elif [[ $myarch = loong ]] ; then
-                myconf_gn+=" target_cpu=\"loong64\""
-                ffmpeg_target_arch=loong64
 	else
 		die "Failed to determine target arch, got '$myarch'."
 	fi
