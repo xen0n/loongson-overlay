@@ -124,3 +124,14 @@
    platform_field_trials->SetUpClientSideFieldTrials(
        used_seed, *entropy_providers, feature_list.get());
  
+--- chromium-121.0.6167.85/build/config/clang/BUILD.gn  2024-01-23 02:41:38.049927500 +0800
++++ chromium-121.0.6167.85-new/build/config/clang/BUILD.gn      2024-02-04 15:12:16.019101640 +0800
+@@ -136,6 +136,8 @@ template("clang_lib") {
+           _dir = "armv7-unknown-linux-gnueabihf"
+         } else if (current_cpu == "arm64") {
+           _dir = "aarch64-unknown-linux-gnu"
++        } else if (current_cpu == "loong64") {
++          _dir = "loongarch64-unknown-linux-gnu"
+         } else {
+           assert(false)  # Unhandled cpu type
+         }
