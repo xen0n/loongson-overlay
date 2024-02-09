@@ -428,9 +428,10 @@ src_prepare() {
 
 	if use loong ; then
 		local p
-		for p in "${WORKDIR}/chromium-loongarch64-${PATCHSET_LOONG}/chromium"/"chromium-${PATCHSET_LOONG_PV}".loongarch64*; do
+		for p in "${WORKDIR}/chromium-loongarch64-${PATCHSET_LOONG}/chromium/chromium-${PATCHSET_LOONG_PV}".loongarch64*; do
 			eapply "${p}"
 		done
+		eapply "${WORKDIR}/chromium-loongarch64-${PATCHSET_LOONG}/chromium/chromium-${PATCHSET_LOONG_PV}.fix-clang-builtins-path.diff"
 		PATCHES+=( "${FILESDIR}/chromium-121-gentoo-loong.patch" )
 	fi
 
