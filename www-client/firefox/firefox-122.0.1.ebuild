@@ -3,7 +3,7 @@
 
 EAPI=8
 
-FIREFOX_PATCHSET="firefox-122-patches-01.tar.xz"
+FIREFOX_PATCHSET="firefox-122-patches-02.tar.xz"
 
 LLVM_MAX_SLOT=17
 
@@ -658,7 +658,7 @@ src_prepare() {
 
 	# Workaround for bgo#917599
 	if has_version ">=dev-libs/icu-74.1" && use system-icu ; then
-		eapply "${WORKDIR}"/firefox-patches/0026-bmo-1862601-system-icu-74.patch
+		eapply "${WORKDIR}"/firefox-patches/*-bmo-1862601-system-icu-74.patch
 	fi
 	rm -v "${WORKDIR}"/firefox-patches/*-bmo-1862601-system-icu-74.patch || die
 
@@ -851,8 +851,6 @@ src_configure() {
 		--disable-strip \
 		--disable-tests \
 		--disable-updater \
-		--disable-wasm-function-references \
-		--disable-wasm-gc \
 		--disable-wmf \
 		--enable-negotiateauth \
 		--enable-new-pass-manager \
@@ -984,10 +982,15 @@ src_configure() {
 		mozconfig_add_options_ac '+x11' --enable-default-toolkit=cairo-gtk3-x11-only
 	fi
 
+	# LTO is handled via configure
+	filter-lto
+
 	if use lto ; then
 		if use clang ; then
 			# Upstream only supports lld or mold when using clang.
 			if tc-ld-is-mold ; then
+				# mold expects the -flto line from *FLAGS configuration, bgo#923119
+				append-ldflags "-flto=thin"
 				mozconfig_add_options_ac "using ld=mold due to system selection" --enable-linker=mold
 			else
 				mozconfig_add_options_ac "forcing ld=lld due to USE=clang and USE=lto" --enable-linker=lld
@@ -1028,9 +1031,6 @@ src_configure() {
 			fi
 		fi
 	fi
-
-	# LTO flag was handled via configure
-	filter-lto
 
 	mozconfig_use_enable debug
 	if use debug ; then
