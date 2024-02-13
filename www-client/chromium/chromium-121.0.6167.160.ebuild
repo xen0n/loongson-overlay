@@ -57,7 +57,7 @@ inherit python-any-r1 qmake-utils readme.gentoo-r1 toolchain-funcs virtualx xdg-
 
 DESCRIPTION="Open-source version of Google Chrome web browser"
 HOMEPAGE="https://www.chromium.org/"
-PATCHSET_PPC64="121.0.6167.85-1raptor0~deb12u1"
+PATCHSET_PPC64="121.0.6167.160-1raptor0~deb12u1"
 PATCHSET_LOONG="d850195ce3640d8854464ba1861e7dc7b4cae73d"
 PATCHSET_LOONG_PV="121.0.6167.85"
 PATCH_V="${PV%%\.*}-2"
@@ -82,7 +82,7 @@ SRC_URI="https://commondatastorage.googleapis.com/chromium-browser-official/${P}
 
 LICENSE="BSD"
 SLOT="0/stable"
-#KEYWORDS="amd64 arm64 ~ppc64"
+KEYWORDS="~amd64 ~arm64 ~ppc64"
 #KEYWORDS="~loong"
 IUSE_SYSTEM_LIBS="+system-harfbuzz +system-icu +system-png +system-zstd"
 IUSE="+X ${IUSE_SYSTEM_LIBS} cups debug gtk4 +hangouts headless kerberos libcxx lto +official pax-kernel pgo +proprietary-codecs pulseaudio"
