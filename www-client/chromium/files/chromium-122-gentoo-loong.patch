@@ -1,3 +1,15 @@
+--- a/base/allocator/partition_allocator/src/partition_alloc/BUILD.gn	2024-02-21 08:20:30.437336000 +0800
++++ b/base/allocator/partition_allocator/src/partition_alloc/BUILD.gn	2024-02-21 21:47:54.926495820 +0800
+@@ -513,6 +514,9 @@ if (is_clang_or_gcc) {
+       } else if (current_cpu == "riscv64") {
+         assert(pcscan_stack_supported)
+         sources += [ "starscan/stack/asm/riscv64/push_registers_asm.cc" ]
++      } else if (current_cpu == "loong64") {
++        assert(pcscan_stack_supported)
++        sources += [ "starscan/stack/asm/loong64/push_registers_asm.cc" ]
+       } else {
+         # To support a trampoline for another arch, please refer to v8/src/heap/base.
+         assert(!pcscan_stack_supported)
 --- chromium-122.0.6261.57/components/variations/service/variations_field_trial_creator_base.cc	2024-02-04 10:16:42.170836853 +0800
 +++ chromium-122.0.6261.57-new/components/variations/service/variations_field_trial_creator_base.cc	2024-02-04 10:12:15.269022073 +0800
 @@ -313,10 +313,12 @@ bool VariationsFieldTrialCreatorBase::Se
