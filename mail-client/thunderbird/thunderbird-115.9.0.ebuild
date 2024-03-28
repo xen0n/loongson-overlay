@@ -1018,7 +1018,7 @@ src_configure() {
 	# With Firefox-115esr elf-hack=relr isn't available (only in rapid).
 	# Solution: Disable build system's elf-hack completely, and add "-z,pack-relative-relocs"
 	#  manually with gcc.
-	mozconfig_add_options_ac 'elf-hack disabled' --disable-elf-hack
+	use loong || mozconfig_add_options_ac 'elf-hack disabled' --disable-elf-hack
 
 	if use amd64 || use x86 ; then
 		! use clang && append-ldflags "-z,pack-relative-relocs"
