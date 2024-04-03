@@ -10,8 +10,8 @@
        } else {
          # To support a trampoline for another arch, please refer to v8/src/heap/base.
          assert(!pcscan_stack_supported)
---- chromium-122.0.6261.57/components/variations/service/variations_field_trial_creator_base.cc	2024-02-04 10:16:42.170836853 +0800
-+++ chromium-122.0.6261.57-new/components/variations/service/variations_field_trial_creator_base.cc	2024-02-04 10:12:15.269022073 +0800
+--- a/components/variations/service/variations_field_trial_creator_base.cc	2024-02-04 10:16:42.170836853 +0800
++++ b/components/variations/service/variations_field_trial_creator_base.cc	2024-02-04 10:12:15.269022073 +0800
 @@ -313,10 +313,12 @@ bool VariationsFieldTrialCreatorBase::Se
    auto entropy_providers = metrics_state_manager->CreateEntropyProviders();
  
@@ -25,3 +25,13 @@
  
    platform_field_trials->SetUpClientSideFieldTrials(
        used_seed, *entropy_providers, feature_list.get());
+--- a/ui/qt/BUILD.gn	2024-03-13 07:38:22.115810400 +0800
++++ b/ui/qt/BUILD.gn	2024-04-04 01:10:56.135260816 +0800
+@@ -60,6 +60,7 @@ template("qt_shim") {
+   pkg_config("qt" + invoker.qt_version + "_config") {
+     packages = [
+       "Qt" + invoker.qt_version + "Core",
++      "Qt" + invoker.qt_version + "Gui",
+       "Qt" + invoker.qt_version + "Widgets",
+     ]
+   }
