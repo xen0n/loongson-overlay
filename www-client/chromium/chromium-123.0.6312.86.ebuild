@@ -460,7 +460,7 @@ src_prepare() {
 		for p in "${WORKDIR}/chromium-loongarch64-${PATCHSET_LOONG}/chromium/chromium-${PATCHSET_LOONG_PV}".????-loongarch64*; do
 			eapply "${p}"
 		done
-		PATCHES+=( "${FILESDIR}/chromium-122-gentoo-loong.patch" )
+		PATCHES+=( "${FILESDIR}/chromium-123-gentoo-loong.patch" )
 	fi
 
 	if use ppc64 ; then
