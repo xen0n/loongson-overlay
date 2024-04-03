@@ -1,13 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
-	<maintainer type="project">
-		<email>chromium@gentoo.org</email>
-		<name>Chromium in Gentoo Project</name>
-	</maintainer>
 	<maintainer type="person">
-		<email>kangie@gentoo.org</email>
-		<name>Matt Jolly</name>
+		<email>xen0n@gentoo.org</email>
+		<name>WANG Xuerui</name>
 	</maintainer>
 	<use>
 		<flag name="ffmpeg-chromium">(binpkg only) Use Chromium FFmpeg fork (<pkg>media-video/ffmpeg-chromium</pkg>) rather than mainline FFmpeg (<pkg>media-video/ffmpeg</pkg>)</flag>
@@ -31,5 +27,6 @@
 	<upstream>
 		<remote-id type="github">chromium/chromium</remote-id>
 		<remote-id type="gitlab">Matt.Jolly/chromium-patches</remote-id>
+		<remote-id type="github">AOSC-Dev/chromium-loongarch64</remote-id>
 	</upstream>
 </pkgmetadata>
