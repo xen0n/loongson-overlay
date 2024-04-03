@@ -69,7 +69,7 @@ inherit python-any-r1 qmake-utils readme.gentoo-r1 toolchain-funcs virtualx xdg-
 DESCRIPTION="Open-source version of Google Chrome web browser"
 HOMEPAGE="https://www.chromium.org/"
 PATCHSET_PPC64="122.0.6261.57-1raptor0~deb12u1"
-PATCHSET_LOONG="cff19cd9e4252d97e4e740ca299d4b258bd6750b"
+PATCHSET_LOONG="chromium-123.0.6312.86-1"
 PATCHSET_LOONG_PV="123.0.6312.86"
 PATCH_V="${PV%%\.*}"
 SRC_URI="https://commondatastorage.googleapis.com/chromium-browser-official/${P}.tar.xz
@@ -83,7 +83,7 @@ SRC_URI="https://commondatastorage.googleapis.com/chromium-browser-official/${P}
 			-> chromium-${PV%%\.*}-rust.tar.xz
 	)
 	loong? (
-		https://github.com/AOSC-Dev/chromium-loongarch64/archive/${PATCHSET_LOONG}.zip -> chromium-loongarch64-aosc-patches-${PATCHSET_LOONG}.zip
+		https://github.com/AOSC-Dev/chromium-loongarch64/archive/refs/tags/${PATCHSET_LOONG}.tar.gz -> chromium-loongarch64-aosc-patches-${PATCHSET_LOONG}.tar.gz
 	)
 	ppc64? (
 		https://quickbuild.io/~raptor-engineering-public/+archive/ubuntu/chromium/+files/chromium_${PATCHSET_PPC64}.debian.tar.xz
