@@ -22,7 +22,7 @@ DEPEND="
 RDEPEND="${DEPEND}"
 
 BDEPEND="
-	>=dev-util/meson-0.61.0
+	>=dev-build/meson-0.61.0
 	virtual/pkgconfig
 	nls? ( sys-devel/gettext )
 "
