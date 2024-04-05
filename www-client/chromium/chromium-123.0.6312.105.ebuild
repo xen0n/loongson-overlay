@@ -458,7 +458,6 @@ src_prepare() {
 		local p
 		local other_patches_to_apply=(
 			Fedora-chromium-121-nullptr_t-without-namespace-std
-			Debian-fixes-absl-optional
 			Debian-upstream-std-to-address
 			Debian-fixes-internalalloc
 			Debian-fixes-optional2
