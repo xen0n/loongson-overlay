@@ -3,7 +3,7 @@
 
 EAPI=8
 
-FIREFOX_PATCHSET="firefox-125-patches-01.tar.xz"
+FIREFOX_PATCHSET="firefox-125-patches-03.tar.xz"
 
 LLVM_COMPAT=( 17 )
 
@@ -605,10 +605,6 @@ src_unpack() {
 src_prepare() {
 	if use lto; then
 		rm -v "${WORKDIR}"/firefox-patches/*-LTO-Only-enable-LTO-*.patch || die
-	fi
-
-	if ! use ppc64 && ! use riscv; then
-		rm -v "${WORKDIR}"/firefox-patches/*ppc64*.patch || die
 	fi
 
 	# Workaround for bgo#917599
@@ -1418,5 +1414,11 @@ pkg_postinst() {
 		elog "glibc not found! You won't be able to play DRM content."
 		elog "See Gentoo bug #910309 or upstream bug #1843683."
 		elog
+	fi
+
+	if use geckodriver ; then
+		ewarn "You have enabled the 'geckodriver' USE flag. Geckodriver is now"
+		ewarn "packaged separately as net-misc/geckodriver and the use flag will be"
+		ewarn "dropped from main Firefox package by Firefox 128.0 release."
 	fi
 }
