@@ -3,7 +3,7 @@
 
 EAPI=8
 
-FIREFOX_PATCHSET="firefox-126-patches-01.tar.xz"
+FIREFOX_PATCHSET="firefox-126-patches-02.tar.xz"
 
 LLVM_COMPAT=( 17 )
 
@@ -70,8 +70,6 @@ IUSE+=" +telemetry valgrind wayland wifi +X"
 # Firefox-only IUSE
 IUSE+=" geckodriver +gmp-autoupdate"
 
-# "-jumbo-build +system-icu": build failure on firefox-120:
-#   firefox-120.0/intl/components/src/TimeZone.cpp:345:3: error: use of undeclared identifier 'MOZ_TRY'
 REQUIRED_USE="|| ( X wayland )
 	debug? ( !system-av1 )
 	pgo? ( lto )
@@ -96,8 +94,11 @@ BDEPEND="${PYTHON_DEPS}
 	>=dev-util/cbindgen-0.26.0
 	net-libs/nodejs
 	virtual/pkgconfig
-	!clang? ( >=virtual/rust-1.74 )
-	!elibc_glibc? ( dev-lang/rust )
+	!clang? (
+		>=virtual/rust-1.74
+		<virtual/rust-1.78
+	)
+	!elibc_glibc? ( <dev-lang/rust-1.78 )
 	amd64? ( >=dev-lang/nasm-2.14 )
 	x86? ( >=dev-lang/nasm-2.14 )
 	pgo? (
