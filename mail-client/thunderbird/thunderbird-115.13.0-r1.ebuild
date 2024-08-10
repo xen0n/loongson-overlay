@@ -3,11 +3,11 @@
 
 EAPI=8
 
-FIREFOX_PATCHSET="firefox-115esr-patches-09.tar.xz"
+FIREFOX_PATCHSET="firefox-115esr-patches-11.tar.xz"
 
-LLVM_MAX_SLOT=17
+LLVM_MAX_SLOT=18
 
-PYTHON_COMPAT=( python3_{10..11} )
+PYTHON_COMPAT=( python3_{10..12} )
 PYTHON_REQ_USE="ncurses,sqlite,ssl"
 
 WANT_AUTOCONF="2.1"
@@ -79,9 +79,18 @@ REQUIRED_USE="|| ( X wayland )
 TB_ONLY_DEPEND="!<x11-plugins/enigmail-2.2
 	selinux? ( sec-policy/selinux-thunderbird )
 	!system-librnp? ( dev-libs/jsoncpp )
-	system-librnp? ( dev-util/librnp )"
+	system-librnp? ( >=dev-util/librnp-0.17.1 )"
 BDEPEND="${PYTHON_DEPS}
 	|| (
+		(
+			sys-devel/clang:18
+			sys-devel/llvm:18
+			clang? (
+				sys-devel/lld:18
+				virtual/rust:0/llvm-18
+				pgo? ( =sys-libs/compiler-rt-sanitizers-18*[profile] )
+			)
+		)
 		(
 			sys-devel/clang:17
 			sys-devel/llvm:17
@@ -116,7 +125,7 @@ BDEPEND="${PYTHON_DEPS}
 	>=dev-util/cbindgen-0.24.3
 	net-libs/nodejs
 	virtual/pkgconfig
-	!clang? ( >=virtual/rust-1.65 )
+	!clang? ( virtual/rust )
 	!elibc_glibc? (
 		|| (
 			dev-lang/rust
@@ -132,7 +141,10 @@ BDEPEND="${PYTHON_DEPS}
 			x11-apps/xhost
 		)
 		wayland? (
-			>=gui-libs/wlroots-0.15.1-r1[tinywl]
+			|| (
+				gui-wm/tinywl
+				<gui-libs/wlroots-0.17.3[tinywl(-)]
+			)
 			x11-misc/xkeyboard-config
 		)
 	)"
@@ -679,6 +691,10 @@ src_prepare() {
 	# Clear cargo checksums from crates we have patched
 	# moz_clear_vendor_checksums crate
 	moz_clear_vendor_checksums audio_thread_priority
+	moz_clear_vendor_checksums bindgen
+	moz_clear_vendor_checksums encoding_rs
+	moz_clear_vendor_checksums any_all_workaround
+	moz_clear_vendor_checksums packed_simd
 
 	# Create build dir
 	BUILD_DIR="${WORKDIR}/${PN}_build"
@@ -1018,7 +1034,13 @@ src_configure() {
 	# With Firefox-115esr elf-hack=relr isn't available (only in rapid).
 	# Solution: Disable build system's elf-hack completely, and add "-z,pack-relative-relocs"
 	#  manually with gcc.
-	use loong || mozconfig_add_options_ac 'elf-hack disabled' --disable-elf-hack
+	#
+	# # elf-hack configure option isn't available on ppc64/riscv, #916259, #929244, #930046.
+	if use loong || use ppc64 || use riscv ; then
+		:;
+	else
+		mozconfig_add_options_ac 'elf-hack disabled' --disable-elf-hack
+	fi
 
 	if use amd64 || use x86 ; then
 		! use clang && append-ldflags "-z,pack-relative-relocs"
