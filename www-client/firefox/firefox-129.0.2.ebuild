@@ -3,7 +3,7 @@
 
 EAPI=8
 
-FIREFOX_PATCHSET="firefox-129-patches-01.tar.xz"
+FIREFOX_PATCHSET="firefox-129-patches-02.tar.xz"
 
 LLVM_COMPAT=( 17 18 )
 
@@ -165,7 +165,10 @@ COMMON_DEPEND="${FF_ONLY_DEPEND}
 	)
 	wifi? (
 		kernel_linux? (
-			net-misc/networkmanager
+			|| (
+				net-misc/networkmanager
+				net-misc/connman[networkmanager]
+			)
 			sys-apps/dbus
 		)
 	)
@@ -416,40 +419,6 @@ mozconfig_use_with() {
 
 	local flag=$(use_with "${@}")
 	mozconfig_add_options_ac "$(use ${1} && echo +${1} || echo -${1})" "${flag}"
-}
-
-# This is a straight copypaste from toolchain-funcs.eclass's 'tc-ld-is-lld', and is temporarily
-# placed here until toolchain-funcs.eclass gets an official support for mold linker.
-# Please see:
-# https://github.com/gentoo/gentoo/pull/28366 ||
-# https://github.com/gentoo/gentoo/pull/28355
-tc-ld-is-mold() {
-	local out
-
-	# Ensure ld output is in English.
-	local -x LC_ALL=C
-
-	# First check the linker directly.
-	out=$($(tc-getLD "$@") --version 2>&1)
-	if [[ ${out} == *"mold"* ]] ; then
-		return 0
-	fi
-
-	# Then see if they're selecting mold via compiler flags.
-	# Note: We're assuming they're using LDFLAGS to hold the
-	# options and not CFLAGS/CXXFLAGS.
-	local base="${T}/test-tc-linker"
-	cat <<-EOF > "${base}.c"
-	int main() { return 0; }
-	EOF
-	out=$($(tc-getCC "$@") ${CFLAGS} ${CPPFLAGS} ${LDFLAGS} -Wl,--version "${base}.c" -o "${base}" 2>&1)
-	rm -f "${base}"*
-	if [[ ${out} == *"mold"* ]] ; then
-		return 0
-	fi
-
-	# No mold here!
-	return 1
 }
 
 virtwl() {
