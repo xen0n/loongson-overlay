@@ -61,7 +61,7 @@ SRC_URI="${MOZ_SRC_BASE_URI}/source/${MOZ_P}.source.tar.xz -> ${MOZ_P_DISTFILES}
 S="${WORKDIR}/${PN}-${PV%_*}"
 LICENSE="MPL-2.0 GPL-2 LGPL-2.1"
 #KEYWORDS="~amd64 ~arm64 ~ppc64 ~riscv ~x86"
-#KEYWORDS="~loong"
+KEYWORDS="~loong"
 
 IUSE="+clang cpu_flags_arm_neon dbus debug eme-free hardened hwaccel jack +jumbo-build libproxy lto"
 IUSE+=" openh264 pgo pulseaudio sndio selinux +system-av1 +system-harfbuzz +system-icu"
@@ -1222,7 +1222,7 @@ src_install() {
 		doexe "${BUILD_DIR}"/dist/bin/vaapitest
 
 		# Install the v4l2test on supported arches (+ arm, + riscv64 when keyworded)
-		if use arm64 || use loong ; then
+		if use arm64 ; then
 			exeinto "${MOZILLA_FIVE_HOME}"
 			doexe "${BUILD_DIR}"/dist/bin/v4l2test
 		fi
