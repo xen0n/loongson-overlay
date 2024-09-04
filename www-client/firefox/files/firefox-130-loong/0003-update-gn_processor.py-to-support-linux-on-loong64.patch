@@ -1,7 +1,7 @@
 From cf96c8fb08a17fafc72ca7c43b9c2fd77557e899 Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <xen0n@gentoo.org>
 Date: Tue, 3 Sep 2024 15:38:04 +0800
-Subject: [PATCH 3/6] update gn_processor.py to support linux on loong64
+Subject: [PATCH 3/9] update gn_processor.py to support linux on loong64
 
 Signed-off-by: WANG Xuerui <xen0n@gentoo.org>
 ---
