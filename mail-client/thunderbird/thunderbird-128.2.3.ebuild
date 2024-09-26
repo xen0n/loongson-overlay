@@ -3,7 +3,7 @@
 
 EAPI=8
 
-FIREFOX_PATCHSET="firefox-128esr-patches-02.tar.xz"
+FIREFOX_PATCHSET="firefox-128esr-patches-03.tar.xz"
 
 LLVM_COMPAT=( 17 18 )
 
@@ -14,7 +14,8 @@ WANT_AUTOCONF="2.1"
 
 VIRTUALX_REQUIRED="manual"
 
-MOZ_ESR=
+# Thunderbird will have separate release and esr channels, matching Firefox's rapid and esr.
+MOZ_ESR=yes
 
 MOZ_PV=${PV}
 MOZ_PV_SUFFIX=
@@ -40,17 +41,17 @@ MOZ_P_DISTFILES="${MOZ_PN}-${MOZ_PV_DISTFILES}"
 inherit autotools check-reqs desktop flag-o-matic gnome2-utils linux-info llvm-r1 multiprocessing \
 	optfeature pax-utils python-any-r1 toolchain-funcs virtualx xdg
 
-MOZ_SRC_BASE_URI="https://archive.mozilla.org/pub/${MOZ_PN}/releases/${MOZ_PV}esr"
+MOZ_SRC_BASE_URI="https://archive.mozilla.org/pub/${MOZ_PN}/releases/${MOZ_PV}"
 
 if [[ ${PV} == *_rc* ]] ; then
-	MOZ_SRC_BASE_URI="https://archive.mozilla.org/pub/${MOZ_PN}/candidates/${MOZ_PV}esr-candidates/build${PV##*_rc}"
+	MOZ_SRC_BASE_URI="https://archive.mozilla.org/pub/${MOZ_PN}/candidates/${MOZ_PV}-candidates/build${PV##*_rc}"
 fi
 
 PATCH_URIS=(
 	https://dev.gentoo.org/~juippis/mozilla/patchsets/${FIREFOX_PATCHSET}
 )
 
-SRC_URI="${MOZ_SRC_BASE_URI}/source/${MOZ_P}esr.source.tar.xz -> ${MOZ_P_DISTFILES}esr.source.tar.xz
+SRC_URI="${MOZ_SRC_BASE_URI}/source/${MOZ_P}.source.tar.xz -> ${MOZ_P_DISTFILES}.source.tar.xz
 	${PATCH_URIS[@]}"
 
 DESCRIPTION="Thunderbird Mail Client"
@@ -62,16 +63,17 @@ HOMEPAGE="https://www.thunderbird.net/"
 SLOT="0"
 LICENSE="MPL-2.0 GPL-2 LGPL-2.1"
 
-IUSE="+clang dbus debug eme-free hardened hwaccel jack libproxy lto +openh264 pgo pulseaudio sndio"
+IUSE="+clang +dbus debug eme-free hardened hwaccel jack libproxy lto +openh264 pgo pulseaudio sndio"
 IUSE+=" selinux +system-av1 +system-harfbuzz +system-icu +system-jpeg +system-libevent"
 IUSE+=" +system-libvpx system-png +system-webp wayland wifi +X"
 
 # Thunderbird-only USE flags.
-IUSE+=" +system-librnp"
+IUSE+=" +rust-extensions +system-librnp"
 
 REQUIRED_USE="|| ( X wayland )
 	debug? ( !system-av1 )
 	pgo? ( lto )
+	rust-extensions? ( dbus )
 	wayland? ( dbus )
 	wifi? ( dbus )"
 
@@ -161,7 +163,10 @@ COMMON_DEPEND="${TB_ONLY_DEPEND}
 	)
 	wifi? (
 		kernel_linux? (
-			net-misc/networkmanager
+			|| (
+				net-misc/networkmanager
+				net-misc/connman[networkmanager]
+			)
 			sys-apps/dbus
 		)
 	)
@@ -266,8 +271,7 @@ moz_clear_vendor_checksums() {
 
 	sed -i \
 		-e 's/\("files":{\)[^}]*/\1/' \
-		"${S}"/third_party/rust/${1}/.cargo-checksum.json \
-		|| die
+		"${S}"/third_party/rust/${1}/.cargo-checksum.json || die
 }
 
 moz_install_xpi() {
@@ -358,40 +362,6 @@ mozconfig_use_with() {
 
 	local flag=$(use_with "${@}")
 	mozconfig_add_options_ac "$(use ${1} && echo +${1} || echo -${1})" "${flag}"
-}
-
-# This is a straight copypaste from toolchain-funcs.eclass's 'tc-ld-is-lld', and is temporarily
-# placed here until toolchain-funcs.eclass gets an official support for mold linker.
-# Please see:
-# https://github.com/gentoo/gentoo/pull/28366 ||
-# https://github.com/gentoo/gentoo/pull/28355
-tc-ld-is-mold() {
-	local out
-
-	# Ensure ld output is in English.
-	local -x LC_ALL=C
-
-	# First check the linker directly.
-	out=$($(tc-getLD "$@") --version 2>&1)
-	if [[ ${out} == *"mold"* ]] ; then
-		return 0
-	fi
-
-	# Then see if they're selecting mold via compiler flags.
-	# Note: We're assuming they're using LDFLAGS to hold the
-	# options and not CFLAGS/CXXFLAGS.
-	local base="${T}/test-tc-linker"
-	cat <<-EOF > "${base}.c"
-	int main() { return 0; }
-	EOF
-	out=$($(tc-getCC "$@") ${CFLAGS} ${CPPFLAGS} ${LDFLAGS} -Wl,--version "${base}.c" -o "${base}" 2>&1)
-	rm -f "${base}"*
-	if [[ ${out} == *"mold"* ]] ; then
-		return 0
-	fi
-
-	# No mold here!
-	return 1
 }
 
 virtwl() {
@@ -611,13 +581,11 @@ src_prepare() {
 	# sed-in toolchain prefix
 	sed -i \
 		-e "s/objdump/${CHOST}-objdump/" \
-		"${S}"/python/mozbuild/mozbuild/configure/check_debug_ranges.py \
-		|| die "sed failed to set toolchain prefix"
+		"${S}"/python/mozbuild/mozbuild/configure/check_debug_ranges.py || die "sed failed to set toolchain prefix"
 
 	sed -i \
 		-e 's/ccache_stats = None/return None/' \
-		"${S}"/python/mozbuild/mozbuild/controller/building.py \
-		|| die "sed failed to disable ccache stats call"
+		"${S}"/python/mozbuild/mozbuild/controller/building.py || die "sed failed to disable ccache stats call"
 
 	einfo "Removing pre-built binaries ..."
 
@@ -736,7 +704,6 @@ src_configure() {
 		--enable-system-ffi \
 		--enable-system-pixman \
 		--enable-system-policies \
-		--enable-thunderbird-rust \
 		--host="${CBUILD:-${CHOST}}" \
 		--libdir="${EPREFIX}/usr/$(get_libdir)" \
 		--prefix="${EPREFIX}/usr" \
@@ -811,6 +778,8 @@ src_configure() {
 	else
 		einfo "Building without Mozilla API key ..."
 	fi
+
+	mozconfig_use_enable rust-extensions thunderbird-rust
 
 	mozconfig_use_with system-av1
 	mozconfig_use_with system-harfbuzz
@@ -1171,8 +1140,7 @@ src_install() {
 		-e "s:@NAME@:${app_name}:" \
 		-e "s:@EXEC@:${exec_command}:" \
 		-e "s:@ICON@:${icon}:" \
-		"${WORKDIR}/${PN}.desktop-template" \
-		|| die
+		"${WORKDIR}/${PN}.desktop-template" || die
 
 	newmenu "${WORKDIR}/${PN}.desktop-template" "${desktop_filename}"
 
@@ -1188,8 +1156,7 @@ src_install() {
 		-e "s:@MOZ_FIVE_HOME@:${MOZILLA_FIVE_HOME}:" \
 		-e "s:@APULSELIB_DIR@:${apulselib}:" \
 		-e "s:@DEFAULT_WAYLAND@:${use_wayland}:" \
-		"${ED}/usr/bin/${PN}" \
-		|| die
+		"${ED}/usr/bin/${PN}" || die
 }
 
 pkg_preinst() {
