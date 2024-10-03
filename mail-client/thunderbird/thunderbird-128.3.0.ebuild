@@ -63,9 +63,9 @@ KEYWORDS="~loong"
 SLOT="0"
 LICENSE="MPL-2.0 GPL-2 LGPL-2.1"
 
-IUSE="+clang +dbus debug eme-free hardened hwaccel jack libproxy lto +openh264 pgo pulseaudio sndio"
-IUSE+=" selinux +system-av1 +system-harfbuzz +system-icu +system-jpeg +system-libevent"
-IUSE+=" +system-libvpx system-png +system-webp wayland wifi +X"
+IUSE="+clang +dbus debug eme-free hardened hwaccel jack libproxy lto pgo pulseaudio sndio selinux"
+IUSE+=" +system-av1 +system-harfbuzz +system-icu +system-jpeg +system-libevent +system-libvpx"
+IUSE+=" system-png +system-webp wayland wifi +X"
 
 # Thunderbird-only USE flags.
 IUSE+=" +rust-extensions +system-librnp"
@@ -183,8 +183,7 @@ COMMON_DEPEND="${TB_ONLY_DEPEND}
 		x11-libs/libxcb:=
 	)"
 RDEPEND="${COMMON_DEPEND}
-	jack? ( virtual/jack )
-	openh264? ( media-libs/openh264:*[plugin] )"
+	jack? ( virtual/jack )"
 DEPEND="${COMMON_DEPEND}
 	X? (
 		x11-base/xorg-proto
