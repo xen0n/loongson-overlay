@@ -61,7 +61,7 @@ SRC_URI="${MOZ_SRC_BASE_URI}/source/${MOZ_P}.source.tar.xz -> ${MOZ_P_DISTFILES}
 S="${WORKDIR}/${PN}-${PV%_*}"
 LICENSE="MPL-2.0 GPL-2 LGPL-2.1"
 #KEYWORDS="~amd64 ~arm64 ~ppc64 ~riscv ~x86"
-#KEYWORDS="~loong"
+KEYWORDS="~loong"
 
 IUSE="+clang dbus debug eme-free hardened hwaccel jack +jumbo-build libproxy lto openh264 pgo"
 IUSE+=" pulseaudio sndio selinux +system-av1 +system-harfbuzz +system-icu +system-jpeg"
