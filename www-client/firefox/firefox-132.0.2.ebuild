@@ -3,9 +3,15 @@
 
 EAPI=8
 
-FIREFOX_PATCHSET="firefox-131-patches-01.tar.xz"
+FIREFOX_PATCHSET="firefox-132-patches-04.tar.xz"
 
-LLVM_COMPAT=( 17 18 )
+LLVM_COMPAT=( 17 18 19 )
+
+# This will also filter rust versions that don't match LLVM_COMPAT in the non-clang path; this is fine.
+RUST_NEEDS_LLVM=1
+
+# If not building with clang we need at least rust 1.76
+RUST_MIN_VER=1.77.1
 
 PYTHON_COMPAT=( python3_{10..12} )
 PYTHON_REQ_USE="ncurses,sqlite,ssl"
@@ -13,6 +19,11 @@ PYTHON_REQ_USE="ncurses,sqlite,ssl"
 WANT_AUTOCONF="2.1"
 
 VIRTUALX_REQUIRED="manual"
+
+# Information about the bundled wasm toolchain from
+# https://github.com/WebAssembly/wasi-sdk/
+WASI_SDK_VER=24.0
+WASI_SDK_LLVM_VER=18
 
 MOZ_ESR=
 
@@ -30,10 +41,10 @@ fi
 if [[ -n ${MOZ_ESR} ]] ; then
 	# ESR releases have slightly different version numbers
 	MOZ_PV="${MOZ_PV}esr"
-	HOMEPAGE="https://www.mozilla.com/firefox https://www.mozilla.org/firefox/enterprise/"
+	HOMEPAGE="https://www.mozilla.org/firefox https://www.mozilla.org/firefox/enterprise/"
 	SLOT="esr"
 else
-	HOMEPAGE="https://www.mozilla.com/firefox"
+	HOMEPAGE="https://www.mozilla.org/firefox"
 	SLOT="rapid"
 fi
 
@@ -43,7 +54,7 @@ MOZ_PV_DISTFILES="${MOZ_PV}${MOZ_PV_SUFFIX}"
 MOZ_P_DISTFILES="${MOZ_PN}-${MOZ_PV_DISTFILES}"
 
 inherit autotools check-reqs desktop flag-o-matic gnome2-utils linux-info llvm-r1 multiprocessing \
-	optfeature pax-utils python-any-r1 readme.gentoo-r1 toolchain-funcs virtualx xdg
+	optfeature pax-utils python-any-r1 rust readme.gentoo-r1 toolchain-funcs virtualx xdg
 
 MOZ_SRC_BASE_URI="https://archive.mozilla.org/pub/${MOZ_PN}/releases/${MOZ_PV}"
 
@@ -57,27 +68,30 @@ PATCH_URIS=(
 
 DESCRIPTION="Firefox Web Browser"
 SRC_URI="${MOZ_SRC_BASE_URI}/source/${MOZ_P}.source.tar.xz -> ${MOZ_P_DISTFILES}.source.tar.xz
-	${PATCH_URIS[@]}"
+	${PATCH_URIS[@]}
+	wasm? (
+		amd64? ( https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-${WASI_SDK_VER/.*/}/wasi-sdk-${WASI_SDK_VER}-x86_64-linux.tar.gz )
+		arm64? ( https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-${WASI_SDK_VER/.*/}/wasi-sdk-${WASI_SDK_VER}-arm64-linux.tar.gz )
+	)"
+
 S="${WORKDIR}/${PN}-${PV%_*}"
 LICENSE="MPL-2.0 GPL-2 LGPL-2.1"
 #KEYWORDS="~amd64 ~arm64 ~ppc64 ~riscv ~x86"
 KEYWORDS="~loong"
 
-IUSE="+clang dbus debug eme-free hardened hwaccel jack +jumbo-build libproxy lto openh264 pgo"
+IUSE="clang dbus debug eme-free hardened hwaccel jack +jumbo-build libproxy openh264 pgo"
 IUSE+=" pulseaudio sndio selinux +system-av1 +system-harfbuzz +system-icu +system-jpeg"
-IUSE+=" +system-jpeg +system-libevent +system-libvpx system-png +system-webp +telemetry valgrind"
-IUSE+=" wayland wifi +X"
+IUSE+=" +system-jpeg +system-libevent +system-libvpx system-png +system-webp valgrind wayland"
+IUSE+=" wifi +X"
 
 # Firefox-only IUSE
-IUSE+=" +gmp-autoupdate gnome-shell"
+IUSE+=" +gmp-autoupdate gnome-shell +telemetry wasm"
 
-# !jumbo-build? ( clang ) -> bmo#1914774, bgo#939004 - causes seemingly random compile crashes with gcc.
 REQUIRED_USE="|| ( X wayland )
 	debug? ( !system-av1 )
-	!jumbo-build? ( clang )
-	pgo? ( lto )
 	wayland? ( dbus )
-	wifi? ( dbus )"
+	wifi? ( dbus )
+"
 
 FF_ONLY_DEPEND="!www-client/firefox:0
 	selinux? ( sec-policy/selinux-mozilla )"
@@ -87,9 +101,9 @@ BDEPEND="${PYTHON_DEPS}
 		sys-devel/llvm:${LLVM_SLOT}
 		clang? (
 			sys-devel/lld:${LLVM_SLOT}
-			virtual/rust:0/llvm-${LLVM_SLOT}
+			pgo? ( sys-libs/compiler-rt-sanitizers:${LLVM_SLOT}[profile] )
 		)
-		pgo? ( sys-libs/compiler-rt-sanitizers:${LLVM_SLOT}[profile] )
+		wasm? ( sys-devel/lld:${LLVM_SLOT} )
 	')
 	app-alternatives/awk
 	app-arch/unzip
@@ -97,8 +111,6 @@ BDEPEND="${PYTHON_DEPS}
 	>=dev-util/cbindgen-0.26.0
 	net-libs/nodejs
 	virtual/pkgconfig
-	!clang? ( >=virtual/rust-1.76 )
-	!elibc_glibc? ( dev-lang/rust )
 	amd64? ( >=dev-lang/nasm-2.14 )
 	x86? ( >=dev-lang/nasm-2.14 )
 	pgo? (
@@ -120,7 +132,7 @@ COMMON_DEPEND="${FF_ONLY_DEPEND}
 	dev-libs/expat
 	dev-libs/glib:2
 	dev-libs/libffi:=
-	>=dev-libs/nss-3.104
+	>=dev-libs/nss-3.105
 	>=dev-libs/nspr-4.35
 	media-libs/alsa-lib
 	media-libs/fontconfig
@@ -224,18 +236,13 @@ llvm_check_deps() {
 			einfo "sys-devel/lld:${LLVM_SLOT} is missing! Cannot use LLVM slot ${LLVM_SLOT} ..." >&2
 			return 1
 		fi
+	fi
 
-		if ! has_version -b "virtual/rust:0/llvm-${LLVM_SLOT}" ; then
-			einfo "virtual/rust:0/llvm-${LLVM_SLOT} is missing! Cannot use LLVM slot ${LLVM_SLOT} ..." >&2
+	if use pgo ; then
+		if ! has_version -b "=sys-libs/compiler-rt-sanitizers-${LLVM_SLOT}*[profile]" ; then
+			einfo "=sys-libs/compiler-rt-sanitizers-${LLVM_SLOT}*[profile] is missing!" >&2
+			einfo "Cannot use LLVM slot ${LLVM_SLOT} ..." >&2
 			return 1
-		fi
-
-		if use pgo ; then
-			if ! has_version -b "=sys-libs/compiler-rt-sanitizers-${LLVM_SLOT}*[profile]" ; then
-				einfo "=sys-libs/compiler-rt-sanitizers-${LLVM_SLOT}*[profile] is missing!" >&2
-				einfo "Cannot use LLVM slot ${LLVM_SLOT} ..." >&2
-				return 1
-			fi
 		fi
 	fi
 
@@ -452,10 +459,12 @@ pkg_pretend() {
 		fi
 
 		# Ensure we have enough disk space to compile
-		if use pgo || use lto || use debug ; then
-			CHECKREQS_DISK_BUILD="13500M"
+		if use pgo || use debug ; then
+			CHECKREQS_DISK_BUILD="14300M"
+		elif tc-is-lto ; then
+			CHECKREQS_DISK_BUILD="10600M"
 		else
-			CHECKREQS_DISK_BUILD="6600M"
+			CHECKREQS_DISK_BUILD="6800M"
 		fi
 
 		check-reqs_pkg_pretend
@@ -463,45 +472,42 @@ pkg_pretend() {
 }
 
 pkg_setup() {
+
+	# Get LTO from environment; export after this phase for use in src_configure (etc)
+	use_lto=no
+
 	if [[ ${MERGE_TYPE} != binary ]] ; then
+
+		if tc-is-lto; then
+			use_lto=yes
+			# LTO is handled via configure
+			filter-lto
+		fi
+
 		if use pgo ; then
 			if ! has userpriv ${FEATURES} ; then
 				eerror "Building ${PN} with USE=pgo and FEATURES=-userpriv is not supported!"
 			fi
 		fi
 
+		if [[ ${use_lto} = yes ]]; then
+			# -Werror=lto-type-mismatch -Werror=odr are going to fail with GCC,
+			# bmo#1516758, bgo#942288
+			filter-flags -Werror=lto-type-mismatch -Werror=odr
+		fi
+
 		# Ensure we have enough disk space to compile
-		if use pgo || use lto || use debug ; then
-			CHECKREQS_DISK_BUILD="13500M"
+		if use pgo || use debug ; then
+			CHECKREQS_DISK_BUILD="14300M"
+		elif [[ ${use_lto} == "yes" ]] ; then
+			CHECKREQS_DISK_BUILD="10600M"
 		else
-			CHECKREQS_DISK_BUILD="6400M"
+			CHECKREQS_DISK_BUILD="6800M"
 		fi
 
 		check-reqs_pkg_setup
-
 		llvm-r1_pkg_setup
-
-		if use clang && use lto && tc-ld-is-lld ; then
-			local version_lld=$(ld.lld --version 2>/dev/null | awk '{ print $2 }')
-			[[ -n ${version_lld} ]] && version_lld=$(ver_cut 1 "${version_lld}")
-			[[ -z ${version_lld} ]] && die "Failed to read ld.lld version!"
-
-			local version_llvm_rust=$(rustc -Vv 2>/dev/null | grep -F -- 'LLVM version:' | awk '{ print $3 }')
-			[[ -n ${version_llvm_rust} ]] && version_llvm_rust=$(ver_cut 1 "${version_llvm_rust}")
-			[[ -z ${version_llvm_rust} ]] && die "Failed to read used LLVM version from rustc!"
-
-			if ver_test "${version_lld}" -ne "${version_llvm_rust}" ; then
-				eerror "Rust is using LLVM version ${version_llvm_rust} but ld.lld version belongs to LLVM version ${version_lld}."
-				eerror "You will be unable to link ${CATEGORY}/${PN}. To proceed you have the following options:"
-				eerror "  - Manually switch rust version using 'eselect rust' to match used LLVM version"
-				eerror "  - Switch to dev-lang/rust[system-llvm] which will guarantee matching version"
-				eerror "  - Build ${CATEGORY}/${PN} without USE=lto"
-				eerror "  - Rebuild lld with llvm that was used to build rust (may need to rebuild the whole "
-				eerror "    llvm/clang/lld/rust chain depending on your @world updates)"
-				die "LLVM version used by Rust (${version_llvm_rust}) does not match with ld.lld version (${version_lld})!"
-			fi
-		fi
-
+		rust_pkg_setup
 		python-any-r1_pkg_setup
 
 		# Avoid PGO profiling problems due to enviroment leakage
@@ -556,6 +562,8 @@ pkg_setup() {
 		export LC_ALL=C
 	fi
 
+	export use_lto
+
 	CONFIG_CHECK="~SECCOMP"
 	WARNING_SECCOMP="CONFIG_SECCOMP not set! This system will be unable to play DRM-protected content."
 	linux-info_pkg_setup
@@ -579,7 +587,7 @@ src_unpack() {
 }
 
 src_prepare() {
-	if use lto; then
+	if [[ ${use_lto} == "yes" ]]; then
 		rm -v "${WORKDIR}"/firefox-patches/*-LTO-Only-enable-LTO-*.patch || die
 	fi
 
@@ -615,8 +623,26 @@ src_prepare() {
 		elif use ppc64 ; then
 			export RUST_TARGET="powerpc64le-unknown-linux-musl"
 		else
-			die "Unknown musl chost, please post your rustc -vV along with emerge --info on Gentoo's bug #915651"
+			die "Unknown musl chost, please post a new bug with your rustc -vV along with emerge --info"
 		fi
+	fi
+
+	# Pre-built wasm path manipulation.
+	if use wasm ; then
+		if use amd64 ; then
+			export wasi_arch="x86_64"
+		elif use arm64 ; then
+			export wasi_arch="arm64"
+		else
+			die "wasm enabled on unknown/unsupported arch!"
+		fi
+
+		sed -i \
+			-e "s:%%PORTAGE_WORKDIR%%:${WORKDIR}:" \
+			-e "s:%%WASI_ARCH%%:${wasi_arch}:" \
+			-e "s:%%WASI_SDK_VER%%:${WASI_SDK_VER}:" \
+			-e "s:%%WASI_SDK_LLVM_VER%%:${WASI_SDK_LLVM_VER}:" \
+			toolkit/moz.configure || die "Failed to update wasi-related paths."
 	fi
 
 	# Make LTO respect MAKEOPTS
@@ -784,7 +810,6 @@ src_configure() {
 		--prefix="${EPREFIX}/usr" \
 		--target="${CHOST}" \
 		--without-ccache \
-		--without-wasm-sandboxed-libraries \
 		--with-intl-api \
 		--with-libclang-path="$(llvm-config --libdir)" \
 		--with-system-nspr \
@@ -858,7 +883,6 @@ src_configure() {
 
 	mozconfig_use_with system-av1
 	mozconfig_use_with system-harfbuzz
-	mozconfig_use_with system-harfbuzz system-graphite2
 	mozconfig_use_with system-icu
 	mozconfig_use_with system-jpeg
 	mozconfig_use_with system-libevent
@@ -900,10 +924,17 @@ src_configure() {
 		mozconfig_add_options_ac '+x11' --enable-default-toolkit=cairo-gtk3-x11-only
 	fi
 
-	# LTO is handled via configure
-	filter-lto
+	# wasm
+	# +system-graphite2 doesn't currently play nice with wasm.
+	if use wasm ; then
+		mozconfig_add_options_ac '+wasm' --with-wasi-sysroot="${WORKDIR}/wasi-sdk-${WASI_SDK_VER}-${wasi_arch}-linux/share/wasi-sysroot/"
+	else
+		mozconfig_add_options_ac 'no wasm-sandbox' --without-wasm-sandboxed-libraries
+		mozconfig_use_with system-harfbuzz system-graphite2
+	fi
 
-	if use lto ; then
+
+	if [[ ${use_lto} == "yes" ]] ; then
 		if use clang ; then
 			# Upstream only supports lld or mold when using clang.
 			if tc-ld-is-mold ; then
@@ -923,14 +954,6 @@ src_configure() {
 			mozconfig_add_options_ac "linker is set to bfd" --enable-linker=bfd
 		fi
 
-		if use pgo ; then
-			mozconfig_add_options_ac '+pgo' MOZ_PGO=1
-
-			if use clang ; then
-				# Used in build/pgo/profileserver.py
-				export LLVM_PROFDATA="llvm-profdata"
-			fi
-		fi
 	else
 		# Avoid auto-magic on linker
 		if use clang ; then
@@ -947,6 +970,16 @@ src_configure() {
 			else
 				mozconfig_add_options_ac "linker is set to bfd due to USE=-clang" --enable-linker=bfd
 			fi
+		fi
+	fi
+
+	# PGO was moved outside lto block to allow building pgo without lto.
+	if use pgo ; then
+		mozconfig_add_options_ac '+pgo' MOZ_PGO=1
+
+		if use clang ; then
+			# Used in build/pgo/profileserver.py
+			export LLVM_PROFDATA="llvm-profdata"
 		fi
 	fi
 
@@ -1019,10 +1052,6 @@ src_configure() {
 	# System-av1 fix
 	use system-av1 && append-ldflags "-Wl,--undefined-version"
 
-	# Allow elfhack to work in combination with unstripped binaries
-	# when they would normally be larger than 2GiB.
-	append-ldflags "-Wl,--compress-debug-sections=zlib"
-
 	# Make revdep-rebuild.sh happy; Also required for musl
 	append-ldflags -Wl,-rpath="${MOZILLA_FIVE_HOME}",--enable-new-dtags
 
@@ -1090,7 +1119,7 @@ src_configure() {
 src_compile() {
 	local virtx_cmd=
 
-	if tc-ld-is-mold && use lto; then
+	if [[ ${use_lto} == "yes" ]] && tc-ld-is-mold; then
 		# increase ulimit with mold+lto, bugs #892641, #907485
 		if ! ulimit -n 16384 1>/dev/null 2>&1 ; then
 			ewarn "Unable to modify ulimits - building with mold+lto might fail due to low ulimit -n resources."
@@ -1297,32 +1326,10 @@ src_install() {
 	# Update wrapper
 	sed -i \
 		-e "s:@PREFIX@:${EPREFIX}/usr:" \
-		-e "s:@MOZ_FIVE_HOME@:${MOZILLA_FIVE_HOME}:" \
-		-e "s:@APULSELIB_DIR@:${apulselib}:" \
 		-e "s:@DEFAULT_WAYLAND@:${use_wayland}:" \
 		"${ED}/usr/bin/${PN}" || die
 
 	readme.gentoo_create_doc
-}
-
-pkg_preinst() {
-	xdg_pkg_preinst
-
-	# If the apulse libs are available in MOZILLA_FIVE_HOME then apulse
-	# does not need to be forced into the LD_LIBRARY_PATH
-	if use pulseaudio && has_version ">=media-sound/apulse-0.1.12-r4" ; then
-		einfo "APULSE found; Generating library symlinks for sound support ..."
-		local lib
-		pushd "${ED}${MOZILLA_FIVE_HOME}" &>/dev/null || die
-		for lib in ../apulse/libpulse{.so{,.0},-simple.so{,.0}} ; do
-			# A quickpkg rolled by hand will grab symlinks as part of the package,
-			# so we need to avoid creating them if they already exist.
-			if [[ ! -L ${lib##*/} ]] ; then
-				ln -s "${lib}" ${lib##*/} || die
-			fi
-		done
-		popd &>/dev/null || die
-	fi
 }
 
 pkg_postinst() {
@@ -1335,13 +1342,6 @@ pkg_postinst() {
 		for plugin in "${MOZ_GMP_PLUGIN_LIST[@]}" ; do
 			elog "\t ${plugin}"
 		done
-		elog
-	fi
-
-	if use pulseaudio && has_version ">=media-sound/apulse-0.1.12-r4" ; then
-		elog "Apulse was detected at merge time on this system and so it will always be"
-		elog "used for sound.  If you wish to use pulseaudio instead please unmerge"
-		elog "media-sound/apulse."
 		elog
 	fi
 
