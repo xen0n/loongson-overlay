@@ -1040,7 +1040,7 @@ src_configure() {
 		else
 			mozconfig_add_options_ac 'relr elf-hack' --enable-elf-hack=relr
 		fi
-	elif use ppc64 || use riscv ; then
+	elif use loong || use ppc64 || use riscv ; then
 		# '--disable-elf-hack' is not recognized on ppc64/riscv,
 		# see bgo #917049, #930046
 		:;
