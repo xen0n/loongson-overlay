@@ -3,7 +3,7 @@
 
 EAPI=8
 
-FIREFOX_PATCHSET="firefox-128esr-patches-05.tar.xz"
+FIREFOX_PATCHSET="firefox-128esr-patches-06.tar.xz"
 
 LLVM_COMPAT=( 17 18 19 )
 
@@ -63,10 +63,10 @@ S="${WORKDIR}/${PN}-${PV%_*}"
 
 LICENSE="MPL-2.0 GPL-2 LGPL-2.1"
 SLOT="0"
-#KEYWORDS="~amd64 ~arm64 ~ppc64 ~x86"
+#KEYWORDS="amd64 ~arm64 ~ppc64 ~x86"
 #KEYWORDS="~loong"
 
-IUSE="clang +dbus debug eme-free hardened hwaccel jack libproxy lto pgo pulseaudio sndio selinux"
+IUSE="+clang +dbus debug eme-free hardened hwaccel jack libproxy lto pgo pulseaudio sndio selinux"
 IUSE+=" +system-av1 +system-harfbuzz +system-icu +system-jpeg +system-libevent +system-libvpx"
 IUSE+=" system-png +system-webp wayland wifi +X"
 
@@ -202,13 +202,13 @@ llvm_check_deps() {
 			einfo "sys-devel/lld:${LLVM_SLOT} is missing! Cannot use LLVM slot ${LLVM_SLOT} ..." >&2
 			return 1
 		fi
+	fi
 
-		if use pgo ; then
-			if ! has_version -b "=sys-libs/compiler-rt-sanitizers-${LLVM_SLOT}*[profile]" ; then
-				einfo "=sys-libs/compiler-rt-sanitizers-${LLVM_SLOT}*[profile] is missing!" >&2
-				einfo "Cannot use LLVM slot ${LLVM_SLOT} ..." >&2
-				return 1
-			fi
+	if use pgo ; then
+		if ! has_version -b "=sys-libs/compiler-rt-sanitizers-${LLVM_SLOT}*[profile]" ; then
+			einfo "=sys-libs/compiler-rt-sanitizers-${LLVM_SLOT}*[profile] is missing!" >&2
+			einfo "Cannot use LLVM slot ${LLVM_SLOT} ..." >&2
+			return 1
 		fi
 	fi
 
@@ -386,10 +386,12 @@ pkg_pretend() {
 		fi
 
 		# Ensure we have enough disk space to compile
-		if use pgo || use lto || use debug ; then
-			CHECKREQS_DISK_BUILD="13500M"
+		if use pgo || use debug ; then
+			CHECKREQS_DISK_BUILD="14300M"
+		elif tc-is-lto ; then
+			CHECKREQS_DISK_BUILD="10600M"
 		else
-			CHECKREQS_DISK_BUILD="6600M"
+			CHECKREQS_DISK_BUILD="6800M"
 		fi
 
 		check-reqs_pkg_pretend
@@ -398,45 +400,36 @@ pkg_pretend() {
 
 pkg_setup() {
 	if [[ ${MERGE_TYPE} != binary ]] ; then
+
+		if tc-is-lto; then
+			use_lto=yes
+			# LTO is handled via configure
+			filter-lto
+		fi
+
 		if use pgo ; then
 			if ! has userpriv ${FEATURES} ; then
 				eerror "Building ${PN} with USE=pgo and FEATURES=-userpriv is not supported!"
 			fi
 		fi
 
-		# Ensure we have enough disk space to compile
-		if use pgo || use lto || use debug ; then
-			CHECKREQS_DISK_BUILD="13500M"
+		if [[ ${use_lto} = yes ]] ; then
+			# -Werror=lto-type-mismatch -Werror=odr are going to fail with GCC,
+			# bmo#1516758, bgo#942288
+			filter-flags -Werror=lto-type-mismatch -Werror=odr
+		fi
+
+		if use pgo || use debug ; then
+			CHECKREQS_DISK_BUILD="14300M"
+		elif [[ ${use_lto} == "yes" ]] ; then
+			CHECKREQS_DISK_BUILD="10600M"
 		else
-			CHECKREQS_DISK_BUILD="6400M"
+			CHECKREQS_DISK_BUILD="6800M"
 		fi
 
 		check-reqs_pkg_setup
-
 		llvm-r1_pkg_setup
 		rust_pkg_setup
-
-		if use clang && use lto && tc-ld-is-lld ; then
-			local version_lld=$(ld.lld --version 2>/dev/null | awk '{ print $2 }')
-			[[ -n ${version_lld} ]] && version_lld=$(ver_cut 1 "${version_lld}")
-			[[ -z ${version_lld} ]] && die "Failed to read ld.lld version!"
-
-			local version_llvm_rust=$(rustc -Vv 2>/dev/null | grep -F -- 'LLVM version:' | awk '{ print $3 }')
-			[[ -n ${version_llvm_rust} ]] && version_llvm_rust=$(ver_cut 1 "${version_llvm_rust}")
-			[[ -z ${version_llvm_rust} ]] && die "Failed to read used LLVM version from rustc!"
-
-			if ver_test "${version_lld}" -ne "${version_llvm_rust}" ; then
-				eerror "Rust is using LLVM version ${version_llvm_rust} but ld.lld version belongs to LLVM version ${version_lld}."
-				eerror "You will be unable to link ${CATEGORY}/${PN}. To proceed you have the following options:"
-				eerror "  - Manually switch rust version using 'eselect rust' to match used LLVM version"
-				eerror "  - Switch to dev-lang/rust[system-llvm] which will guarantee matching version"
-				eerror "  - Build ${CATEGORY}/${PN} without USE=lto"
-				eerror "  - Rebuild lld with llvm that was used to build rust (may need to rebuild the whole "
-				eerror "    llvm/clang/lld/rust chain depending on your @world updates)"
-				die "LLVM version used by Rust (${version_llvm_rust}) does not match with ld.lld version (${version_lld})!"
-			fi
-		fi
-
 		python-any-r1_pkg_setup
 
 		# Avoid PGO profiling problems due to enviroment leakage
@@ -490,6 +483,8 @@ pkg_setup() {
 		# Ensure we use C locale when building, bug #746215
 		export LC_ALL=C
 	fi
+
+	export use_lto
 }
 
 src_unpack() {
@@ -510,7 +505,7 @@ src_unpack() {
 }
 
 src_prepare() {
-	if use lto; then
+	if [[ ${use_lto} == "yes" ]]; then
 		rm -v "${WORKDIR}"/firefox-patches/*-LTO-Only-enable-LTO-*.patch || die
 	fi
 
@@ -541,8 +536,18 @@ src_prepare() {
 			export RUST_TARGET="x86_64-unknown-linux-musl"
 		elif use x86 ; then
 			export RUST_TARGET="i686-unknown-linux-musl"
+		elif use arm64 ; then
+			export RUST_TARGET="aarch64-unknown-linux-musl"
+		elif use ppc64 ; then
+			export RUST_TARGET="powerpc64le-unknown-linux-musl"
+		elif use riscv ; then
+			# We can pretty safely rule out any 32-bit riscvs, but 64-bit riscvs also have tons of
+			# different ABIs available. riscv64gc-unknown-linux-musl seems to be the best working
+			# guess right now though.
+			elog "riscv detected, forcing a riscv64 target for now."
+			export RUST_TARGET="riscv64gc-unknown-linux-musl"
 		else
-			die "Unknown musl chost, please post your rustc -vV along with emerge --info on Gentoo's bug #915651"
+			die "Unknown musl chost, please post a new bug with your rustc -vV along with emerge --info"
 		fi
 	fi
 
@@ -619,6 +624,7 @@ src_configure() {
 		if tc-is-gcc; then
 			have_switched_compiler=yes
 		fi
+		
 		AR=llvm-ar
 		CC=${CHOST}-clang-${version_clang}
 		CXX=${CHOST}-clang++-${version_clang}
@@ -732,9 +738,10 @@ src_configure() {
 		mozconfig_add_options_ac '' --enable-sandbox
 	fi
 
-	# Enable JIT on riscv64 explicitly
-	# Can be removed once upstream enable it by default in the future.
-	use riscv && mozconfig_add_options_ac 'Enable JIT for RISC-V 64' --enable-jit
+	# Enable JIT on riscv64 explicitly, since it's not activated automatically via "known arches" list.
+	# Update 128.1.0: Disable jit on riscv (this line can be blanked to disable by default),
+	# bgo#937867.
+	use riscv && mozconfig_add_options_ac 'Disable JIT for RISC-V 64' --disable-jit
 
 	if [[ -s "${S}/api-google.key" ]] ; then
 		local key_origin="Gentoo default"
@@ -824,13 +831,7 @@ src_configure() {
 		mozconfig_add_options_ac '+x11' --enable-default-toolkit=cairo-gtk3-x11-only
 	fi
 
-	# LTO is handled via configure.
-	# -Werror=lto-type-mismatch -Werror=odr are going to fail with GCC,
-	# bmo#1516758, bgo#942288
-	filter-lto
-	filter-flags -Werror=lto-type-mismatch -Werror=odr
-
-	if use lto ; then
+	if [[ ${use_lto} == "yes" ]] ; then
 		if use clang ; then
 			# Upstream only supports lld or mold when using clang.
 			if tc-ld-is-mold ; then
@@ -850,14 +851,6 @@ src_configure() {
 			mozconfig_add_options_ac "linker is set to bfd" --enable-linker=bfd
 		fi
 
-		if use pgo ; then
-			mozconfig_add_options_ac '+pgo' MOZ_PGO=1
-
-			if use clang ; then
-				# Used in build/pgo/profileserver.py
-				export LLVM_PROFDATA="llvm-profdata"
-			fi
-		fi
 	else
 		# Avoid auto-magic on linker
 		if use clang ; then
@@ -874,6 +867,15 @@ src_configure() {
 			else
 				mozconfig_add_options_ac "linker is set to bfd due to USE=-clang" --enable-linker=bfd
 			fi
+		fi
+	fi
+
+	if use pgo ; then
+		mozconfig_add_options_ac '+pgo' MOZ_PGO=1
+
+		if use clang ; then
+			# Used in build/pgo/profileserver.py
+			export LLVM_PROFDATA="llvm-profdata"
 		fi
 	fi
 
@@ -998,7 +1000,7 @@ src_configure() {
 src_compile() {
 	local virtx_cmd=
 
-	if tc-ld-is-mold && use lto; then
+	if [[ ${use_lto} == "yes" ]] && tc-ld-is-mold ; then
 		# increase ulimit with mold+lto, bugs #892641, #907485
 		if ! ulimit -n 16384 1>/dev/null 2>&1 ; then
 			ewarn "Unable to modify ulimits - building with mold+lto might fail due to low ulimit -n resources."
@@ -1117,10 +1119,15 @@ src_install() {
 	# Install menu
 	local app_name="Mozilla ${MOZ_PN^}"
 	local desktop_file="${FILESDIR}/icon/${PN}-r2.desktop"
-	local desktop_filename="${PN}.desktop"
 	local exec_command="${PN}"
 	local icon="${PN}"
 	local use_wayland="false"
+
+	if [[ -n ${MOZ_ESR} ]] ; then
+		local desktop_filename="${PN}-esr.desktop"
+	else
+		local desktop_filename="${PN}.desktop"
+	fi
 
 	if use wayland ; then
 		use_wayland="true"
