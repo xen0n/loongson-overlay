@@ -1,4 +1,4 @@
-From b3548d93aa6f040aa9f568b30367916f16d2beb6 Mon Sep 17 00:00:00 2001
+From 2ad04031f822e49a4d5121bb1de09f62023f666d Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <xen0n@gentoo.org>
 Date: Wed, 4 Sep 2024 16:45:05 +0800
 Subject: [PATCH 09/11] Fix missing loongarch subdir in libpng moz.yaml

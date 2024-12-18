@@ -1,4 +1,4 @@
-From effcb0d7eb3cd038320f96c652210dff20fe5985 Mon Sep 17 00:00:00 2001
+From f54fc0d661430ef3597813df791142c009a24dff Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <xen0n@gentoo.org>
 Date: Wed, 27 Nov 2024 15:54:29 +0800
 Subject: [PATCH 06/11] Re-generate libwebrtc moz.build files

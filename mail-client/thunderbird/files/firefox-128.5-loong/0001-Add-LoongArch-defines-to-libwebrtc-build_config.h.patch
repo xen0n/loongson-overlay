@@ -1,4 +1,4 @@
-From 9a302e1b0d7afdd2d0c133754cd0121d35d9f58f Mon Sep 17 00:00:00 2001
+From c593121a5a3f82e190567cc926983864a698fb80 Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <xen0n@gentoo.org>
 Date: Wed, 27 Nov 2024 15:50:25 +0800
 Subject: [PATCH 01/11] Add LoongArch defines to libwebrtc build_config.h

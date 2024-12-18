@@ -1,4 +1,4 @@
-From 02f5652fbb59a576abda0c4b9039ff18969722b5 Mon Sep 17 00:00:00 2001
+From 73eb671d882c3f2f49a4e73ab599e800b4e26483 Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <xen0n@gentoo.org>
 Date: Wed, 4 Sep 2024 16:51:22 +0800
 Subject: [PATCH 11/11] Enable LoongArch LSX optimization for libpng

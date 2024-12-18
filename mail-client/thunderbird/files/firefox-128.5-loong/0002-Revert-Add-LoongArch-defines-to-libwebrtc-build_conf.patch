@@ -1,4 +1,4 @@
-From 8e6159efffd08c48689b0e56c191c64df25f0be8 Mon Sep 17 00:00:00 2001
+From fee8b47746833aed317c5ac31f0c7c4eac35728f Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <xen0n@gentoo.org>
 Date: Wed, 27 Nov 2024 15:52:21 +0800
 Subject: [PATCH 02/11] Revert "Add LoongArch defines to libwebrtc
