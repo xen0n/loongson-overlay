@@ -1,7 +1,7 @@
-From c0860f55f46d0a258be97d99ebc13c7380acd331 Mon Sep 17 00:00:00 2001
+From 39e4c125466c1450d5ed231b603e18de5e98b5b5 Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <xen0n@gentoo.org>
 Date: Tue, 3 Sep 2024 15:38:04 +0800
-Subject: [PATCH 2/7] update gn_processor.py to support linux on loong64
+Subject: [PATCH 2/8] update gn_processor.py to support linux on loong64
 
 Signed-off-by: WANG Xuerui <xen0n@gentoo.org>
 ---
@@ -9,7 +9,7 @@ Signed-off-by: WANG Xuerui <xen0n@gentoo.org>
  1 file changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/python/mozbuild/mozbuild/gn_processor.py b/python/mozbuild/mozbuild/gn_processor.py
-index e0b2ca4439591..ccf90ab0bc9d3 100644
+index db7f780a1a17e..3567e1d33a7ad 100644
 --- a/python/mozbuild/mozbuild/gn_processor.py
 +++ b/python/mozbuild/mozbuild/gn_processor.py
 @@ -183,6 +183,7 @@ def filter_gn_config(path, gn_result, sandbox_vars, input_vars, gn_target):
@@ -20,7 +20,7 @@ index e0b2ca4439591..ccf90ab0bc9d3 100644
      }
      oses = {
          "android": "Android",
-@@ -791,7 +792,7 @@ def main():
+@@ -781,7 +782,7 @@ def main():
              if target_os in ("linux", "openbsd"):
                  target_cpus.append("riscv64")
              if target_os == "linux":

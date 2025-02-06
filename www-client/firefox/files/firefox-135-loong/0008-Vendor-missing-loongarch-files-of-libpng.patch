@@ -1,7 +1,7 @@
-From 119040a253ed4ce5f4495c9df16a018145f3bde1 Mon Sep 17 00:00:00 2001
+From 86c4d6a407accd4f6ad5fdeba6f55123784aed1c Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <xen0n@gentoo.org>
 Date: Wed, 4 Sep 2024 16:50:54 +0800
-Subject: [PATCH 7/7] Vendor missing loongarch files of libpng
+Subject: [PATCH 8/8] Vendor missing loongarch files of libpng
 
 Signed-off-by: WANG Xuerui <xen0n@gentoo.org>
 ---

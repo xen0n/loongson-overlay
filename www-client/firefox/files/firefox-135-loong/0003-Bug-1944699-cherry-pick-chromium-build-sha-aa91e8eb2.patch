@@ -1,0 +1,60 @@
+From 15d0940b9dcf03955353bdba031966f32e020841 Mon Sep 17 00:00:00 2001
+From: Michael Froman <mfroman@mozilla.com>
+Date: Wed, 29 Jan 2025 23:08:37 +0000
+Subject: [PATCH 3/8] Bug 1944699 - cherry-pick chromium/build sha aa91e8eb2.
+ r=dbaker DONTBUILD
+
+We need this for build file generation to work on macOS dev
+machines that have python 3.13.
+
+Differential Revision: https://phabricator.services.mozilla.com/D236064
+
+(cherry picked from commit 11c4eeeffd257b7160b57de008d51cb89c358005)
+---
+ .../chromium/build/moz-patch-stack/0026.patch | 21 +++++++++++++++++++
+ third_party/chromium/build/vs_toolchain.py    |  1 -
+ 2 files changed, 21 insertions(+), 1 deletion(-)
+ create mode 100644 third_party/chromium/build/moz-patch-stack/0026.patch
+
+diff --git a/third_party/chromium/build/moz-patch-stack/0026.patch b/third_party/chromium/build/moz-patch-stack/0026.patch
+new file mode 100644
+index 0000000000000..bfd6c6e789beb
+--- /dev/null
++++ b/third_party/chromium/build/moz-patch-stack/0026.patch
+@@ -0,0 +1,21 @@
++From: Michael Froman <mfroman@mozilla.com>
++Date: Wed, 29 Jan 2025 16:33:00 -0600
++Subject: Bug xxx - cherry-pick chromium/build sha aa91e8eb2
++
++Mercurial Revision: https://hg.mozilla.org/mozilla-central/rev/7e1a138772ce49bd7725ebdeecf16e13bad3b495
++---
++ vs_toolchain.py | 1 -
++ 1 file changed, 1 deletion(-)
++
++diff --git a/vs_toolchain.py b/vs_toolchain.py
++index 55372ba3a..53e0f9bd3 100755
++--- a/vs_toolchain.py
+++++ b/vs_toolchain.py
++@@ -9,7 +9,6 @@ import collections
++ import glob
++ import json
++ import os
++-import pipes
++ import platform
++ import re
++ import shutil
+diff --git a/third_party/chromium/build/vs_toolchain.py b/third_party/chromium/build/vs_toolchain.py
+index 55372ba3a81db..53e0f9bd323eb 100755
+--- a/third_party/chromium/build/vs_toolchain.py
++++ b/third_party/chromium/build/vs_toolchain.py
+@@ -9,7 +9,6 @@ import collections
+ import glob
+ import json
+ import os
+-import pipes
+ import platform
+ import re
+ import shutil
+-- 
+2.48.1
+
