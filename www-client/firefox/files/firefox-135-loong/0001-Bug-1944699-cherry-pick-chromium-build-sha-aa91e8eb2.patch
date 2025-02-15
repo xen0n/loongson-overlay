@@ -1,7 +1,7 @@
-From 15d0940b9dcf03955353bdba031966f32e020841 Mon Sep 17 00:00:00 2001
+From 68c92fd913fd2d95293ea77734f48861f1c1d5c3 Mon Sep 17 00:00:00 2001
 From: Michael Froman <mfroman@mozilla.com>
 Date: Wed, 29 Jan 2025 23:08:37 +0000
-Subject: [PATCH 3/8] Bug 1944699 - cherry-pick chromium/build sha aa91e8eb2.
+Subject: [PATCH 1/9] Bug 1944699 - cherry-pick chromium/build sha aa91e8eb2.
  r=dbaker DONTBUILD
 
 We need this for build file generation to work on macOS dev

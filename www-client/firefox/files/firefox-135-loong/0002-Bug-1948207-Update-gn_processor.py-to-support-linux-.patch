@@ -1,9 +1,10 @@
-From 39e4c125466c1450d5ed231b603e18de5e98b5b5 Mon Sep 17 00:00:00 2001
+From cfbf58245a03edaeab283a6bc2d2c0d30a9dc940 Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <xen0n@gentoo.org>
 Date: Tue, 3 Sep 2024 15:38:04 +0800
-Subject: [PATCH 2/8] update gn_processor.py to support linux on loong64
+Subject: [PATCH 2/9] Bug 1948207 - Update gn_processor.py to support linux on
+ loong64. r?glandium
 
-Signed-off-by: WANG Xuerui <xen0n@gentoo.org>
+Differential Revision: https://phabricator.services.mozilla.com/D238169
 ---
  python/mozbuild/mozbuild/gn_processor.py | 3 ++-
  1 file changed, 2 insertions(+), 1 deletion(-)

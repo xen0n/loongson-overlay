@@ -1,15 +1,29 @@
-From 5e7317868ffe402014df7b69d5c5d8a1e866e3b3 Mon Sep 17 00:00:00 2001
+From 350f9b1c6df5f4b85afae65c0ee2ce1ec90cfaff Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <xen0n@gentoo.org>
 Date: Tue, 3 Sep 2024 15:47:26 +0800
-Subject: [PATCH 6/8] Fix libyuv unified-source and LoongArch SIMD build
+Subject: [PATCH 9/9] Fix libyuv unified-source and LoongArch SIMD build
 
 Signed-off-by: WANG Xuerui <xen0n@gentoo.org>
 ---
+ media/libyuv/libyuv/libyuv.gyp         |  2 +-
  media/libyuv/libyuv/libyuv.gypi        |  4 ++++
  media/libyuv/libyuv/source/row_lasx.cc | 14 ++++++++++++++
  media/libyuv/libyuv/source/row_lsx.cc  | 14 ++++++++++++++
- 3 files changed, 32 insertions(+)
+ 4 files changed, 33 insertions(+), 1 deletion(-)
 
+diff --git a/media/libyuv/libyuv/libyuv.gyp b/media/libyuv/libyuv/libyuv.gyp
+index 379eda8ba62a1..e1aaafe52a7d9 100644
+--- a/media/libyuv/libyuv/libyuv.gyp
++++ b/media/libyuv/libyuv/libyuv.gyp
+@@ -29,7 +29,7 @@
+     'mips_msa%': 0,  # Default to msa off.
+     'build_neon': 0,
+     'build_msa': 0,
+-    'build_lsx': 0,
++    'build_lsx': 1,
+     'conditions': [
+        ['(target_arch == "armv7" or target_arch == "armv7s" or \
+        (target_arch == "arm" and arm_version >= 7) or target_arch == "arm64")\
 diff --git a/media/libyuv/libyuv/libyuv.gypi b/media/libyuv/libyuv/libyuv.gypi
 index 1fd1be71e3414..fbe35fc42e6dc 100644
 --- a/media/libyuv/libyuv/libyuv.gypi

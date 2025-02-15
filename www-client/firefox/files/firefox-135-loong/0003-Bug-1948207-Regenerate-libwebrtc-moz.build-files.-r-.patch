@@ -1,18 +1,18 @@
-From 92df9f533d337f25eff89b2918f6fdabe78cfbb1 Mon Sep 17 00:00:00 2001
+From 1d758f6de48b873a8b9d5ffc7b6b770400990c05 Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <xen0n@gentoo.org>
-Date: Thu, 6 Feb 2025 16:38:29 +0800
-Subject: [PATCH 4/8] chore: regenerate libwebrtc moz.build files
+Date: Fri, 14 Feb 2025 16:10:56 +0800
+Subject: [PATCH 3/9] Bug 1948207 - Regenerate libwebrtc moz.build files.
+ r?#webrtc-reviewers
 
-Regenerate moz.build files to incorporate loong64 libwebrtc enablement in
-gn_processor.py.
+Regenerate moz.build files for the loong64 changes in gn_processor.py
+to take effect.
 
 Generation command:
 
-  ./mach python \
-       python/mozbuild/mozbuild/gn_processor.py \
+    ./mach python build/gn_processor.py \
        dom/media/webrtc/third_party_build/gn-configs/webrtc.json
 
-Signed-off-by: WANG Xuerui <xen0n@gentoo.org>
+Differential Revision: https://phabricator.services.mozilla.com/D238170
 ---
  .../resource_adaptation_api_gn/moz.build      |  4 +++
  .../libwebrtc/api/array_view_gn/moz.build     |  4 +++
@@ -212,7 +212,6 @@ Signed-off-by: WANG Xuerui <xen0n@gentoo.org>
  .../modules/audio_coding/g711_gn/moz.build    |  4 +++
  .../modules/audio_coding/g722_c_gn/moz.build  |  4 +++
  .../modules/audio_coding/g722_gn/moz.build    |  4 +++
- .../modules/audio_coding/ilbc_c_gn/moz.build  |  4 +++
  .../modules/audio_coding/ilbc_gn/moz.build    |  4 +++
  .../audio_coding/isac_bwinfo_gn/moz.build     |  4 +++
  .../audio_coding/isac_vad_gn/moz.build        |  4 +++
@@ -525,7 +524,7 @@ Signed-off-by: WANG Xuerui <xen0n@gentoo.org>
  .../video_stream_encoder_impl_gn/moz.build    |  4 +++
  .../moz.build                                 |  4 +++
  third_party/libwebrtc/webrtc_gn/moz.build     |  4 +++
- 511 files changed, 2091 insertions(+)
+ 510 files changed, 2087 insertions(+)
 
 diff --git a/third_party/libwebrtc/api/adaptation/resource_adaptation_api_gn/moz.build b/third_party/libwebrtc/api/adaptation/resource_adaptation_api_gn/moz.build
 index a80e5f32ade2b..cde6fefd2a8de 100644
@@ -3497,21 +3496,6 @@ index 7e6c4fa154fda..dbdf83e603c4d 100644
 --- a/third_party/libwebrtc/modules/audio_coding/g722_gn/moz.build
 +++ b/third_party/libwebrtc/modules/audio_coding/g722_gn/moz.build
 @@ -151,6 +151,10 @@ if CONFIG["TARGET_CPU"] == "arm":
-     DEFINES["WEBRTC_ARCH_ARM_V7"] = True
-     DEFINES["WEBRTC_HAS_NEON"] = True
- 
-+if CONFIG["TARGET_CPU"] == "loongarch64":
-+
-+    DEFINES["_GNU_SOURCE"] = True
-+
- if CONFIG["TARGET_CPU"] == "mips32":
- 
-     DEFINES["MIPS32_LE"] = True
-diff --git a/third_party/libwebrtc/modules/audio_coding/ilbc_c_gn/moz.build b/third_party/libwebrtc/modules/audio_coding/ilbc_c_gn/moz.build
-index f49ac18199ceb..aa1ee791054f1 100644
---- a/third_party/libwebrtc/modules/audio_coding/ilbc_c_gn/moz.build
-+++ b/third_party/libwebrtc/modules/audio_coding/ilbc_c_gn/moz.build
-@@ -222,6 +222,10 @@ if CONFIG["TARGET_CPU"] == "arm":
      DEFINES["WEBRTC_ARCH_ARM_V7"] = True
      DEFINES["WEBRTC_HAS_NEON"] = True
  

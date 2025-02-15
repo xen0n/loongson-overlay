@@ -1,0 +1,38 @@
+From e167099ab6004567419418026f5dd64f958dffc0 Mon Sep 17 00:00:00 2001
+From: WANG Xuerui <xen0n@gentoo.org>
+Date: Fri, 14 Feb 2025 22:44:16 +0800
+Subject: [PATCH 8/9] Bug 1778177 - Build libvpx for loongarch64. r?chunmin
+
+---
+ media/libvpx/moz.build | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/media/libvpx/moz.build b/media/libvpx/moz.build
+index df29c9aae8838..846d946b64b36 100644
+--- a/media/libvpx/moz.build
++++ b/media/libvpx/moz.build
+@@ -87,6 +87,12 @@ elif CONFIG['TARGET_CPU'] == 'aarch64':
+         SOURCES += files['LINUX_ARM64_SOURCES']
+         ASFLAGS += [ '-I%s/media/libvpx/config/linux/arm64/' % TOPSRCDIR ]
+         LOCAL_INCLUDES += [ '/media/libvpx/config/linux/arm64/' ]
++elif CONFIG['TARGET_CPU'] == 'loongarch64':
++    # LoongArch64 is Linux-only for now.
++    EXPORTS.vpx += files['LINUX_LOONGARCH64_EXPORTS']
++    SOURCES += files['LINUX_LOONGARCH64_SOURCES']
++    ASFLAGS += [ '-I%s/media/libvpx/config/linux/loongarch64/' % TOPSRCDIR ]
++    LOCAL_INCLUDES += [ '/media/libvpx/config/linux/loongarch64/' ]
+ else:
+     # Generic C-only configuration
+     EXPORTS.vpx += files['GENERIC_EXPORTS']
+@@ -133,6 +139,8 @@ for f in SOURCES:
+             SOURCES[f].flags += ['-march=armv8.2-a+dotprod+i8mm+sve']
+         if 'sve2.c' in f:
+             SOURCES[f].flags += ['-march=armv9-a+sve2']
++        if 'lsx.c' in f:
++            SOURCES[f].flags += ['-mlsx']
+ 
+ # Suppress warnings in third-party code.
+ CFLAGS += [
+-- 
+2.48.1
+

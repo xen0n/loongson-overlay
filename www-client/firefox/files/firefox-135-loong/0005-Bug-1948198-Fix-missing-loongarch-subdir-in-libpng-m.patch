@@ -1,13 +1,18 @@
-From 86c4d6a407accd4f6ad5fdeba6f55123784aed1c Mon Sep 17 00:00:00 2001
+From dea8598eee49a1931e1c935c1a82239846783a7c Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <xen0n@gentoo.org>
-Date: Wed, 4 Sep 2024 16:50:54 +0800
-Subject: [PATCH 8/8] Vendor missing loongarch files of libpng
+Date: Wed, 4 Sep 2024 16:45:05 +0800
+Subject: [PATCH 5/9] Bug 1948198 - Fix missing loongarch subdir in libpng
+ moz.yaml. r?#gfx-reviewers
 
-Signed-off-by: WANG Xuerui <xen0n@gentoo.org>
+Add loongarch to the vendor configuration and re-run `mach vendor` to
+bring in the necessary code for LoongArch LSX.
+
+Differential Revision: https://phabricator.services.mozilla.com/D238165
 ---
  .../libpng/loongarch/filter_lsx_intrinsics.c  | 412 ++++++++++++++++++
  media/libpng/loongarch/loongarch_lsx_init.c   |  65 +++
- 2 files changed, 477 insertions(+)
+ media/libpng/moz.yaml                         |   1 +
+ 3 files changed, 478 insertions(+)
  create mode 100644 media/libpng/loongarch/filter_lsx_intrinsics.c
  create mode 100644 media/libpng/loongarch/loongarch_lsx_init.c
 
@@ -500,6 +505,18 @@ index 0000000000000..2c80fe81b6873
 +
 +#endif /* PNG_LOONGARCH_LSX_IMPLEMENTATION == 1 */
 +#endif /* PNG_READ_SUPPORTED */
+diff --git a/media/libpng/moz.yaml b/media/libpng/moz.yaml
+index 4827c47286c29..f7de4c6454804 100644
+--- a/media/libpng/moz.yaml
++++ b/media/libpng/moz.yaml
+@@ -37,6 +37,7 @@ vendoring:
+     - arm
+     - contrib/arm-neon/linux.c
+     - intel
++    - loongarch
+     - mips
+     - powerpc
+     - ANNOUNCE
 -- 
 2.48.1
 
