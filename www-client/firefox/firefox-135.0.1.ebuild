@@ -1207,7 +1207,7 @@ src_install() {
 		doexe "${BUILD_DIR}"/dist/bin/vaapitest
 
 		# Install the v4l2test on supported arches (+ arm, + riscv64 when keyworded)
-		if use arm64 || use loong ; then
+		if use arm64 ; then
 			exeinto "${MOZILLA_FIVE_HOME}"
 			doexe "${BUILD_DIR}"/dist/bin/v4l2test
 		fi
