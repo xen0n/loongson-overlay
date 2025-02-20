@@ -1,7 +1,7 @@
-From dea8598eee49a1931e1c935c1a82239846783a7c Mon Sep 17 00:00:00 2001
+From 7fc8ab62cdb42a0e0753253a37e57967333bfef1 Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <xen0n@gentoo.org>
 Date: Wed, 4 Sep 2024 16:45:05 +0800
-Subject: [PATCH 5/9] Bug 1948198 - Fix missing loongarch subdir in libpng
+Subject: [PATCH 7/9] Bug 1948198 - Fix missing loongarch subdir in libpng
  moz.yaml. r?#gfx-reviewers
 
 Add loongarch to the vendor configuration and re-run `mach vendor` to

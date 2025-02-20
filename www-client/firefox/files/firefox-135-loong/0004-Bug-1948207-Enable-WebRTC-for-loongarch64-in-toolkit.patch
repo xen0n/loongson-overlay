@@ -1,10 +1,12 @@
-From 674fe0403fc667e17d20aa30247188360e73471a Mon Sep 17 00:00:00 2001
+From 1b504bd1be6a478580bcc6870fecb45c1b1b5fc8 Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <xen0n@gentoo.org>
-Date: Tue, 3 Sep 2024 15:39:18 +0800
+Date: Wed, 19 Feb 2025 16:32:41 +0000
 Subject: [PATCH 4/9] Bug 1948207 - Enable WebRTC for loongarch64 in
- toolkit/moz.configure. r?#webrtc-reviewers
+ toolkit/moz.configure. r=webrtc-reviewers,mjf
 
 Differential Revision: https://phabricator.services.mozilla.com/D238171
+
+(cherry picked from commit 4b88212bef8e20fb01c4d146a5a91b9ebf748ded)
 ---
  toolkit/moz.configure | 1 +
  1 file changed, 1 insertion(+)

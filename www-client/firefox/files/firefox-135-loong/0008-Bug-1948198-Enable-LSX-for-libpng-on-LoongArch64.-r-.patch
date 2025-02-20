@@ -1,7 +1,7 @@
-From c65980cec778c17dfdb4c15db1a08d783b8ec983 Mon Sep 17 00:00:00 2001
+From 0aee2fdc55de2c9f4425af2f123fb1aa523f8ecb Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <xen0n@gentoo.org>
 Date: Fri, 14 Feb 2025 16:59:24 +0800
-Subject: [PATCH 6/9] Bug 1948198 - Enable LSX for libpng on LoongArch64.
+Subject: [PATCH 8/9] Bug 1948198 - Enable LSX for libpng on LoongArch64.
  r?#gfx-reviewers
 
 Enable LSX unconditionally for LoongArch64 because its availability

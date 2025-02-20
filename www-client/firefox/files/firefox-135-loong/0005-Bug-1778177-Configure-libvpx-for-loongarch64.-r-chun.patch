@@ -1,8 +1,12 @@
-From 87d9915a77e1837ed83d6d599ffbe8316e63c7b5 Mon Sep 17 00:00:00 2001
+From 032a614a9e9f742e9db45ed49a8c184cf549058a Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <xen0n@gentoo.org>
-Date: Fri, 14 Feb 2025 22:38:38 +0800
-Subject: [PATCH 7/9] Bug 1778177 - Configure libvpx for loongarch64. r?chunmin
+Date: Thu, 20 Feb 2025 09:45:31 +0000
+Subject: [PATCH 5/9] Bug 1778177 - Configure libvpx for loongarch64. r=chunmin
+ DONTBUILD
 
+Differential Revision: https://phabricator.services.mozilla.com/D238349
+
+(cherry picked from commit 5e406cc40b803d9e631cc4e9bf73943f187bace6)
 ---
  .../config/linux/loongarch64/vp8_rtcd.h       | 226 +++++
  .../config/linux/loongarch64/vp9_rtcd.h       | 106 ++

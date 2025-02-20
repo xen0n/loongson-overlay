@@ -1,4 +1,4 @@
-From 350f9b1c6df5f4b85afae65c0ee2ce1ec90cfaff Mon Sep 17 00:00:00 2001
+From 92925ffff295d40c8a19031e6598ec2ea5f8502d Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <xen0n@gentoo.org>
 Date: Tue, 3 Sep 2024 15:47:26 +0800
 Subject: [PATCH 9/9] Fix libyuv unified-source and LoongArch SIMD build

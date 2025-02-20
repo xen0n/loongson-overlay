@@ -1,10 +1,12 @@
-From cfbf58245a03edaeab283a6bc2d2c0d30a9dc940 Mon Sep 17 00:00:00 2001
+From 9ede984f2b9695a06aa39a9de3d7edb92787d9bd Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <xen0n@gentoo.org>
-Date: Tue, 3 Sep 2024 15:38:04 +0800
+Date: Wed, 19 Feb 2025 16:32:41 +0000
 Subject: [PATCH 2/9] Bug 1948207 - Update gn_processor.py to support linux on
- loong64. r?glandium
+ loong64. r=firefox-build-system-reviewers,glandium
 
 Differential Revision: https://phabricator.services.mozilla.com/D238169
+
+(cherry picked from commit 7e63d1302021f3341923d29d151634568c0d5c2d)
 ---
  python/mozbuild/mozbuild/gn_processor.py | 3 ++-
  1 file changed, 2 insertions(+), 1 deletion(-)

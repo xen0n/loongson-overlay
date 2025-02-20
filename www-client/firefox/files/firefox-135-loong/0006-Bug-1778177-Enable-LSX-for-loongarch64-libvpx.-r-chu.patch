@@ -1,8 +1,12 @@
-From e167099ab6004567419418026f5dd64f958dffc0 Mon Sep 17 00:00:00 2001
+From 9bae4170c3fd63912197095b2a47653a1f6446ea Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <xen0n@gentoo.org>
-Date: Fri, 14 Feb 2025 22:44:16 +0800
-Subject: [PATCH 8/9] Bug 1778177 - Build libvpx for loongarch64. r?chunmin
+Date: Thu, 20 Feb 2025 09:45:32 +0000
+Subject: [PATCH 6/9] Bug 1778177 - Enable LSX for loongarch64 libvpx.
+ r=chunmin DONTBUILD
 
+Differential Revision: https://phabricator.services.mozilla.com/D238350
+
+(cherry picked from commit 8b8a1456e6984cc87e3833b807c6f486fc5b66f1)
 ---
  media/libvpx/moz.build | 8 ++++++++
  1 file changed, 8 insertions(+)
