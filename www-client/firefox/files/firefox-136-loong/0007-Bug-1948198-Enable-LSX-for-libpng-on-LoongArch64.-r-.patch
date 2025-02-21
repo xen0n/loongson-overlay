@@ -1,0 +1,57 @@
+From 8f3daa2ccab5a33f16380c1c9128fe60b3596c98 Mon Sep 17 00:00:00 2001
+From: WANG Xuerui <xen0n@gentoo.org>
+Date: Fri, 14 Feb 2025 16:59:24 +0800
+Subject: [PATCH 7/8] Bug 1948198 - Enable LSX for libpng on LoongArch64.
+ r?#gfx-reviewers
+
+Enable LSX unconditionally for LoongArch64 because its availability
+is guaranteed for LoongArch desktop and server platforms, which are
+general-purpose and popular.
+
+This change partially reverts D231469.
+
+Differential Revision: https://phabricator.services.mozilla.com/D238166
+---
+ media/libpng/moz.build    | 7 ++++++-
+ media/libpng/pnglibconf.h | 7 +++++++
+ 2 files changed, 13 insertions(+), 1 deletion(-)
+
+diff --git a/media/libpng/moz.build b/media/libpng/moz.build
+index 418fda2468b04..cdbd821028bf5 100644
+--- a/media/libpng/moz.build
++++ b/media/libpng/moz.build
+@@ -72,7 +72,12 @@ if CONFIG['HAVE_ALTIVEC']:
+     ]
+ 
+ if CONFIG['TARGET_CPU'] == 'loongarch64':
+-    CFLAGS += ['-mno-lsx']
++    DEFINES['MOZ_PNG_USE_LOONGARCH_LSX'] = True
++    CFLAGS += ['-mlsx']
++    UNIFIED_SOURCES += [
++        'loongarch/filter_lsx_intrinsics.c',
++        'loongarch/loongarch_lsx_init.c',
++    ]
+ 
+ if CONFIG['MOZ_TREE_FREETYPE']:
+     DEFINES['FT_CONFIG_OPTION_USE_PNG'] = True
+diff --git a/media/libpng/pnglibconf.h b/media/libpng/pnglibconf.h
+index 12f61c1822f9e..7ae3bbaddd40e 100644
+--- a/media/libpng/pnglibconf.h
++++ b/media/libpng/pnglibconf.h
+@@ -54,6 +54,13 @@
+ #  define PNG_ARM_NEON_OPT 0
+ #endif
+ 
++#ifdef MOZ_PNG_USE_LOONGARCH_LSX
++#  undef PNG_LOONGARCH_LSX_OPT /* Let libpng decide */
++#  define PNG_ALIGNED_MEMORY_SUPPORTED
++#else
++#  define PNG_LOONGARCH_LSX_OPT 0
++#endif
++
+ #ifdef MOZ_PNG_USE_MIPS_MSA
+ #  undef PNG_MIPS_MSA_OPT
+ #  define PNG_ALIGNED_MEMORY_SUPPORTED
+-- 
+2.48.1
+
