@@ -1,4 +1,4 @@
-From 032a614a9e9f742e9db45ed49a8c184cf549058a Mon Sep 17 00:00:00 2001
+From 80f7b403b6a2ed539f290b11488965b4ab76d96b Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <xen0n@gentoo.org>
 Date: Thu, 20 Feb 2025 09:45:31 +0000
 Subject: [PATCH 5/9] Bug 1778177 - Configure libvpx for loongarch64. r=chunmin
@@ -1666,10 +1666,10 @@ index f84dc75be1709..bf9ac037f97f6 100755
  config=$(print_config generic)
  make_clean
 diff --git a/media/libvpx/sources.mozbuild b/media/libvpx/sources.mozbuild
-index 1847cb8f6783d..c2565c6d15bbf 100644
+index 12c20ede9f3a6..f5d68f6ff9bbc 100644
 --- a/media/libvpx/sources.mozbuild
 +++ b/media/libvpx/sources.mozbuild
-@@ -2656,6 +2656,212 @@ files = {
+@@ -2642,6 +2642,212 @@ files = {
      'libvpx/vpx_scale/vpx_scale_rtcd.c',
      'libvpx/vpx_util/vpx_thread.c',
      'libvpx/vpx_util/vpx_write_yuv_frame.c',

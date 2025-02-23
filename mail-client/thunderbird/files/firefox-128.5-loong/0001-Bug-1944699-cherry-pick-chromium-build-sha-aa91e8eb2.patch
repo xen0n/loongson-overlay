@@ -1,4 +1,4 @@
-From 94a776ecb1a21c4fa3c69c341def33f03271a538 Mon Sep 17 00:00:00 2001
+From 0033d1d088b467268e880f5e6e684ad704fba1c1 Mon Sep 17 00:00:00 2001
 From: Michael Froman <mfroman@mozilla.com>
 Date: Wed, 29 Jan 2025 23:08:37 +0000
 Subject: [PATCH 1/9] Bug 1944699 - cherry-pick chromium/build sha aa91e8eb2.
@@ -12,7 +12,7 @@ Differential Revision: https://phabricator.services.mozilla.com/D236064
 (cherry picked from commit 11c4eeeffd257b7160b57de008d51cb89c358005)
 ---
  .../chromium/build/moz-patch-stack/0026.patch | 21 +++++++++++++++++++
- third_party/chromium/build/vs_toolchain.py    |  1 -
+ third_party/libwebrtc/build/vs_toolchain.py   |  1 -
  2 files changed, 21 insertions(+), 1 deletion(-)
  create mode 100644 third_party/chromium/build/moz-patch-stack/0026.patch
 
@@ -43,10 +43,10 @@ index 0000000000000..bfd6c6e789beb
 + import platform
 + import re
 + import shutil
-diff --git a/third_party/chromium/build/vs_toolchain.py b/third_party/chromium/build/vs_toolchain.py
+diff --git a/third_party/libwebrtc/build/vs_toolchain.py b/third_party/libwebrtc/build/vs_toolchain.py
 index 55372ba3a81db..53e0f9bd323eb 100755
---- a/third_party/chromium/build/vs_toolchain.py
-+++ b/third_party/chromium/build/vs_toolchain.py
+--- a/third_party/libwebrtc/build/vs_toolchain.py
++++ b/third_party/libwebrtc/build/vs_toolchain.py
 @@ -9,7 +9,6 @@ import collections
  import glob
  import json

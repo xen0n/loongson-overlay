@@ -1,15 +1,22 @@
-From f54fc0d661430ef3597813df791142c009a24dff Mon Sep 17 00:00:00 2001
+From ed33a0a27ca70a0a4f8e4c53542316244a8eb775 Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <xen0n@gentoo.org>
-Date: Wed, 27 Nov 2024 15:54:29 +0800
-Subject: [PATCH 06/11] Re-generate libwebrtc moz.build files
+Date: Wed, 19 Feb 2025 16:32:41 +0000
+Subject: [PATCH 3/9] Bug 1948207 - Regenerate libwebrtc moz.build files.
+ r=webrtc-reviewers,mjf
 
-With the following invocation at project root:
+Regenerate moz.build files for the loong64 changes in gn_processor.py
+to take effect.
 
-```sh
-./mach python python/mozbuild/mozbuild/gn_processor.py dom/media/webrtc/third_party_build/gn-configs/webrtc.json
-```
+Generation command:
 
-Signed-off-by: WANG Xuerui <xen0n@gentoo.org>
+    ./mach python build/gn_processor.py \
+       dom/media/webrtc/third_party_build/gn-configs/webrtc.json
+
+Differential Revision: https://phabricator.services.mozilla.com/D238170
+
+(cherry picked from commit efe9fdf85156910fb7af66ab60fe10cf029a7a88)
+
+[xen0n: regenerate for 128esr branch]
 ---
  .../resource_adaptation_api_gn/moz.build      |  4 +++
  .../libwebrtc/api/array_view_gn/moz.build     |  4 +++
@@ -7498,5 +7505,5 @@ index 0a5908916a503..4ba08802c685c 100644
  
      DEFINES["MIPS32_LE"] = True
 -- 
-2.47.0
+2.48.1
 

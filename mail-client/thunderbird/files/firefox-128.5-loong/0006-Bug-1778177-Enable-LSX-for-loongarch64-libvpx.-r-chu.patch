@@ -1,4 +1,4 @@
-From 9bae4170c3fd63912197095b2a47653a1f6446ea Mon Sep 17 00:00:00 2001
+From 251dec8bb20ed3bb5f0fc7f4c0769934ef112218 Mon Sep 17 00:00:00 2001
 From: WANG Xuerui <xen0n@gentoo.org>
 Date: Thu, 20 Feb 2025 09:45:32 +0000
 Subject: [PATCH 6/9] Bug 1778177 - Enable LSX for loongarch64 libvpx.
