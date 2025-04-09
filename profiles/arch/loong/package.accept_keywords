@@ -1,5 +1,0 @@
-=sys-boot/grub-2.12_rc* **
-sys-kernel/genkernel ~*
-
-# for lld:16
-~sys-devel/lld-toolchain-symlinks-16 **
