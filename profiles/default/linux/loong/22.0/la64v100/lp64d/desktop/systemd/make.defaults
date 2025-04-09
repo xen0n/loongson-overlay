@@ -1,8 +1,0 @@
-# There is openssl but no gcrypt in our seed stage, probably due to git being
-# required for our gcc, so force libgcrypt to be present in stage1 to
-# workaround build failure of systemd-resolved:
-#
-# /usr/lib/gcc/loongarch64-unknown-linux-gnu/12.0.0/../../../../loongarch64-unknown-linux-gnu/bin/ld: src/resolve/libsystemd-resolve-core.a(resolved-dns-dnssec.c.o): undefined reference to symbol 'EC_KEY_set_public_key@@OPENSSL_1_1_0'
-#
-# Search PREFER_OPENSSL in systemd code for further details.
-BOOTSTRAP_USE="${BOOTSTRAP_USE} gcrypt"
