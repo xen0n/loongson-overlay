@@ -1,0 +1,16 @@
+# Copyright 2025 Gentoo Authors
+# Distributed under the terms of the GNU General Public License v2
+
+# WANG Xuerui <xen0n@gentoo.org> (2025-04-10)
+# Package version pins according to the 《开源生态发展合作倡议》
+# ("Open-source Ecosystem Development & Cooperation Initiative") list,
+# compiled by 5 Chinese distro vendors: deepin, openAnolis, OpenCloudOS,
+# openEuler and openKylin.
+#
+# Only the most essential packages are included here though; the full list
+# in the original initiative is too restrictive, requires huge number of
+# backports for LoongArch, and involves package versions that are no longer
+# present in ::gentoo. We believe a decent level of compatibility is still
+# achievable with this reduced list if proper bundling/avoidance of system
+# libraries is done.
+>=sys-libs/glibc-2.39

@@ -6,12 +6,10 @@ mips    targets/desktop/3a3000/systemd  exp
 mips    targets/desktop/3a4000          exp
 mips    targets/desktop/3a4000/systemd  exp
 
-loong   default/linux/loong/22.0/la64v100/lp64d                  exp
-loong   default/linux/loong/22.0/la64v100/lp64d/desktop          exp
-loong   default/linux/loong/22.0/la64v100/lp64d/desktop/systemd  exp
-loong   default/linux/loong/22.0/la64v100/lp64d/systemd          exp
 loong   default/linux/loong/23.0/la64v100/lp64d/llvm             exp
 loong   default/linux/loong/23.0/la64v100/lp64d/llvm/systemd     exp
 
 loong   default/linux/loong/23.0/la64v100/lp64d/llvm/bootstrap              exp
 loong   default/linux/loong/23.0/la64v100/lp64d/llvm/systemd/bootstrap      exp
+
+loong   default/linux/loong/osedci-2024 exp
