@@ -1,0 +1,17 @@
+--- a/src/3rdparty/chromium/third_party/libyuv/BUILD.gn    2025-01-02 17:36:22.953452843 +0800
++++ b/src/3rdparty/chromium/third_party/libyuv/BUILD.gn    2025-01-02 17:30:25.551137114 +0800
+@@ -183,6 +183,14 @@
+       "-ffp-contract=fast",  # Enable fma vectorization for NEON.
+     ]
+   }
++  if (current_cpu == "loong64") {
++    sources += [
++      "source/rotate_lsx.cc",
++      "source/row_lsx.cc",
++      "source/scale_lsx.cc"
++    ]
++  }
++
+ }
+ 
+ if (libyuv_use_neon) {
