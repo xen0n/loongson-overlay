@@ -13,9 +13,9 @@ detect_version
 
 SRC_URI="${KERNEL_URI}"
 PATCH_PV="" # to ease testing new versions against not existing patches
-PATCH_VER="2"
-PATCH_DEV="sam"
-[[ -n $PATCH_PV ]] && SRC_URI+="
+PATCH_VER=""
+PATCH_DEV=""
+[[ -n $PATCH_VER ]] && SRC_URI+="
 	${PATCH_VER:+https://dev.gentoo.org/~${PATCH_DEV}/distfiles/sys-kernel/linux-headers/gentoo-headers-${PATCH_PV}-${PATCH_VER}.tar.xz}
 "
 S="${WORKDIR}/linux-${K_BASE_VER}"
