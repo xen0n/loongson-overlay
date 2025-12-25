@@ -18,7 +18,7 @@ SRC_URI="
 	${KERNEL_URI}
 	${PATCH_VER:+https://dev.gentoo.org/~${PATCH_DEV}/distfiles/sys-kernel/linux-headers/gentoo-headers-${PATCH_PV}-${PATCH_VER}.tar.xz}
 "
-S="${WORKDIR}/linux-${KV_FULL}"
+S="${WORKDIR}/linux-${K_BASE_VER}"
 
 #KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~m68k ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86"
 KEYWORDS="~loong"
