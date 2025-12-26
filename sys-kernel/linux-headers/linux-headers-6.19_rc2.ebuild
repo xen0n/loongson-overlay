@@ -38,6 +38,8 @@ src_prepare() {
 	local PATCHES=()
 	[[ -n ${PATCH_VER} ]] && PATCHES+=( "${WORKDIR}"/${PATCH_PV} )
 
+	PATCHES+=( "${DISTDIR}/patch-${KV_FULL}.patch" )
+
 	# TODO: May need forward porting to newer versions
 	use elibc_musl && PATCHES+=(
 		"${FILESDIR}"/${PN}-5.15-remove-inclusion-sysinfo.h.patch
